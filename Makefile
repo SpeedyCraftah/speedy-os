@@ -13,7 +13,7 @@ replacedAsm = $(subst .asm,.o,$(replacedCpp))
 objects = $(subst .s,.o,$(replacedAsm))
 
 %.o: %.cpp
-	export PATH="$HOME/opt/cross/bin:$PATH"
+	export PATH="$$HOME/opt/cross/bin:$$PATH"
 	i686-elf-g++ $(GPPPARAMS) -o $@ -c $<
 
 %.o: %.asm # For nasm compiler
