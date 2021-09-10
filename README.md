@@ -1,2 +1,2 @@
 # speedy-os
-My sweaty operating system.
+A hobby operating system. Learning C++ and operating system indepth while at it!
