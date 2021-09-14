@@ -12,47 +12,22 @@
 #include "structures/string.h"
 #include "structures/flex_array.h"
 
+#include "tables/gdt.h"
+
 void kernelControlHandOver() {
-    video::printnl();
-    video::printf("Welcome!\n\n", VGA_COLOUR::LIGHT_BLUE);
-
-    structures::flexible_array<int> array;
-
-    array.push(1);
-    
-    array.set_at(1, 2);
-    array.set_at(3, 3);
+    // Clear screen for QEMU.
+    video::clearscr();
 
     video::printnl();
-    video::printf(conversions::s_int_to_char(array.get_capacity()));
-    video::printnl();
+    video::printf("Welcome.\n\n", VGA_COLOUR::LIGHT_GREEN);
 
-    array.set_at(5, 4);
-    
-    /*for (int i = 0; i < 8; i++) {
-        video::printf(conversions::s_int_to_char(array[i]));
-        video::printnl();
-    }*/
+    // Load the global descriptor table.
+    // Defines memory segments.
+    GDTDescriptor gdtDescriptor;
+    gdtDescriptor.Size = sizeof(GDT) - 1;
+    gdtDescriptor.Offset = (uint32_t)&DefaultGDT;
 
-    array.defragment();
+    LoadGDT(&gdtDescriptor);
 
-    array.resize(array.get_size());
-
-    array.push(5);
-
-    video::printnl();
-    video::printf(conversions::s_int_to_char(array.get_capacity()));
-    video::printnl();
-
-    video::printnl();
-
-    /*for (int i = 0; i < 8; i++) {
-        video::printf(conversions::s_int_to_char(array[i]));
-        video::printnl();
-    }*/
-
-    video::printf("\nWayyyyy", VGA_COLOUR::LIGHT_RED);
-    video::printnl();
-
-    asm("hlt");
+    asm volatile("hlt");
 }
