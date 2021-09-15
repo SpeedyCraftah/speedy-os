@@ -2,7 +2,7 @@
 
 #include "../io/video.h"
 
-void kernel::panic(char* error) {
+void kernel::panic(char* error, bool hang) {
     video::clearscr(VGA_COLOUR::BLUE);
     
     video::printf("KERNEL PANIC\n------------\n\n", VGA_COLOUR::WHITE);
@@ -11,5 +11,5 @@ void kernel::panic(char* error) {
     video::printf("PANIC DETAILS: ", VGA_COLOUR::WHITE);
     video::printf(error, VGA_COLOUR::LIGHT_GREY);
 
-    asm volatile("hlt");
+    if (hang) asm volatile("hlt");
 }

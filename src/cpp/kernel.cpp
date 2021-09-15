@@ -13,6 +13,9 @@
 #include "structures/flex_array.h"
 
 #include "tables/gdt.h"
+#include "tables/idt.h"
+
+extern "C" void OnInterrupt();
 
 void kernelControlHandOver() {
     // Clear screen for QEMU.
@@ -28,6 +31,21 @@ void kernelControlHandOver() {
     gdtDescriptor.Offset = (uint32_t)&DefaultGDT;
 
     LoadGDT(&gdtDescriptor);
+
+
+    // Loads the interrupt descriptor table.
+    // Defines interrupts.
+    IDTDescriptor idtDescriptor;
+    idtDescriptor.Limit = sizeof(IDTEntry) * 256 - 1;
+    idtDescriptor.Base = (uint32_t)&IDTEntries;
+
+    // Define test gate (0/0 fault).
+    IDTEntries[0] = idt_define_gate(OnInterrupt, 0x8E);
+
+    LoadIDT(&idtDescriptor);
+
+    // Trigger 0 / 0 interrupt.
+    volatile int test = 0 / 0;
 
     asm volatile("hlt");
 }

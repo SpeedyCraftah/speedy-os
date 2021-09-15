@@ -13,5 +13,12 @@ struct IDTEntry {
     unsigned Reserved : 8;
     unsigned Attributes : 8;
     unsigned Offset1 : 16;
-} __attribute__((packed)) 
-__attribute__((aligned(0x10));
+} __attribute__((packed));
+
+extern IDTEntry IDTEntries[256];
+
+IDTEntry idt_define_gate(void (*offset)(), uint8_t attributes);
+
+extern "C" void HandleInterrupt();
+
+extern "C" void LoadIDT(IDTDescriptor* descriptor);
