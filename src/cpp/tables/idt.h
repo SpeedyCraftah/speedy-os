@@ -15,10 +15,9 @@ struct IDTEntry {
     unsigned Offset1 : 16;
 } __attribute__((packed));
 
-extern IDTEntry IDTEntries[256];
+// Align for better performance.
+extern IDTEntry IDTEntries[256] __attribute__((aligned(0x10)));
 
 IDTEntry idt_define_gate(void (*offset)(), uint8_t attributes);
-
-extern "C" void HandleInterrupt();
 
 extern "C" void LoadIDT(IDTDescriptor* descriptor);

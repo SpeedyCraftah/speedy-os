@@ -14,8 +14,9 @@
 
 #include "tables/gdt.h"
 #include "tables/idt.h"
+#include "interrupts/general.h"
 
-extern "C" void OnInterrupt();
+extern "C" void TestInt();
 
 void kernelControlHandOver() {
     // Clear screen for QEMU.
@@ -32,6 +33,7 @@ void kernelControlHandOver() {
 
     LoadGDT(&gdtDescriptor);
 
+    // UNSTABLE CODE BELOW (?)
 
     // Loads the interrupt descriptor table.
     // Defines interrupts.
@@ -39,13 +41,18 @@ void kernelControlHandOver() {
     idtDescriptor.Limit = sizeof(IDTEntry) * 256 - 1;
     idtDescriptor.Base = (uint32_t)&IDTEntries;
 
-    // Define test gate (0/0 fault).
-    IDTEntries[0] = idt_define_gate(OnInterrupt, 0x8E);
+    // Loading of gates seperated into another file due to size (and complexity).
+    GeneralInterruptManager::LoadAll();
 
     LoadIDT(&idtDescriptor);
 
-    // Trigger 0 / 0 interrupt.
-    volatile int test = 0 / 0;
+    // Trigger some test interrupts to test
+    asm volatile("int $1");
+    asm volatile("int $3");
 
-    asm volatile("hlt");
+    // Crash on purpose (GPF).
+    asm volatile("int $2");
+
+    // Disable interrupts and halt.
+    asm volatile("cli; hlt");
 }
