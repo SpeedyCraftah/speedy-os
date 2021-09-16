@@ -13,7 +13,7 @@ struct IDTEntry {
     unsigned Reserved : 8;
     unsigned Attributes : 8;
     unsigned Offset1 : 16;
-} __attribute__((packed));
+} __attribute__((packed)) __attribute__((aligned(0x10));
 
 extern IDTEntry IDTEntries[256];
 
