@@ -1,4 +1,4 @@
 # speedy-os
-A hobby operating system. Learning C++ and operating system indepth while at it!
+A hobby operating system. Learning C++ and operating systems indepth while at it!
 
 WIP
