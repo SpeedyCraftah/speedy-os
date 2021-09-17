@@ -5,7 +5,7 @@
 #include "misc/conversions.h"
 #include "heap/allocator.h"
 #include "misc/str.h"
-#include "cpu/registers.h"
+#include "abstractions/cpu.h"
 #include "panic/panic.h"
 #include "structures/map.h"
 #include "misc/smart_ptr.h"
