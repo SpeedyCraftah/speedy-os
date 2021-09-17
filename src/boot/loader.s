@@ -7,6 +7,7 @@
 
 .space 65
 
+// START OF GRUB MULTIBOOT
 
 .set MAGIC, 0x1badb002
 .set FLAGS, (1<<0 | 1<<1)
@@ -16,8 +17,8 @@
     .long MAGIC
     .long FLAGS
     .long CHECKSUM
-    
 
+// END OF GRUB MULTIBOOT
 
 .section .text
 .extern kernelMain
@@ -29,13 +30,11 @@ loader:
     call callConstructors
     push %eax
     push %ebx
-    call kernelMain
+    
+    // Calling is unnecessary and wastes memory as we'll never return.
+    jmp kernelMain
 
-_stop:
-    cli
-    hlt
-    jmp _stop
-
+// Stack grows down.
 .section .bss 
 .space 2 * 1024 * 1024
 kernel_stack:
