@@ -14,7 +14,7 @@
 
 #include "tables/gdt.h"
 #include "tables/idt.h"
-#include "interrupts/general.h"
+#include "interrupts/exceptions.h"
 #include "abstractions/io_port.h"
 #include "interrupts/irq.h"
 #include "interrupts/controllers/pic.h"
