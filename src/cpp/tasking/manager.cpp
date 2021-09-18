@@ -3,7 +3,7 @@
 #include "manager.h"
 #include "structures/process.h"
 #include "../../software/system/system.cpp"
-#include "../cpu/registers.h"
+#include "../abstractions/cpu.h"
 #include <stdint.h>
 
 unsigned int multitasking::process_manager::next_process_id = 0;

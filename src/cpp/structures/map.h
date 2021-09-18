@@ -8,6 +8,13 @@ namespace structures {
     template <class KeyT, class ValT>
     class map {
         public:
+            struct entry {
+                bool empty = true;
+                unsigned int probes;
+                KeyT key;
+                ValT value;
+            };
+
             map(unsigned int initialCapacity = 10) {
                 capacity = initialCapacity;
                 storage_ptr = heap::malloc<entry>(sizeof(entry) * initialCapacity, false);
@@ -27,6 +34,13 @@ namespace structures {
 
             unsigned int get_occupied_buckets() {
                 return occupiedBuckets;
+            }
+
+            // Unsafe raw method to getting bucket data.
+            entry get_raw_bucket_at(unsigned int index) {
+                if (index > capacity || index < 0) return entry();
+
+                return storage_ptr[index];
             }
 
             void resize(unsigned int newCapacity) {
@@ -136,7 +150,7 @@ namespace structures {
                         else if (i < 0) i = capacity - 1;
 
                         if (!storage_ptr[i].empty && storage_ptr[i].key == key) {
-                            return storage_ptr[i].value;
+                            return true;
                         }
 
                         i++;
@@ -206,13 +220,6 @@ namespace structures {
             }
 
         private:
-            struct entry {
-                bool empty = true;
-                unsigned int probes;
-                KeyT key;
-                ValT value;
-            };
-
             entry* storage_ptr;
             unsigned int capacity;
             unsigned int occupiedBuckets = 0;

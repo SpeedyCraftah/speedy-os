@@ -14,6 +14,11 @@ class video {
             const VGA_COLOUR text_colour = VGA_COLOUR::LIGHT_GREY,
             const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
         );
+        static void printf(
+            char input,
+            const VGA_COLOUR text_colour = VGA_COLOUR::LIGHT_GREY,
+            const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
+        );
 
     private:
         static unsigned int VGA_WIDTH;

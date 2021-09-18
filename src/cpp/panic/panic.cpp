@@ -11,5 +11,5 @@ void kernel::panic(char* error, bool hang) {
     video::printf("PANIC DETAILS: ", VGA_COLOUR::WHITE);
     video::printf(error, VGA_COLOUR::LIGHT_GREY);
 
-    if (hang) asm volatile("hlt");
+    if (hang) asm volatile("cli; hlt");
 }

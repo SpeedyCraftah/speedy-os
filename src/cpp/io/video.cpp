@@ -48,3 +48,9 @@ void video::printf(char* input, const VGA_COLOUR text_colour, const VGA_COLOUR b
         i++;
     }
 }
+
+// Print char.
+void video::printf(char input, const VGA_COLOUR text_colour, const VGA_COLOUR bg_colour) {
+    current_address[0] = add_colour_to_char(input, text_colour, bg_colour);
+    current_address++;
+}

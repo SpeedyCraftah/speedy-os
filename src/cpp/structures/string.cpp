@@ -5,6 +5,14 @@
 #include "../misc/str.h"
 #include "../panic/panic.h"
 
+structures::string::string(char character) {
+    _length = 2;
+    storage_ptr = heap::malloc<char>(2);
+
+    storage_ptr[0] = character;
+    storage_ptr[1] = '\0';
+}
+
 structures::string::string(char* str) {
     if (str == nullptr) return;
 

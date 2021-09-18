@@ -87,11 +87,11 @@ namespace structures {
                 if (fragmented) defragment();
             }
 
-            bool is_fragmented() {
+            inline bool is_fragmented() {
                 return fragmented;
             }
 
-            bool is_empty_at(unsigned int index) {
+            inline bool is_empty_at(unsigned int index) {
                 if (index + 1 > capacity) return false;
 
                 return storage_ptr[index].empty;
@@ -121,13 +121,12 @@ namespace structures {
 
             void remove_at(unsigned int index) {
                 if (index + 1 > capacity || storage_ptr[index].empty) return;
-
                 if (index != next_index - 1) {
                     fragmented = true;
-                } else {
-                    next_index--;
-                    occupied--;
                 }
+                    
+                next_index--;
+                occupied--;
 
                 storage_ptr[index].value = 0;
                 storage_ptr[index].empty = true;
@@ -155,7 +154,7 @@ namespace structures {
                     kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
                 }
 
-                T value = storage_ptr[next_index - 1];
+                entry element = storage_ptr[next_index - 1];
                 
                 storage_ptr[next_index - 1].empty = true;
                 storage_ptr[next_index - 1].value = 0;
@@ -163,7 +162,7 @@ namespace structures {
                 occupied--;
                 next_index--;
 
-                return value;
+                return element.value;
             }
 
             // Override [] operator. (const for safety).

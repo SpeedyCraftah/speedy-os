@@ -5,6 +5,7 @@
 namespace structures {
     class string {
         public:
+            string(char character);
             string(char* str = nullptr);
             ~string();
 
