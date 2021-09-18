@@ -15,8 +15,10 @@
 #include "tables/gdt.h"
 #include "tables/idt.h"
 #include "interrupts/general.h"
-
-extern "C" void TestInt();
+#include "abstractions/io_port.h"
+#include "interrupts/irq.h"
+#include "interrupts/controllers/pic.h"
+#include "structures/events.h"
 
 void kernelControlHandOver() {
     // Clear screen for QEMU.
@@ -33,7 +35,6 @@ void kernelControlHandOver() {
 
     LoadGDT(&gdtDescriptor);
 
-    // UNSTABLE CODE BELOW (?)
 
     // Loads the interrupt descriptor table.
     // Defines interrupts.
@@ -43,16 +44,21 @@ void kernelControlHandOver() {
 
     // Loading of gates seperated into another file due to size (and complexity).
     GeneralInterruptManager::LoadAll();
+    IRQInterruptManager::LoadAll();
 
+
+    // Remap the PIC offsets to entry 32 & 40.
+    controllers::pic::remap(32, 40);
+
+    // Mask 0 for now since the PIT appears to be misconfigured and we do not need a tick yet.
+    controllers::pic::mask_line(0);
+
+    // Load the table and enable interrupts.
     LoadIDT(&idtDescriptor);
 
-    // Trigger some test interrupts to test
-    asm volatile("int $1");
-    asm volatile("int $3");
-
-    // Crash on purpose (GPF).
-    asm volatile("int $2");
 
     // Disable interrupts and halt.
-    asm volatile("cli; hlt");
+    // asm volatile("cli; hlt");
+
+    while(1) {};
 }
