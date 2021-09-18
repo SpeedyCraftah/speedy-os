@@ -56,14 +56,16 @@ void interrupts::exceptions::load_all() {
 extern "C" __attribute__((fastcall)) void HandleGeneralCPUException(uint8_t vector) {
     // General Protection Fault (will soon kernel panic).
     if (vector == 13) {
-        video::printf("\n\nGENERAL PROTECTION FAULT INTERRUPT\n", VGA_COLOUR::LIGHT_RED);
-        video::printf("SYSTEM HAS BEEN HALTED", VGA_COLOUR::LIGHT_BLUE);
+        video::printf("\n\nA general protection fault has occured.\n", VGA_COLOUR::LIGHT_RED);
+        video::printf("System has been halted.", VGA_COLOUR::LIGHT_BLUE);
 
         asm volatile("cli; hlt");
     }
 
-    // Me using the old method instead of using my string function.
-    video::printf("Interrupt No. ");
-    video::printf(conversions::s_int_to_char(vector));
     video::printnl();
+    video::printf("Exception Interrupt No. ");
+    video::printf(conversions::s_int_to_char(vector));
+    video::printf("\nSystem has been halted.", VGA_COLOUR::LIGHT_BLUE);
+    
+    asm volatile("cli; hlt");
 }
