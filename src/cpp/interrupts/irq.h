@@ -1,5 +1,7 @@
 #pragma once
 
-namespace IRQInterruptManager {
-    void LoadAll();
+namespace interrupts {
+    namespace irqs {
+        void load_all();
+    }
 }

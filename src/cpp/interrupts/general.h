@@ -1,5 +1,7 @@
 #pragma once
 
-namespace GeneralInterruptManager {
-    void LoadAll();
+namespace interrupts {
+    namespace exceptions {
+        void load_all();
+    }
 }

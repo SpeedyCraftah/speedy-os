@@ -26,7 +26,7 @@ extern "C" void INTERRUPT_20();
 extern "C" void INTERRUPT_30();
 
 // Loads all CPU exceptions (except excluded ones).
-void GeneralInterruptManager::LoadAll() {
+void interrupts::exceptions::load_all() {
     // Don't try to tell me this is tedious.
 
     IDTEntries[0] = idt_define_gate(INTERRUPT_0, 0x8E);

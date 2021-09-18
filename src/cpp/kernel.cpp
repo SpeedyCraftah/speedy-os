@@ -43,9 +43,8 @@ void kernelControlHandOver() {
     idtDescriptor.Base = (uint32_t)&IDTEntries;
 
     // Loading of gates seperated into another file due to size (and complexity).
-    GeneralInterruptManager::LoadAll();
-    IRQInterruptManager::LoadAll();
-
+    interrupts::exceptions::load_all();
+    interrupts::irqs::load_all();
 
     // Remap the PIC offsets to entry 32 & 40.
     controllers::pic::remap(32, 40);

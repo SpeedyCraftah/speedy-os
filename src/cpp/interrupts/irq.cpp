@@ -26,7 +26,7 @@ extern "C" void INTERRUPT_46();
 extern "C" void INTERRUPT_47();
 extern "C" void INTERRUPT_48();
 
-void IRQInterruptManager::LoadAll() {
+void interrupts::irqs::load_all() {
     IDTEntries[32] = idt_define_gate(INTERRUPT_33, 0x8E);
     IDTEntries[33] = idt_define_gate(INTERRUPT_34, 0x8E);
     IDTEntries[34] = idt_define_gate(INTERRUPT_35, 0x8E);
