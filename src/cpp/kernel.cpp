@@ -1,6 +1,7 @@
 // Kernel now has all control.
 
 #include <stdint.h>
+#include "interrupts/controllers/pit.h"
 #include "io/video.h"
 #include "misc/conversions.h"
 #include "heap/allocator.h"
@@ -19,6 +20,10 @@
 #include "interrupts/irq.h"
 #include "interrupts/controllers/pic.h"
 #include "structures/events.h"
+
+#include "drivers/keyboard/keyboard.h"
+
+#include <limits.h>
 
 void kernelControlHandOver() {
     // Clear screen for QEMU.
@@ -44,20 +49,26 @@ void kernelControlHandOver() {
 
     // Loading of gates seperated into another file due to size (and complexity).
     interrupts::exceptions::load_all();
-    interrupts::irqs::load_all();
+    interrupts::irq::load_all();
 
     // Remap the PIC offsets to entry 32 & 40.
     controllers::pic::remap(32, 40);
 
-    // Mask 0 for now since the PIT appears to be misconfigured and we do not need a tick yet.
-    controllers::pic::mask_line(0);
+    // Mask 0 for now since the PIT isn't required yet.
+    // controllers::pic::mask_line(0);
 
     // Load the table and enable interrupts.
     LoadIDT(&idtDescriptor);
 
+    // Configure PIT timer to send an interrupt every 10 milliseconds.
+    controllers::pit::set_channel_0_frequency(100);
 
-    // Disable interrupts and halt.
-    // asm volatile("cli; hlt");
+    // Load keyboard driver.
+    drivers::keyboard::load();
 
-    while(1) {};
+
+    // Halt loop to let CPU sleep.
+    while(1) {
+        asm volatile("hlt");
+    };
 }
