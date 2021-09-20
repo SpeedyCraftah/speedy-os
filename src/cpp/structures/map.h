@@ -87,7 +87,7 @@ namespace structures {
                     int i = index + 1;
 
                     while (1) {
-                        //if (total >= occupiedBuckets) return nullptr;
+                        if (total >= occupiedBuckets) break;
                         
                         if (i > capacity - 1) i = 0;
                         else if (i < 0) i = capacity - 1;
@@ -97,6 +97,7 @@ namespace structures {
                         }
 
                         i++;
+                        total++;
                     }
                 }
             }
@@ -154,6 +155,7 @@ namespace structures {
                         }
 
                         i++;
+                        total++;
                     }
                 }
 
