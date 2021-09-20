@@ -26,7 +26,14 @@ extern "C" void INTERRUPT_46();
 extern "C" void INTERRUPT_47();
 extern "C" void INTERRUPT_48();
 
-void interrupts::irqs::load_all() {
+// Add events for use by mostly drivers.
+// TODO - Optimise the crap out of it.
+structures::event_handler<uint8_t, uint8_t> interrupts::irq::events;
+
+void interrupts::irq::load_all() {
+    // Load event handler.
+    events = structures::event_handler<uint8_t, uint8_t>();
+
     IDTEntries[32] = idt_define_gate(INTERRUPT_33, 0x8E);
     IDTEntries[33] = idt_define_gate(INTERRUPT_34, 0x8E);
     IDTEntries[34] = idt_define_gate(INTERRUPT_35, 0x8E);
@@ -46,11 +53,27 @@ void interrupts::irqs::load_all() {
     IDTEntries[47] = idt_define_gate(INTERRUPT_48, 0x8E);
 }
 
+static unsigned int counter = 0;
 
 // High level interrupt handler for IRQs
 // Also has fastcall attribute for extra performance & ease.
 // (vector passed via register).
-extern "C" __attribute__((fastcall)) void HandleIRQInterrupt (uint8_t vector) {
+extern "C" __attribute__((fastcall)) void HandleIRQInterrupt(uint8_t vector) {
     uint8_t irq = vector - 33;
 
+    // PIT interrupt (every 10ms).
+    if (irq == 0) {
+        counter += 10;
+
+        if (counter % 50 == 0) {
+            video::current_address = (unsigned short*)0xb8000;
+            video::printf("Timer: ");
+            video::printf(conversions::s_int_to_char(counter));
+            video::printf("ms");
+        } 
+
+    }
+
+    // Emit.
+    //interrupts::irq::events.emit_event(irq, irq);
 }
