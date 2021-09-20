@@ -7,6 +7,11 @@
 
 class video {
     public:
+        static unsigned short* current_address;
+        
+        static unsigned int VGA_WIDTH;
+        static unsigned int VGA_HEIGHT;
+
         static void clearscr(const VGA_COLOUR bg = VGA_COLOUR::BLACK);
         static void printnl();
         static void printf(
@@ -20,12 +25,13 @@ class video {
             const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
         );
 
-    private:
-        static unsigned int VGA_WIDTH;
-        static unsigned int VGA_HEIGHT;
-        static unsigned int VGA_NULL;
+        static void printf_reverse(
+            char* input,
+            const VGA_COLOUR text_colour = VGA_COLOUR::LIGHT_GREY,
+            const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
+        );
 
-        static unsigned short* current_address;
+    private:
         static unsigned short* address;
 
         static unsigned short default_background;
