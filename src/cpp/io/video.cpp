@@ -54,3 +54,23 @@ void video::printf(char input, const VGA_COLOUR text_colour, const VGA_COLOUR bg
     current_address[0] = add_colour_to_char(input, text_colour, bg_colour);
     current_address++;
 }
+
+// Prints to the screen but in reverse.
+void video::printf_reverse(char* input, const VGA_COLOUR text_colour, const VGA_COLOUR bg_colour) {
+    int i = 0;
+
+    while (1) {
+        if (input[i] == '\0') {
+            break;
+        } else if (input[i] == '\n') {
+            printnl();
+        } else {
+            current_address[0] = add_colour_to_char(input[i], text_colour, bg_colour);
+            current_address--;
+        }
+
+        i++;
+    }
+
+    current_address++;
+}
