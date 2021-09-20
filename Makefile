@@ -30,18 +30,10 @@ install: kernel.bin
 	sudo cp $< /boot/kernel.bin
 	
 speedyos.iso: kernel.bin
-	mkdir iso
-	mkdir iso/boot
-	mkdir iso/boot/grub
 	cp ./dist/$< iso/boot/
-	echo 'set timeout-0' >> iso/boot/grub/grub.cfg
-	echo 'set default-0' >> iso/boot/grub/grub.cfg
-	echo 'menuentry "Speedy OS v0.1"{' >> iso/boot/grub/grub.cfg
-	echo '  multiboot /boot/kernel.bin' >> iso/boot/grub/grub.cfg
-	echo ' boot' >> iso/boot/grub/grub.cfg
-	echo '}' >> iso/boot/grub/grub.cfg
 	grub-mkrescue --output=./dist/$@ iso
-	rm -rf iso 
+	rm iso/boot/kernel.bin
+	
 
 run: speedyos.iso
 	
