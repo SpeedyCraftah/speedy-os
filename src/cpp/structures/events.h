@@ -62,7 +62,6 @@ namespace structures {
 
             void emit_event(EventT event, DataT data) {
                 if (!storage_ptr.exists(event)) return;
-
                 flexible_array<void(*)()>* arr = storage_ptr.fetch(event);
 
                 // Prepare data.
