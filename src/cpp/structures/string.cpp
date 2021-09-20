@@ -94,7 +94,7 @@ structures::string& structures::string::concat(char* src) {
 }
 
 // Overload [] operator.
-char structures::string::operator[](int index) {
+char& structures::string::operator[](int index) {
     if (storage_ptr == nullptr) kernel::panic("Overload operation attempted on an uninitialised string.");
     return storage_ptr[index];
 }

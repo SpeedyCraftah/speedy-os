@@ -24,7 +24,7 @@ namespace structures {
             string& operator=(const string& src);
 
             // Overload [] operator.
-            char operator[](int index);
+            char& operator[](int index);
 
             // Overload + operator (strings).
             string operator+(string& src);
