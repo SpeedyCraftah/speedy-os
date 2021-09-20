@@ -77,119 +77,63 @@ namespace structures {
             }
 
             ValT& fetch(KeyT key) {
-                uint32_t hash = hash_key(key);
-                unsigned int index = hash % capacity;
+                bucketLookupResult result = locate_bucket(key);
+                if (!result.found)
+                    kernel::panic("A non-existant entry was queried. Entries must be checked for existance before fetching.");
 
-                if (!storage_ptr[index].empty && storage_ptr[index].key == key) {
-                    return storage_ptr[index].value;
-                } else {
-                    int total = 0;
-                    int i = index + 1;
-
-                    while (1) {
-                        if (total >= occupiedBuckets) break;
-                        
-                        if (i > capacity - 1) i = 0;
-                        else if (i < 0) i = capacity - 1;
-
-                        if (!storage_ptr[i].empty && storage_ptr[i].key == key) {
-                            return storage_ptr[i].value;
-                        }
-
-                        i++;
-                        total++;
-                    }
-                }
+                return storage_ptr[result.index].value;
             }
 
             void remove(KeyT key) {
-                uint32_t hash = hash_key(key);
-                unsigned int index = hash % capacity;
+                bucketLookupResult result = locate_bucket(key);
 
-                if (!storage_ptr[index].empty && storage_ptr[index].key == key) {
-                    // No need to clear all elements. Will be overwritten anyways.
-                    storage_ptr[index].empty = true;
-                    
-                    uint32_t shift_index = index;
-                    
-                    // Begin shifting keys back mechanism.
-                    while (1) {
-                        shift_index++;
-                        if (storage_ptr[shift_index].empty || storage_ptr[shift_index].probes == 0) break;
-                        
-                        entry oldBucket = storage_ptr[shift_index];
-                        storage_ptr[shift_index - 1] = oldBucket;
-                        
-                        storage_ptr[shift_index].empty = true;
-                        storage_ptr[shift_index].probes = 0;
-                    }
-                    
-                    return;
-                } else {
-                    int total = 0;
-                    int i = index + 1;
-
-                    while (1) {
-                        if (total >= occupiedBuckets) return;
-
-                        if (i > capacity - 1) i = 0;
-                        else if (i < 0) i = capacity - 1;
-
-                        if (!storage_ptr[i].empty && storage_ptr[i].key == key) {
-                            storage_ptr[i].empty = true;
-                            break;
-                        }
-
-                        i++;
-                        total++;
-                    }
-                }
+                // Silently exit as we do not need an output.
+                if (!result.found) return;
 
                 occupiedBuckets--;
+
+                storage_ptr[result.index] = entry();
+                
+                uint32_t shift_index = result.index;
+                
+                // Begin shifting keys back mechanism (if any).
+                while (1) {
+                    shift_index++;
+
+                    // If empty, break.
+                    if (storage_ptr[shift_index].probes == 0) break;
+                    
+                    // Needs to be moved back.
+                    entry targetBucket = storage_ptr[shift_index];
+
+                    targetBucket.probes--;
+                    storage_ptr[shift_index - 1] = targetBucket;
+                    
+                    storage_ptr[shift_index] = entry();
+                }
             }
 
-            bool exists(KeyT key) {
-                uint32_t hash = hash_key(key);
-                unsigned int index = hash % capacity;
-
-                if (!storage_ptr[index].empty && storage_ptr[index].key == key) {
-                    return true;
-                } else {
-                    int total = 0;
-                    int i = index + 1;
-
-                    while (1) {
-                        if (total >= occupiedBuckets) break;
-                        
-                        if (i > capacity - 1) i = 0;
-                        else if (i < 0) i = capacity - 1;
-
-                        if (storage_ptr[i].empty || storage_ptr[i].probes == 0) return false;
-
-                        if (storage_ptr[i].empty && storage_ptr[i].key == key) {
-                            return true;
-                        }
-
-                        i++;
-                        total++;
-                    }
-                }
-
-                return false;
+            inline bool exists(KeyT key) {
+                return locate_bucket(key).found;
             }
 
             // Sets a key. If optimisation is skipped and the map overflows, a kernel panic will occur.
-            void set(KeyT key, ValT& value, bool auto_optimise = true) {
+            void set(KeyT key, ValT value, bool auto_optimise = true) {
+                if (locate_bucket(key).found)
+                    kernel::panic("A key has attempted to be set which would result in a duplicate entry as overwriting is disabled for safety.");
+
                 // Resize the table for more storage and quicker access speeds.
                 if (auto_optimise && (float)occupiedBuckets / capacity >= 0.92) {
                     resize((unsigned int)((float)capacity * 1.9));
                 }
 
-                if (occupiedBuckets >= capacity) kernel::panic("A map value has attempted to be appended; however the maps capacity has been exhausted and a resize has not commenced.");
+                if (occupiedBuckets >= capacity)
+                    kernel::panic("A map value has attempted to be appended; however the maps capacity has been exhausted and a resize has not commenced.");
 
                 uint32_t hash = hash_key(key);
-                unsigned int index = hash % capacity;
+                uint32_t index = hash % capacity;
 
+                // Define new entry.
                 entry target;
                 target.key = key;
                 target.value = value;
@@ -199,38 +143,32 @@ namespace structures {
                 if (storage_ptr[index].empty) {
                     storage_ptr[index] = target;
                 } else {
-                    int i = index;
-
+                    // Probe for location.
                     while (1) {
-                        if (i > capacity - 1) i = 0;
-                        else if (i < 0) i = capacity - 1;
+                        index++;
 
-                        entry bucket = storage_ptr[i];
+                        // Move onto next probe.
+                        target.probes++;
 
+                        // Boundary checks.
+                        if (index > capacity - 1) index = 0;
+                        else if (index < 0) index = capacity - 1;
+
+                        entry bucket = storage_ptr[index];
+
+                        // If a free bucket has been found.
                         if (bucket.empty) {
-                            storage_ptr[i] = target;
+                            storage_ptr[index] = target;
                             break;
                         } else {
+                            // Swap richer bucket for poorer.
                             if (bucket.probes < target.probes) {
                                 entry oldBucket = bucket;
-                                storage_ptr[i] = target;
 
+                                storage_ptr[index] = target;
                                 target = oldBucket;
-
-                                // Check if old position is available by any chance.
-                                int newBucketHashIndex = hash_key(target.key) % capacity;
-
-                                if (i != newBucketHashIndex && storage_ptr[newBucketHashIndex].empty) {
-                                    target.probes = 0;
-                                    storage_ptr[newBucketHashIndex] = target;
-
-                                    break;
-                                }
                             }
                         }
-
-                        i++;
-                        target.probes++;
                     }
                 }
 
@@ -244,6 +182,40 @@ namespace structures {
 
             inline unsigned int hash_key(int key) {
                 return key;
+            }
+
+            struct bucketLookupResult {
+                unsigned int index;
+                bool found;
+            };
+
+            bucketLookupResult locate_bucket(KeyT key) {
+                uint32_t hash = hash_key(key);
+                uint32_t index = hash % capacity;
+
+                // If found at allocated hash.
+                if (storage_ptr[index].key == key) {
+                    return bucketLookupResult({ index, true });
+                }
+
+                // Start locating by probing.
+                while (1) {
+                    index++;
+
+                    // If bounds are exceeded, loop round.
+                    if (index > capacity - 1) index = 0;
+                    else if (index < 0) index = capacity - 1;
+
+                    entry bucket = storage_ptr[index];
+
+                    // Not found.
+                    if (bucket.probes == 0)
+                        return bucketLookupResult({ 0, false });
+
+                    else if (bucket.key == key) {
+                        return bucketLookupResult({ index, true });
+                    }
+                }
             }
 
             uint32_t hash_key(char* key) {
