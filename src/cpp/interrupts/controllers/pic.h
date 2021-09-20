@@ -1,5 +1,8 @@
 // Controller written in C++ since assembly would be too much work.
 
+// PIC - Responsible for IRQ interrupts (keyboard/timer etc).
+// Dedicated chip which needs communicating with.
+
 #pragma once
 
 #include <stdint.h>
