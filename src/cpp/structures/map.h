@@ -109,7 +109,21 @@ namespace structures {
                 if (!storage_ptr[index].empty && storage_ptr[index].key == key) {
                     // No need to clear all elements. Will be overwritten anyways.
                     storage_ptr[index].empty = true;
-
+                    
+                    uint32_t shift_index = index;
+                    
+                    // Begin shifting keys back mechanism.
+                    while (1) {
+                        shift_index++;
+                        if (storage_ptr[shift_index].empty || storage_ptr[shift_index].probes == 0) break;
+                        
+                        entry oldBucket = storage_ptr[shift_index];
+                        storage_ptr[shift_index - 1] = oldBucket;
+                        
+                        storage_ptr[shift_index].empty = true;
+                        storage_ptr[shift_index].probes = 0;
+                    }
+                    
                     return;
                 } else {
                     int total = 0;
@@ -150,7 +164,9 @@ namespace structures {
                         if (i > capacity - 1) i = 0;
                         else if (i < 0) i = capacity - 1;
 
-                        if (!storage_ptr[i].empty && storage_ptr[i].key == key) {
+                        if (storage_ptr[i].empty || storage_ptr[i].probes == 0) return false;
+
+                        if (storage_ptr[i].empty && storage_ptr[i].key == key) {
                             return true;
                         }
 
