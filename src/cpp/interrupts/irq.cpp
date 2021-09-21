@@ -6,6 +6,9 @@
 #include "../abstractions/io_port.h"
 #include "../structures/string.h"
 
+// Handlers.
+#include "../drivers/keyboard.h"
+
 // Master PICs.
 extern "C" void INTERRUPT_33();
 extern "C" void INTERRUPT_34();
@@ -65,5 +68,5 @@ extern "C" __attribute__((fastcall)) void HandleIRQInterrupt(uint8_t vector) {
             video::printf("ms");
         } 
 
-    }
+    } else if (irq == 1) drivers::keyboard::handle_interrupt();
 }
