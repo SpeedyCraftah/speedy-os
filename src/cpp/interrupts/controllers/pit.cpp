@@ -10,7 +10,7 @@ void controllers::pit::set_channel_0_frequency(float frequency_hz) {
     uint16_t ct_number = DIVISOR / frequency_hz;
 
     // Send command initialisation code for channel 0.
-    io_port::bit_8::out(0x43, 0x36);    
+    io_port::bit_8::out(0x43, 0x34);    
 
     // Split the number by two 8 bits since this is an 8 bit line.      
     io_port::bit_8::out(0x40, ct_number & 0xFF);  

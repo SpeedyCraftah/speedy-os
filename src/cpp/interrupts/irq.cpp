@@ -6,6 +6,8 @@
 #include "../abstractions/io_port.h"
 #include "../structures/string.h"
 
+#include "../drivers/keyboard/keyboard.h"
+
 // Master PICs.
 extern "C" void INTERRUPT_33();
 extern "C" void INTERRUPT_34();
@@ -64,16 +66,12 @@ extern "C" __attribute__((fastcall)) void HandleIRQInterrupt(uint8_t vector) {
     // PIT interrupt (every 10ms).
     if (irq == 0) {
         counter += 10;
+    }
 
-        if (counter % 50 == 0) {
-            video::current_address = (unsigned short*)0xb8000;
-            video::printf("Timer: ");
-            video::printf(conversions::s_int_to_char(counter));
-            video::printf("ms");
-        } 
-
+    if (irq == 1) {
+        drivers::keyboard::handle_interrupt();
     }
 
     // Emit.
-    //interrupts::irq::events.emit_event(irq, irq);
+    // interrupts::irq::events.emit_event(irq, irq);
 }
