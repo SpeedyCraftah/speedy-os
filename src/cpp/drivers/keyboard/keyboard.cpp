@@ -5,13 +5,10 @@
 #include "../../abstractions/io_port.h"
 #include "../../interrupts/controllers/pic.h"
 
-static bool shift_held = false;
-
 namespace drivers {
     void keyboard::load() {
         setup_char_table();
         
-        interrupts::irq::events.add_event_listener(1, handle_interrupt);
     }
     
     void keyboard::handle_interrupt() {

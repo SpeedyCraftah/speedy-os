@@ -28,14 +28,7 @@ extern "C" void INTERRUPT_46();
 extern "C" void INTERRUPT_47();
 extern "C" void INTERRUPT_48();
 
-// Add events for use by mostly drivers.
-// TODO - Optimise the crap out of it.
-structures::event_handler<uint8_t, uint8_t> interrupts::irq::events;
-
 void interrupts::irq::load_all() {
-    // Load event handler.
-    events = structures::event_handler<uint8_t, uint8_t>();
-
     IDTEntries[32] = idt_define_gate(INTERRUPT_33, 0x8E);
     IDTEntries[33] = idt_define_gate(INTERRUPT_34, 0x8E);
     IDTEntries[34] = idt_define_gate(INTERRUPT_35, 0x8E);

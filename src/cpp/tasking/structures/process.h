@@ -16,6 +16,8 @@ struct Process {
 
     TaskPriority priority;
     Registers registers;
+    
+    uint32_t total_cpu_time;
 
     Software::ProcessRuntime* process;
 };
