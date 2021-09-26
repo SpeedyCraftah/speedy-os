@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-namespace controllers {
+namespace chips {
     namespace pic {
         void remap(uint8_t master_offset, uint8_t slave_offset);
         

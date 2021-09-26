@@ -1,6 +1,6 @@
 #include "pic.h"
 
-#include "../../abstractions/io_port.h"
+#include "../abstractions/io_port.h"
 
 // Common PIC definitions.
 #define PIC1		0x20
@@ -22,14 +22,14 @@
 #define ICW4_BUF_MASTER	0x0C
 #define ICW4_SFNM	0x10
 
-void controllers::pic::remap(uint8_t master_offset, uint8_t slave_offset) {
+void chips::pic::remap(uint8_t master_offset, uint8_t slave_offset) {
     // Save mask states.
     uint8_t a1 = io_port::bit_8::in(PIC1_DATA);
 	uint8_t a2 = io_port::bit_8::in(PIC2_DATA);
  
     // Add lots of delays to let possible slow PICs catch up.
 
-    // Starts init sequence for both controllers.
+    // Starts init sequence for both chips.
 	io_port::bit_8::out(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
     io_port::bit_8::delay_void();
 	io_port::bit_8::out(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
@@ -54,7 +54,7 @@ void controllers::pic::remap(uint8_t master_offset, uint8_t slave_offset) {
 	io_port::bit_8::out(PIC2_DATA, a2);
 }
 
-void controllers::pic::mask_line(uint8_t line) {
+void chips::pic::mask_line(uint8_t line) {
     uint16_t port;
     uint8_t value;
  
@@ -70,7 +70,7 @@ void controllers::pic::mask_line(uint8_t line) {
     io_port::bit_8::out(port, value);
 }
 
-void controllers::pic::unmask_line(uint8_t line) {
+void chips::pic::unmask_line(uint8_t line) {
     uint16_t port;
     uint8_t value;
  

@@ -1,11 +1,13 @@
 #include "pit.h"
 
-#include "../../abstractions/io_port.h"
+#include "../abstractions/io_port.h"
+#include "../io/video.h"
 
 // Define the divisor to divide the frequency by.
-#define DIVISOR (float)1193180
+#define DIVISOR 1193180
 
-void controllers::pit::set_channel_0_frequency(float frequency_hz) {
+// Floats currently unsupported.
+void chips::pit::set_channel_0_frequency(uint16_t frequency_hz) {
     // Calculate tick number.
     uint16_t ct_number = DIVISOR / frequency_hz;
 

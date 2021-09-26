@@ -5,8 +5,8 @@
 
 #include <stdint.h>
 
-namespace controllers {
+namespace chips {
     namespace pit {
-        void set_channel_0_frequency(float frequency_hz);
+        void set_channel_0_frequency(uint16_t frequency_hz);
     }
 }
