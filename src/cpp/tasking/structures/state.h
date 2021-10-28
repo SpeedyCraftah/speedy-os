@@ -12,8 +12,8 @@ enum TaskPriority : uint8_t {
 // actively running = Program processes on its own accord.
 
 enum TaskStatus : uint8_t {
-    SUSPENDED = 0, // suspended - no cpu time given (even if events occur).
-    WAITING_FOR_DATA = 1, // waiting - will be given cpu time when an event occurs.
-    RUNNING_BUSY = 2,  // running but busy - all events will be supressed until status 1 or 3.
-    RUNNING = 3 // running - will run on its own accord (while loop) and receive events.
+    RUNNING = 0, // running - will run on its own accord (while loop) and receive events.
+    SUSPENDED = 1, // suspended - no cpu time given (even if events occur).
+    WAITING_FOR_DATA = 2, // waiting - will be given cpu time when an event occurs.
+    RUNNING_BUSY = 3  // running but busy - all events will be supressed until status 0 or 2.
 };
