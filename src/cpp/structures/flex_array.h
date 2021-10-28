@@ -149,6 +149,7 @@ namespace structures {
                 next_index++;
             }
 
+            // Pops the last element and returns it.
             T pop() {
                 if (fragmented) {
                     kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
@@ -161,6 +162,25 @@ namespace structures {
 
                 occupied--;
                 next_index--;
+
+                return element.value;
+            }
+
+            // Pops the first element and returns it.
+            // Inefficient as it has to defragment the whole array afterwards to maintain linear structure.
+            T shift() {
+                if (fragmented) {
+                    kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
+                }
+
+                entry element = storage_ptr[0];
+
+                storage_ptr[0].empty = true;
+                storage_ptr[0].value = 0;
+
+                occupied--;
+
+                defragment();
 
                 return element.value;
             }
