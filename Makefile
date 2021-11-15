@@ -1,7 +1,7 @@
 # -ffunction-sections -fdata-sections -Wl,–gc-sections 
-GPPPARAMS = -O2 -ffreestanding -Wno-write-strings -Wno-register -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -fno-stack-protector
+GPPPARAMS = -g -O2 -ffreestanding -Wno-write-strings -Wno-register -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -fno-stack-protector
 ASPARAMS = --32
-LDPARAMS = -melf_i386
+LDPARAMS = -g -melf_i386
 
 ASMFILE = src/boot/loader.asm
 
@@ -37,3 +37,5 @@ speedyos.iso: kernel.bin
 
 run: speedyos.iso
 	
+clean:
+	find . -name "*.o" -type f -delete
