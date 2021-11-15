@@ -75,7 +75,7 @@ void chips::pic::unmask_line(uint8_t line) {
     uint8_t value;
  
     // Worker or master?
-    if(line < 8) {
+    if (line < 8) {
         port = PIC1_DATA;
     } else {
         port = PIC2_DATA;
@@ -84,4 +84,14 @@ void chips::pic::unmask_line(uint8_t line) {
 
     value = io_port::bit_8::in(port) & ~(1 << line);
     io_port::bit_8::out(port, value);
+}
+
+void chips::pic::send_eoi_master() {
+    asm volatile("mov $0x20, %al");
+    asm volatile("out %al, $0x20");
+}
+
+void chips::pic::send_eoi_slave() {
+    io_port::bit_8::out(0x20, 0x20);
+    io_port::bit_8::out(0xA0, 0x20);
 }

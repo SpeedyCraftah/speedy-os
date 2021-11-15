@@ -13,5 +13,8 @@ namespace chips {
         
         void mask_line(uint8_t line);
         void unmask_line(uint8_t line);
+
+        void send_eoi_master();
+        void send_eoi_slave();
     }
 }
