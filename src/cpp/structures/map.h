@@ -3,6 +3,7 @@
 #include "../heap/allocator.h"
 #include "../misc/str.h"
 #include "../panic/panic.h"
+#include "../misc/algorithm.h"
 
 namespace structures {
     template <class KeyT, class ValT>
@@ -17,7 +18,8 @@ namespace structures {
 
             map(unsigned int initialCapacity = 10) {
                 capacity = initialCapacity;
-                storage_ptr = heap::malloc<entry>(sizeof(entry) * initialCapacity, false);
+
+                storage_ptr = heap::malloc<entry>(sizeof(entry) * initialCapacity, true);
 
                 for (int i = 0; i < capacity; i++) {
                     storage_ptr[i] = entry();
@@ -78,8 +80,9 @@ namespace structures {
 
             ValT& fetch(KeyT key) {
                 bucketLookupResult result = locate_bucket(key);
-                if (!result.found)
+                if (!result.found) {
                     kernel::panic("A non-existant entry was queried. Entries must be checked for existance before fetching.");
+                }
 
                 return storage_ptr[result.index].value;
             }
@@ -218,24 +221,8 @@ namespace structures {
                 }
             }
 
-            uint32_t hash_key(char* key) {
-                uint32_t fnvPrime = 16777619;
-                uint32_t hash = 2166136261;
-
-                int i = 0;
-
-                while (1) {
-                    if (key[i] == '\0') break;
-
-                    int characterCode = (int)key[i];
-
-                    hash ^= characterCode;
-                    hash *= fnvPrime;
-
-                    i++;
-                }
-
-                return hash;
+            inline uint32_t hash_key(char* key) {
+                return algorithm::hash_string_fnv1a(key);
             }
     };
 };

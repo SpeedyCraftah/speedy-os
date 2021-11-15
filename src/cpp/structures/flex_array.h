@@ -98,7 +98,7 @@ namespace structures {
             }
 
             // Alias for array[index].
-            const T& get_at(unsigned int index) {
+            T& get_at(unsigned int index) {
                 return operator[](index);
             }
 
@@ -128,7 +128,6 @@ namespace structures {
                 next_index--;
                 occupied--;
 
-                storage_ptr[index].value = 0;
                 storage_ptr[index].empty = true;
             }
 
@@ -158,7 +157,6 @@ namespace structures {
                 entry element = storage_ptr[next_index - 1];
                 
                 storage_ptr[next_index - 1].empty = true;
-                storage_ptr[next_index - 1].value = 0;
 
                 occupied--;
                 next_index--;
@@ -176,7 +174,6 @@ namespace structures {
                 entry element = storage_ptr[0];
 
                 storage_ptr[0].empty = true;
-                storage_ptr[0].value = 0;
 
                 occupied--;
 
@@ -185,9 +182,10 @@ namespace structures {
                 return element.value;
             }
 
-            // Override [] operator. (const for safety).
-            const T& operator[](unsigned int index) {
-                if (capacity < index + 1) return 0;
+            // Override [] operator.
+            T& operator[](unsigned int index) {
+                if (capacity < index + 1) kernel::panic("An operation has been attempted on a flexible array which exhausts the capacity ranges.");
+                if (is_empty_at(index)) kernel::panic("An operation has been attempted on an flexible array empty bucket.");
 
                 return storage_ptr[index].value;
             }
@@ -204,7 +202,7 @@ namespace structures {
         private:
             struct entry {
                 bool empty = true;
-                T value = 0;
+                T value;
             };
 
             entry* storage_ptr;
