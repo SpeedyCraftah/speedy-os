@@ -25,15 +25,9 @@ extern "C" void INTERRUPT_19();
 extern "C" void INTERRUPT_20();
 extern "C" void INTERRUPT_30();
 
-// Add events (may be removed).
-structures::event_handler<uint8_t, uint8_t> interrupts::exceptions::events;
-
 // Loads all CPU exceptions (except excluded ones).
 void interrupts::exceptions::load_all() {
     // Don't try to tell me this is tedious.
-
-    // Load event handler (here since constructor does not get called otherwise).
-    events = structures::event_handler<uint8_t, uint8_t>();
 
     IDTEntries[0] = idt_define_gate(INTERRUPT_0, 0x8E);
     IDTEntries[1] = idt_define_gate(INTERRUPT_1, 0x8E);
@@ -67,9 +61,6 @@ extern "C" __attribute__((fastcall)) void HandleGeneralCPUException(uint8_t vect
 
         asm volatile("cli; hlt");
     }
-
-    // Events for exceptions will be removed.
-    interrupts::exceptions::events.emit_event(vector, vector);
 
     video::printnl();
     video::printf("Exception Interrupt No. ");
