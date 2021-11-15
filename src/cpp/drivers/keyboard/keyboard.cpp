@@ -3,18 +3,37 @@
 #include "../../interrupts/irq.h"
 #include "../../io/video.h"
 #include "../../abstractions/io_port.h"
-#include "../../interrupts/controllers/pic.h"
+#include "../../chips/pic.h"
+#include "../../scheduling/scheduler.h"
+#include "../../scheduling/events.h"
 
 namespace drivers {
+    static uint32_t process_id;
+
     void keyboard::load() {
         setup_char_table();
-        
+
+        // Create virtual process for events to take place.
+        process_id = scheduler::start_process(
+            structures::string("Keyboard Driver"),
+            0,
+            TaskStatus::RUNNING_WAITING_FOR_DATA,
+            ProcessFlag::SYSTEM_DRIVER,
+            false,
+            true
+        );
     }
     
+    // Inlined for performance.
     void keyboard::handle_interrupt() {
         uint8_t key = io_port::bit_8::in(0x60);
 
         // To be implemented properly.
+        char c = keyboard::keycode_to_ascii(key, true);
+        if (c == '\0') return;
+
+        // On key press.
+        scheduler::events::emit_event(process_id, 1, c);
     }
 
     void __attribute__((fastcall)) keyboard::ascii_to_uppercase(structures::string& string) {
