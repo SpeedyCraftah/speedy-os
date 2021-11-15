@@ -4,12 +4,11 @@
 #include <stdint.h>
 
 struct MARRecord {
-    MARRecord(uint8_t* location_, int size_, bool reserved_);
-
     // Used to determine if a record actually exists.
     uint8_t magic_number = 174;
 
-    uint32_t process_id;
+    // 0 = kernel.
+    uint32_t process_id = 0;
 
     uint8_t* location;
     int size;
@@ -21,7 +20,7 @@ class heap {
         static unsigned int heap_allocated_bytes;
 
         static MARRecord* mar_array;
-        static int MARRecordCounter;
+        static uint32_t MARRecordCounter;
 
         static uint8_t* next_alloc_addr;
 
@@ -36,12 +35,12 @@ class heap {
         // Allocates {size} of memory in the heap with an option to clear old data.
         // skip_mar should never be used.
         template<typename T>
-        static T* malloc(int size = sizeof(T), bool reset = true, bool skip_mar = false) {
+        static T* malloc(uint32_t size = sizeof(T), bool reset = true, bool skip_mar = false, uint32_t process_id = 0) {
             T* location = nullptr;
 
             // Iterate over the MAR to find any previous suitable locations.
             if (!skip_mar && MARRecordCounter != 0) {
-                for (int i = 0; i < MARRecordCounter; i++) {
+                for (uint32_t i = 0; i < MARRecordCounter; i++) {
                     MARRecord* block = &mar_array[i];
 
                     // If we've reached the end of the list (left for security).
@@ -60,6 +59,7 @@ class heap {
                         }
 
                         block->reserved = true;
+                        block->process_id = process_id;
                         location = (T*)block->location;
                     }
                 }
@@ -74,7 +74,13 @@ class heap {
                 uint8_t* data_location = meta_location + sizeof(int);
 
                 // Add to MAR.
-                mar_array[mar_index] = MARRecord(data_location, size, true);
+                MARRecord record;
+                record.size = size;
+                record.location = data_location;
+                record.reserved = true;
+                record.process_id = process_id;
+                
+                mar_array[mar_index] = record;
 
                 *((int*)meta_location) = mar_index;
 
@@ -89,6 +95,24 @@ class heap {
 
             return location;
         };
+
+        static void free_by_process_id(uint32_t process_id) {
+            for (uint32_t i = 0; i < MARRecordCounter; i++) {
+                MARRecord* block = &mar_array[i];
+
+                // If we've reached the end of the list (left for security).
+                if (block->location == 0) break;
+
+                // Continue if the block is not reserved.
+                if (!block->reserved) continue;
+
+                // If the block is not owned by the process.
+                if (block->process_id != process_id) continue;
+
+                // Found a block, deallocate.
+                free(block->location);
+            }
+        }
 
         // Deallocates a memory block. 1 = Deallocated, 0 = Could not deallocate.
         template <typename T>

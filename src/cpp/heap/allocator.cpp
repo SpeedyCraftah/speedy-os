@@ -14,13 +14,7 @@ void operator delete(void* ptr, size_t size) {
     heap::free<void>(ptr);
 };
 
-MARRecord::MARRecord(uint8_t* location_, int size_, bool reserved_) {
-    location = location_;
-    size = size_;
-    reserved = reserved_;
-}
-
-int heap::MARRecordCounter = 0;
+uint32_t heap::MARRecordCounter = 0;
 unsigned int heap::heap_allocated_bytes = 0;
 
 MARRecord* heap::mar_array = (MARRecord*)0x01000000;
