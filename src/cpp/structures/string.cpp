@@ -4,6 +4,7 @@
 #include "../io/video.h"
 #include "../misc/str.h"
 #include "../panic/panic.h"
+#include "../misc/algorithm.h"
 
 structures::string::string(char character) {
     _length = 2;
@@ -11,6 +12,8 @@ structures::string::string(char character) {
 
     storage_ptr[0] = character;
     storage_ptr[1] = '\0';
+
+    _update_hash();
 }
 
 structures::string::string(char* str) {
@@ -35,6 +38,8 @@ structures::string::string(char* str) {
 
         i++;
     }
+
+    _update_hash();
 }
 
 structures::string::~string() {
@@ -43,6 +48,10 @@ structures::string::~string() {
 
 unsigned int structures::string::length() {
     return _length;
+}
+
+unsigned int structures::string::get_weak_hash() {
+    return _hash;
 }
 
 structures::string& structures::string::concat(char* src) {
@@ -90,6 +99,9 @@ structures::string& structures::string::concat(char* src) {
     // Update length.
     _length = srcLength + _length;
 
+    // Update hash.
+    _update_hash();
+
     return *this;
 }
 
@@ -104,6 +116,17 @@ char& structures::string::operator[](int index) {
 structures::string::operator char*() {
     if (storage_ptr == nullptr) kernel::panic("Overload operation attempted on an uninitialised string.");
     return char_reference();
+}
+
+// Check if the strings are equal via hash.
+bool structures::string::hash_equal_to(structures::string& str) {
+    return str.get_weak_hash() == _hash;
+}
+
+// Character version of above.
+bool structures::string::hash_equal_to(char* str) {
+    uint32_t char_hash = algorithm::hash_string_fnv1a(str);
+    return char_hash == _hash;
 }
 
 // Overload + operator (strings).
@@ -177,4 +200,9 @@ smart_ptr<char> structures::string::char_copy() {
     }
 
     return str;
+}
+
+void structures::string::_update_hash() {
+    uint32_t new_hash = algorithm::hash_string_fnv1a(storage_ptr);
+    _hash = new_hash;
 }

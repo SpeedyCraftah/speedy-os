@@ -20,8 +20,12 @@ namespace structures {
             // Concats a char* to string.
             string& concat(char* src);
 
-            // Overload = operator.
-            string& operator=(const string& src);
+            // Retrieve the hash.
+            unsigned int get_weak_hash();
+            
+            // Assertion of equalness.
+            bool hash_equal_to(char* str);
+            bool hash_equal_to(string& str);
 
             // Overload [] operator.
             char& operator[](int index);
@@ -38,6 +42,9 @@ namespace structures {
         private:
             char* storage_ptr = nullptr;
 
+            void _update_hash();
+
+            unsigned int _hash = 0;
             unsigned int _length = 0;
     };
 }
