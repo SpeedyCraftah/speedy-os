@@ -5,8 +5,3 @@ LoadIDT:
     sti
 
     ret
-
-global TestInt
-TestInt:
-    mov eax, 1
-    ret
