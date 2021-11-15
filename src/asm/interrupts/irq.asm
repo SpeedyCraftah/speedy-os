@@ -3,9 +3,13 @@
 ; Reference outside handler.
 extern HandleIRQInterrupt
 
+section .text
+
 ; Macro for easy script copying.
 %macro IRQBodyMaster 1
-    ; Send EOI.
+    ; Save registers.
+    pushad
+    pushfd
 
     ; Since the handler has fastcall attribute, params are passed via registers.
     mov ecx, %1
@@ -15,11 +19,17 @@ extern HandleIRQInterrupt
     mov al, 0x20
     out 0x20, al
 
+    ; Restore registers.
+    popfd
+    popad
+
     iret
 %endmacro
 
 %macro IRQBodySlave 1
-    ; Send EOI.
+    ; Save registers.
+    pushad
+    pushfd
 
     ; Since the handler has fastcall attribute, params are passed via registers.
     mov ecx, %1
@@ -30,6 +40,10 @@ extern HandleIRQInterrupt
     out 0x20, al
     out 0xA0, al
 
+    ; Restore registers.
+    popad
+    popfd
+
     iret
 %endmacro
 
@@ -38,7 +52,6 @@ extern HandleIRQInterrupt
 ; (IRQs have to be divisble by 8 for some reason).
 
 ; Master.
-global INTERRUPT_33
 global INTERRUPT_34
 global INTERRUPT_35
 global INTERRUPT_36
@@ -58,8 +71,11 @@ global INTERRUPT_47
 global INTERRUPT_48
 
 ; Define.
-INTERRUPT_33:
-    IRQBodyMaster 33
+
+; Timer interrupt.
+; Directly hooked and managed by scheduler for performance and flexibility reasons.
+; Moved to irqtimer.asm.
+; INTERRUPT_33:
 
 INTERRUPT_34:
     IRQBodyMaster 34

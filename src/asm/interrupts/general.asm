@@ -5,12 +5,18 @@ extern HandleGeneralCPUException
 
 ; Macro for easy script copying.
 %macro ISRBody 1
-    ; Push interrupt code param.
-    ; ? Save and restore CPU registers??
+    ; Save registers.
+    pushad
+    pushfd
 
     ; Since the handler has fastcall attribute, params are passed via registers.
     mov ecx, %1
     call HandleGeneralCPUException
+
+    ; Restore registers.
+    popad
+    popfd
+
     iret
 %endmacro
 
