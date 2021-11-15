@@ -30,7 +30,8 @@ namespace drivers {
 			static char keys_released_map[256];
 
             static void load();
-            static void handle_interrupt();
+
+			static void handle_interrupt();
 
 			// Get some extra performance by passing params via registers.
             static __attribute__((fastcall)) char keycode_to_ascii(uint8_t keycode, bool pressed);

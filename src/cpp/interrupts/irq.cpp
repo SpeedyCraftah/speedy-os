@@ -48,23 +48,14 @@ void interrupts::irq::load_all() {
     IDTEntries[47] = idt_define_gate(INTERRUPT_48, 0x8E);
 }
 
-static unsigned int counter = 0;
-
 // High level interrupt handler for IRQs
 // Also has fastcall attribute for extra performance & ease.
 // (vector passed via register).
 extern "C" __attribute__((fastcall)) void HandleIRQInterrupt(uint8_t vector) {
     uint8_t irq = vector - 33;
 
-    // PIT interrupt (every 10ms).
-    if (irq == 0) {
-        counter += 10;
-    }
-
+    // Keyboard hardware interrupt.
     if (irq == 1) {
         drivers::keyboard::handle_interrupt();
     }
-
-    // Emit.
-    // interrupts::irq::events.emit_event(irq, irq);
 }

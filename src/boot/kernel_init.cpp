@@ -22,5 +22,5 @@ extern "C" void kernelMain(void* multiboot_structure, uint32_t magicnumber)
     asm("call disable_vga_cursor");
     asm("call fix_blinking_text");
 
-    kernelControlHandOver();
+    return kernelControlHandOver();
 }

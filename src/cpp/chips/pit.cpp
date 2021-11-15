@@ -6,7 +6,6 @@
 // Define the divisor to divide the frequency by.
 #define DIVISOR 1193180
 
-// Floats currently unsupported.
 void chips::pit::set_channel_0_frequency(uint16_t frequency_hz) {
     // Calculate tick number.
     uint16_t ct_number = DIVISOR / frequency_hz;

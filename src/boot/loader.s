@@ -28,14 +28,17 @@
 loader:
     mov $kernel_stack, %esp
     call callConstructors
-    push %eax
-    push %ebx
     
-    // Calling is unnecessary and wastes memory as we'll never return.
+    // push %eax
+    // push %ebx
+    
     jmp kernelMain
 
 // Stack grows down.
-.section .bss 
+.section .bss
+
+// 2MB kernel stack (will be lowered in the future).
 .space 2 * 1024 * 1024
+
+.global kernel_stack
 kernel_stack:
-    
