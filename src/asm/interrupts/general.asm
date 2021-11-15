@@ -14,8 +14,8 @@ extern HandleGeneralCPUException
     call HandleGeneralCPUException
 
     ; Restore registers.
-    popad
     popfd
+    popad
 
     iret
 %endmacro

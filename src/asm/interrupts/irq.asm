@@ -41,8 +41,8 @@ section .text
     out 0xA0, al
 
     ; Restore registers.
-    popad
     popfd
+    popad
 
     iret
 %endmacro
