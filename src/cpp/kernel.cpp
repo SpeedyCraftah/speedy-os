@@ -1,34 +1,28 @@
 // Kernel now has all control.
 
-#include <stdint.h>
-#include "interrupts/controllers/pit.h"
-#include "io/video.h"
-#include "misc/conversions.h"
-#include "heap/allocator.h"
-#include "misc/str.h"
-#include "abstractions/cpu.h"
-#include "panic/panic.h"
-#include "structures/map.h"
-#include "misc/smart_ptr.h"
+#include "chips/fpu.h"
+#include "chips/pit.h"
+
 #include "structures/string.h"
-#include "structures/flex_array.h"
 
 #include "tables/gdt.h"
 #include "tables/idt.h"
+
 #include "interrupts/exceptions.h"
-#include "abstractions/io_port.h"
+#include "interrupts/software.h"
 #include "interrupts/irq.h"
-#include "interrupts/controllers/pic.h"
-#include "structures/events.h"
+
+#include "chips/pic.h"
 
 #include "drivers/keyboard/keyboard.h"
+#include "scheduling/scheduler.h"
 
-#include <limits.h>
+#include "programs/test.h"
 
 void kernelControlHandOver() {
     // Clear screen for QEMU.
     video::clearscr();
-
+    
     video::printnl();
     video::printf("Welcome.\n\n", VGA_COLOUR::LIGHT_GREEN);
 
@@ -40,7 +34,6 @@ void kernelControlHandOver() {
 
     LoadGDT(&gdtDescriptor);
 
-
     // Loads the interrupt descriptor table.
     // Defines interrupts.
     IDTDescriptor idtDescriptor;
@@ -50,25 +43,45 @@ void kernelControlHandOver() {
     // Loading of gates seperated into another file due to size (and complexity).
     interrupts::exceptions::load_all();
     interrupts::irq::load_all();
+    interrupts::software::load_all();
+
+    // Configure FPU to be able to run float operations.
+    chips::fpu::init_fpu();
+
+    // Configure PIT timer to send an interrupt every 5 milliseconds (around 200 hertz).
+    // Set to this amount due to bugs and issues with virtual machines keeping up.
+    // Will be adjusted eventually.
+    chips::pit::set_channel_0_frequency(200);
 
     // Remap the PIC offsets to entry 32 & 40.
-    controllers::pic::remap(32, 40);
+    chips::pic::remap(32, 40);
 
-    // Mask 0 for now since the PIT isn't required yet.
-    // controllers::pic::mask_line(0);
+    // Mask PIT since the scheduler isn't ready yet.
+    chips::pic::mask_line(0);
 
     // Load the table and enable interrupts.
     LoadIDT(&idtDescriptor);
 
-    // Configure PIT timer to send an interrupt every 10 milliseconds.
-    controllers::pit::set_channel_0_frequency(100);
+    // Initialise scheduler.
+    scheduler::initialise();
+
+    // START OF LOADING DRIVERS.
 
     // Load keyboard driver.
     drivers::keyboard::load();
 
+    // END OF LOADING DRIVERS.
 
-    // Halt loop to let CPU sleep.
-    while(1) {
-        asm volatile("hlt");
-    };
+    // Start a test process.
+    scheduler::start_process(
+        structures::string("test"), 
+        TestProgramCPP::main, 
+        TaskStatus::RUNNING, 0, true
+    );
+    
+    // Unmask the PIT as scheduler is now ready.
+    chips::pic::unmask_line(0);
+
+    // Wait for first tick of the PIT after which control will be handed to the scheduler.
+    asm volatile("hlt");
 }
