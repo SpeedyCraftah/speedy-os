@@ -6,17 +6,17 @@
 #include "../misc/algorithm.h"
 
 namespace structures {
-    template <class KeyT, class ValT>
+    template <class ValT>
     class map {
         public:
             struct entry {
                 bool empty = true;
-                unsigned int probes;
-                KeyT key;
+                uint32_t probes;
+                uint32_t key;
                 ValT value;
             };
 
-            map(unsigned int initialCapacity = 10) {
+            map(uint32_t initialCapacity = 10) {
                 capacity = initialCapacity;
 
                 storage_ptr = heap::malloc<entry>(sizeof(entry) * initialCapacity, true);
@@ -30,26 +30,26 @@ namespace structures {
                 heap::free(storage_ptr);
             }
 
-            unsigned int get_capacity() {
+            uint32_t get_capacity() {
                 return capacity;
             }
 
-            unsigned int get_occupied_buckets() {
+            uint32_t get_occupied_buckets() {
                 return occupiedBuckets;
             }
 
             // Unsafe raw method to getting bucket data.
-            entry get_raw_bucket_at(unsigned int index) {
+            entry get_raw_bucket_at(uint32_t index) {
                 if (index > capacity || index < 0) return entry();
 
                 return storage_ptr[index];
             }
 
-            void resize(unsigned int newCapacity) {
+            void resize(uint32_t newCapacity) {
                 // Safety checks to prevent overflowing allocated memory.
                 if (newCapacity <= capacity) return;
 
-                unsigned int oldCapacity = capacity;
+                uint32_t oldCapacity = capacity;
 
                 entry* old_storage_ptr = storage_ptr;
                 entry* new_storage_ptr = heap::malloc<entry>(sizeof(entry) * newCapacity, false);
@@ -78,7 +78,7 @@ namespace structures {
                 heap::free<entry>(old_storage_ptr);
             }
 
-            ValT& fetch(KeyT key) {
+            ValT& fetch(uint32_t key) {
                 bucketLookupResult result = locate_bucket(key);
                 if (!result.found) {
                     kernel::panic("A non-existant entry was queried. Entries must be checked for existance before fetching.");
@@ -87,7 +87,11 @@ namespace structures {
                 return storage_ptr[result.index].value;
             }
 
-            void remove(KeyT key) {
+            ValT& fetch(char* key) {
+                return fetch(hash_key(key));
+            }
+
+            void remove(uint32_t key) {
                 bucketLookupResult result = locate_bucket(key);
 
                 // Silently exit as we do not need an output.
@@ -116,12 +120,20 @@ namespace structures {
                 }
             }
 
-            inline bool exists(KeyT key) {
+            inline void remove(char* key) {
+                remove(hash_key(key));
+            }
+
+            inline bool exists(uint32_t key) {
                 return locate_bucket(key).found;
             }
 
+            inline bool exists(char* key) {
+                return exists(hash_key(key));
+            }
+
             // Sets a key. If optimisation is skipped and the map overflows, a kernel panic will occur.
-            void set(KeyT key, ValT value, bool auto_optimise = true) {
+            void set(uint32_t key, ValT value, bool auto_optimise = true) {
                 if (locate_bucket(key).found)
                     kernel::panic("A key has attempted to be set which would result in a duplicate entry as overwriting is disabled for safety.");
 
@@ -178,13 +190,21 @@ namespace structures {
                 occupiedBuckets++;
             }
 
+            inline void set(char* key, ValT value, bool auto_optimise = true) {
+                return set(hash_key(key), value, auto_optimise);
+            }
+
         private:
             entry* storage_ptr;
-            unsigned int capacity;
-            unsigned int occupiedBuckets = 0;
+            uint32_t capacity;
+            uint32_t occupiedBuckets = 0;
 
-            inline unsigned int hash_key(int key) {
+            inline uint32_t hash_key(int key) {
                 return key;
+            }
+
+            inline uint32_t hash_key(char* key) {
+                return algorithm::hash_string_fnv1a(key);
             }
 
             struct bucketLookupResult {
@@ -192,7 +212,7 @@ namespace structures {
                 bool found;
             };
 
-            bucketLookupResult locate_bucket(KeyT key) {
+            bucketLookupResult locate_bucket(uint32_t key) {
                 uint32_t hash = hash_key(key);
                 uint32_t index = hash % capacity;
 
@@ -221,8 +241,8 @@ namespace structures {
                 }
             }
 
-            inline uint32_t hash_key(char* key) {
-                return algorithm::hash_string_fnv1a(key);
+            inline bucketLookupResult locate_bucket(char* key) {
+                return locate_bucket(hash_key(key));
             }
     };
 };

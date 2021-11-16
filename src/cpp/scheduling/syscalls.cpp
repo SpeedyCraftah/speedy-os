@@ -145,8 +145,6 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         else return 0; 
     } else if (id == 10) {
-        // DOES NOT WORK RIGHT NOW.
-
         if (!scheduler::get_process_list_string()->exists((char*)data)) {
             TEMP_REGISTERS.eax = 0;
             return 0;

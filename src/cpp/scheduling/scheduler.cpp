@@ -26,15 +26,15 @@ extern "C" void scheduler_sleep();
 
 extern "C" uint8_t kernel_stack;
 
-static structures::map<uint32_t, Process*>* process_list;
-static structures::map<char*, Process*>* process_list_string;
+static structures::map<Process*>* process_list;
+static structures::map<Process*>* process_list_string;
 static structures::flexible_array<uint32_t>* process_queue;
 
 namespace scheduler {
     void initialise() {
         // Initialise queue & process map.
-        process_list = new structures::map<uint32_t, Process*>(15);
-        process_list_string = new structures::map<char*, Process*>(15);
+        process_list = new structures::map<Process*>(15);
+        process_list_string = new structures::map<Process*>(15);
         process_queue = new structures::flexible_array<uint32_t>(15);
     }
 
@@ -49,11 +49,11 @@ namespace scheduler {
         return scheduler_switch_to_task();
     }
 
-    structures::map<uint32_t, Process*>* get_process_list() {
+    structures::map<Process*>* get_process_list() {
         return process_list;
     }
 
-    structures::map<char*, Process*>* get_process_list_string() {
+    structures::map<Process*>* get_process_list_string() {
         return process_list_string;
     }
 
