@@ -122,8 +122,27 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         process->main_status = (TaskStatus)data;
 
-        if (data == TaskStatus::RUNNING_BUSY && scheduler::event_running) return 1;
-        else if (data == TaskStatus::RUNNING_WAITING_FOR_DATA && !scheduler::event_running) return 1;
+        if (data == TaskStatus::RUNNING_BUSY && scheduler::event_running) {
+            // Dump event registers.
+            process->event_receiver.registers = TEMP_REGISTERS;
+            process->event_receiver.queue->get_at(0).overtime = true;
+
+            scheduler::get_process_queue()->push(process->id);
+            scheduler::current_process = 0;
+
+            return 1;
+        }
+
+        else if (data == TaskStatus::RUNNING_WAITING_FOR_DATA && !scheduler::event_running) {
+            // Dump registers.
+            process->registers = TEMP_REGISTERS;
+
+            scheduler::get_process_queue()->push(process->id);
+            scheduler::current_process = 0;
+
+            return 1;
+        }
+
         else return 0; 
     } else if (id == 10) {
         // DOES NOT WORK RIGHT NOW.
