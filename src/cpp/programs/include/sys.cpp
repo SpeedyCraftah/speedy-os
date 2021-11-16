@@ -61,9 +61,17 @@ namespace speedyos {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $7, %ecx");
-        asm volatile("mov 4(%esp), %ebx");
+
+        // Preserve ebx register as required by ABI.
+        asm volatile("push %ebx");
+        asm volatile("mov 8(%esp), %ebx");
+
         asm volatile("int $128");
-        asm volatile("ret");
+
+        // Restore ebp register.
+        asm volatile("pop %ebx");
+        
+        asm volatile("ret $4");
     }
 
     __attribute__((naked)) __attribute__((fastcall)) void emit_event(
