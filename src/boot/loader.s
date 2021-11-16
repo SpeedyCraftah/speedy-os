@@ -37,8 +37,8 @@ loader:
 // Stack grows down.
 .section .bss
 
-// 2MB kernel stack (will be lowered in the future).
-.space 2 * 1024 * 1024
+// 4KB kernel stack.
+.space 4 * 1024
 
 .global kernel_stack
 kernel_stack:
