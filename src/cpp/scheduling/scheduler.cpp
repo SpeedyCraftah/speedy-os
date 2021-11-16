@@ -182,7 +182,7 @@ namespace scheduler {
     // On PIT tick (called from assembly).
     extern "C" void on_scheduler_timer_interrupt_main() {
         // Add time to elapsed time.
-        elapsed_ms += 5;
+        elapsed_ms += 4;
 
         // If process finished running.
         if (current_process != 0) {
@@ -198,7 +198,7 @@ namespace scheduler {
             }
 
             // Add CPU time.
-            process->total_cpu_time += 5;
+            process->total_cpu_time += 4;
 
             // Schedule process for execution.
             process_queue->push(current_process);

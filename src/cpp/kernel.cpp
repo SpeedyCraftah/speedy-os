@@ -48,10 +48,10 @@ void kernelControlHandOver() {
     // Configure FPU to be able to run float operations.
     chips::fpu::init_fpu();
 
-    // Configure PIT timer to send an interrupt every 5 milliseconds (around 200 hertz).
+    // Configure PIT timer to send an interrupt every 4 milliseconds (around 250 hertz).
     // Set to this amount due to bugs and issues with virtual machines keeping up.
     // Will be adjusted eventually.
-    chips::pit::set_channel_0_frequency(200);
+    chips::pit::set_channel_0_frequency(250);
 
     // Remap the PIC offsets to entry 32 & 40.
     chips::pic::remap(32, 40);
@@ -76,6 +76,12 @@ void kernelControlHandOver() {
     scheduler::start_process(
         structures::string("test"), 
         TestProgramCPP::main, 
+        TaskStatus::RUNNING, 0, true
+    );
+
+    scheduler::start_process(
+        structures::string("test2"), 
+        TestProgramCPP::main2, 
         TaskStatus::RUNNING, 0, true
     );
     
