@@ -55,7 +55,6 @@ namespace scheduler {
             uint32_t event_id,
             uint32_t event_data
         ) {
-
             Process* emitter = scheduler::get_process_list()->fetch(emitter_process_id);
 
             if (!emitter->event_emitter.supported) return;
