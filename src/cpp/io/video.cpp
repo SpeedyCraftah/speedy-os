@@ -74,3 +74,11 @@ void video::printf_reverse(char* input, const VGA_COLOUR text_colour, const VGA_
 
     current_address++;
 }
+
+void video::printf_log(char* name, char* input, const VGA_COLOUR name_colour, const VGA_COLOUR input_colour) {
+    video::printf("[", VGA_COLOUR::WHITE);
+    video::printf(name, name_colour);
+    video::printf("] ", VGA_COLOUR::WHITE);
+    video::printf(input, input_colour);
+    video::printnl();
+}

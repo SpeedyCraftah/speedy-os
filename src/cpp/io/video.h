@@ -31,6 +31,13 @@ class video {
             const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
         );
 
+        static void printf_log(
+            char* name,
+            char* input,
+            const VGA_COLOUR name_colour = VGA_COLOUR::LIGHT_BLUE,
+            const VGA_COLOUR input_colour = VGA_COLOUR::WHITE
+        );
+
     private:
         static unsigned short* address;
 
