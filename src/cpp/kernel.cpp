@@ -22,9 +22,8 @@
 void kernelControlHandOver() {
     // Clear screen for QEMU.
     video::clearscr();
-    
-    video::printnl();
-    video::printf("Welcome.\n\n", VGA_COLOUR::LIGHT_GREEN);
+
+    video::printf_log("Kernel", "Defining GDT memory segments (128M)...");
 
     // Load the global descriptor table.
     // Defines memory segments.
@@ -34,24 +33,33 @@ void kernelControlHandOver() {
 
     LoadGDT(&gdtDescriptor);
 
+    video::printf_log("Kernel", "Defining IDT interrupt entries...");
+
     // Loads the interrupt descriptor table.
     // Defines interrupts.
     IDTDescriptor idtDescriptor;
     idtDescriptor.Limit = sizeof(IDTEntry) * 256 - 1;
     idtDescriptor.Base = (uint32_t)&IDTEntries;
 
+    video::printf_log("Kernel", "Populating IDT table...");
+
     // Loading of gates seperated into another file due to size (and complexity).
     interrupts::exceptions::load_all();
     interrupts::irq::load_all();
     interrupts::software::load_all();
 
+    video::printf_log("Kernel", "Initialising FPU...");
+
     // Configure FPU to be able to run float operations.
     chips::fpu::init_fpu();
 
-    // Configure PIT timer to send an interrupt every 4 milliseconds (around 250 hertz).
-    // Set to this amount due to bugs and issues with virtual machines keeping up.
-    // Will be adjusted eventually.
-    chips::pit::set_channel_0_frequency(250);
+    video::printf_log("Kernel", "Setting PIT timer frequency to 500Hz...");
+
+    // Configure PIT timer to send an interrupt every 2 milliseconds.
+    // Will eventually be increased to 1000 hertz (1ms/int).
+    chips::pit::set_channel_0_frequency(500);
+    
+    video::printf_log("Kernel", "Configuring PIC...");
 
     // Remap the PIC offsets to entry 32 & 40.
     chips::pic::remap(32, 40);
@@ -59,13 +67,19 @@ void kernelControlHandOver() {
     // Mask PIT since the scheduler isn't ready yet.
     chips::pic::mask_line(0);
 
+    video::printf_log("Kernel", "Initialising IDT and enabling interrupts...");
+
     // Load the table and enable interrupts.
     LoadIDT(&idtDescriptor);
+
+    video::printf_log("Kernel", "Initialising task scheduler...");
 
     // Initialise scheduler.
     scheduler::initialise();
 
     // START OF LOADING DRIVERS.
+
+    video::printf_log("Kernel", "Loading keyboard driver...");
 
     // Load keyboard driver.
     drivers::keyboard::load();
@@ -74,20 +88,20 @@ void kernelControlHandOver() {
 
     // Start a test process.
     scheduler::start_process(
-        structures::string("test"), 
+        structures::string("test program"), 
         TestProgramCPP::main, 
         TaskStatus::RUNNING, 0, true
     );
-
-    scheduler::start_process(
-        structures::string("test2"), 
-        TestProgramCPP::main2, 
-        TaskStatus::RUNNING, 0, true
-    );
     
+    video::printf_log("Kernel", "Enabling PIT timer...");
+
     // Unmask the PIT as scheduler is now ready.
     chips::pic::unmask_line(0);
 
+    video::printf_log("Kernel", "Waiting for next PIT tick...");
+
     // Wait for first tick of the PIT after which control will be handed to the scheduler.
-    asm volatile("hlt");
+    while (true) {
+        asm volatile("hlt");
+    }
 }
