@@ -5,7 +5,7 @@ LDPARAMS = -g -melf_i386
 
 ASMFILE = src/boot/loader.asm
 
-compiledObjects = $(wildcard src/*.asm) $(wildcard src/*/*.asm) $(wildcard src/*/*/*.asm) $(wildcard src/*.s) $(wildcard src/*/*.s) $(wildcard src/*/*/*.s) $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) $(wildcard src/*/*/*/*.cpp)
+compiledObjects = $(wildcard src/*.asm) $(wildcard src/*/*.asm) $(wildcard src/*/*/*.asm) $(wildcard src/*.s) $(wildcard src/*/*.s) $(wildcard src/*/*/*.s) $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) $(wildcard src/*/*/*/*.cpp) $(wildcard src/*/*/*/*/*.cpp) $(wildcard src/*/*/*/*/*/*.cpp)
 
 # replace objects1 extensions from cpp to o.
 replacedCpp = $(subst .cpp,.o,$(compiledObjects))
