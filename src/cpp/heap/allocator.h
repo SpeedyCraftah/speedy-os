@@ -1,12 +1,8 @@
 #pragma once
 
-#include "../misc/conversions.h"
 #include <stdint.h>
 
 struct MARRecord {
-    // Used to determine if a record actually exists.
-    uint8_t magic_number = 174;
-
     // 0 = kernel.
     uint32_t process_id = 0;
 
@@ -15,12 +11,15 @@ struct MARRecord {
     bool reserved;
 };
 
+extern "C" uint32_t current_process;
+
 class heap {
     private:
-        static unsigned int heap_allocated_bytes;
+        static uint32_t heap_allocated_bytes;
 
         static MARRecord* mar_array;
         static uint32_t MARRecordCounter;
+        static uint32_t reserved_blocks;
 
         static uint8_t* next_alloc_addr;
 
@@ -32,10 +31,14 @@ class heap {
     public:
         // TODO: Check if MAR is within bounds.
 
+        static uint32_t get_allocated_bytes();
+        static uint32_t get_total_blocks();
+        static uint32_t get_reserved_blocks();
+
         // Allocates {size} of memory in the heap with an option to clear old data.
         // skip_mar should never be used.
         template<typename T>
-        static T* malloc(uint32_t size = sizeof(T), bool reset = true, bool skip_mar = false, uint32_t process_id = 0) {
+        static T* malloc(uint32_t size = sizeof(T), bool reset = true, bool skip_mar = false, uint32_t process_id = current_process) {
             T* location = nullptr;
 
             // Iterate over the MAR to find any previous suitable locations.
@@ -49,8 +52,8 @@ class heap {
                     // Continue if the block is in use.
                     if (block->reserved) continue;
 
-                    // If the block size is equal or no larger than 10 bytes of the requested size.
-                    if (block->size >= size && block->size - size <= 10) {
+                    // If the block size is equal or no larger than 50 bytes of the requested size.
+                    if (block->size == size || (block->size >= size && block->size - size <= 50)) {
                         // Clear the block off of old memory if requested.
                         if (reset) {
                             for (int j = 0; j <= block->size; j++) {
@@ -61,6 +64,9 @@ class heap {
                         block->reserved = true;
                         block->process_id = process_id;
                         location = (T*)block->location;
+
+                        heap_allocated_bytes += block->size;
+                        reserved_blocks++;
                     }
                 }
             }
@@ -71,7 +77,7 @@ class heap {
                 
                 int mar_index = MARRecordCounter++;
 
-                uint8_t* data_location = meta_location + sizeof(int);
+                uint8_t* data_location = meta_location;
 
                 // Add to MAR.
                 MARRecord record;
@@ -82,13 +88,12 @@ class heap {
                 
                 mar_array[mar_index] = record;
 
-                *((int*)meta_location) = mar_index;
-
                 next_alloc_addr = data_location + size;
 
                 location = (T*)data_location;
 
-                heap_allocated_bytes += size + sizeof(int);
+                heap_allocated_bytes += size;
+                reserved_blocks++;
             }
 
             // TODO: Return nullptr if new block cannot be allocated.
@@ -117,17 +122,24 @@ class heap {
         // Deallocates a memory block. 1 = Deallocated, 0 = Could not deallocate.
         template <typename T>
         static bool free(T* address) {
-            int mar_reference = *((int*)(to_reg_ptr(address) - sizeof(int)));
-            MARRecord* record = &mar_array[mar_reference];
+            for (uint32_t i = 0; i < MARRecordCounter; i++) {
+                MARRecord record = mar_array[i];
+                
+                // Check if record location matches freeing location.
+                if (record.location != (uint8_t*)address) continue;
 
-            // Check if record exists.
-            if (record->magic_number != 174) return false;
+                // If block is not reserved, stop.
+                if (!record.reserved) break;
 
-            // Block is now free and may be reused.
-            record->reserved = false;
+                // Block is now free and may be reused.
+                record.reserved = false;
 
-            heap_allocated_bytes -= record->size;
+                heap_allocated_bytes -= record.size;
+                reserved_blocks--;
 
-            return true;
+                return true;
+            }
+
+            return false;
         }
 };

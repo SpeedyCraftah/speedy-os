@@ -14,8 +14,21 @@ void operator delete(void* ptr, size_t size) {
     heap::free<void>(ptr);
 };
 
+uint32_t heap::get_allocated_bytes() {
+    return heap_allocated_bytes;
+}
+
+uint32_t heap::get_total_blocks() {
+    return MARRecordCounter;
+}
+
+uint32_t heap::get_reserved_blocks() {
+    return reserved_blocks;
+}
+
 uint32_t heap::MARRecordCounter = 0;
-unsigned int heap::heap_allocated_bytes = 0;
+uint32_t heap::heap_allocated_bytes = 0;
+uint32_t heap::reserved_blocks = 0;
 
 MARRecord* heap::mar_array = (MARRecord*)0x01000000;
 uint8_t* heap::next_alloc_addr = (uint8_t*)0x1200000;
