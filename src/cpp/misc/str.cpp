@@ -24,7 +24,7 @@ char* str::join_some(char delim, char* a, char* b, char* c) {
     int alloc_size = 1 + a_size + b_size + use_delim;
     if (c_size != 0) alloc_size += c_size + use_delim;
 
-    char* text = heap::malloc<char>(alloc_size);
+    char* text = (char*)heap::malloc(alloc_size);
     int text_i = 0;
 
     for (int i = 0; i < a_size; i++) {

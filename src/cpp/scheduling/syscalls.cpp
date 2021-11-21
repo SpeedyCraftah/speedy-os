@@ -63,7 +63,7 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         return 1;
     } else if (id == 4) {
-        uint8_t* memory_ptr = heap::malloc<uint8_t>(data, true, false, scheduler::current_process);
+        uint8_t* memory_ptr = (uint8_t*)heap::malloc(data, true, false, scheduler::current_process);
         TEMP_REGISTERS.eax = reinterpret_cast<uint32_t>(memory_ptr);
     } else if (id == 5) {
         void* memory_ptr = reinterpret_cast<void*>(data);

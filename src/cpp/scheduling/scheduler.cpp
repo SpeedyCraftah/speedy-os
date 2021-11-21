@@ -5,6 +5,7 @@
 #include "../abstractions/cpu.h"
 #include "../chips/pic.h"
 #include "events.h"
+#include "../misc/conversions.h"
 
 #include <stdint.h>
 
@@ -87,12 +88,6 @@ namespace scheduler {
 
         // Deallocate process name.
         delete process->name;
-
-        video::printnl();
-        video::printf("Process ", VGA_COLOUR::LIGHT_RED);
-        video::printf(conversions::s_int_to_char(process_id), VGA_COLOUR::LIGHT_RED);
-        video::printf(" has been ended.", VGA_COLOUR::LIGHT_RED);
-        video::printnl();
     }
 
     uint32_t start_process(structures::string name, void(*entry)(), TaskStatus status, uint32_t flags, bool event_receiver_support, bool event_emitter_support) {
@@ -121,7 +116,7 @@ namespace scheduler {
             new_process->event_receiver.queue = new structures::flexible_array<TaskEvent>();
 
             // Create stack for event handler (1kb).
-            uint8_t* stack = heap::malloc<uint8_t>(1 * 1024);
+            uint8_t* stack = (uint8_t*)heap::malloc(1 * 1024);
             new_process->event_receiver.stack_base = (void*)stack;
 
             // Setup separate registers for event handler.
@@ -129,18 +124,18 @@ namespace scheduler {
             new_registers.esp = reinterpret_cast<uint32_t>(stack) + (1 * 1024);
 
             new_process->event_receiver.registers = new_registers;
-        }
+        } else new_process->event_receiver.supported = false;
 
         // If process will support dispatching events.
         if (event_emitter_support) {
             new_process->event_emitter.supported = true;
             new_process->event_emitter.subscribed = new structures::flexible_array<TaskEventSubscription>();
-        }
+        } else new_process->event_emitter.supported = false;
 
         // If process is a driver, it does not need registers or a stack.
         if ((flags & ProcessFlag::SYSTEM_DRIVER) == 0) {
             // Create a stack for the new process (2kb).
-            uint8_t* stack = heap::malloc<uint8_t>(2 * 1024);
+            uint8_t* stack = (uint8_t*)heap::malloc(2 * 1024);
             new_process->stack_base = (void*)stack;
 
             // Setup registers (only load eflags due to bugs).
@@ -167,22 +162,13 @@ namespace scheduler {
         process_list->set(new_process->id, new_process);
         process_list_string->set(new_process->name.char_reference(), new_process);
 
-        video::printnl();
-        video::printf("Process ", VGA_COLOUR::LIGHT_GREEN);
-        video::printf(conversions::s_int_to_char(new_process->id), VGA_COLOUR::LIGHT_GREEN);
-        video::printf(" (", VGA_COLOUR::LIGHT_GREEN);
-        video::printf(new_process->name, VGA_COLOUR::LIGHT_GREEN);
-        video::printf(")", VGA_COLOUR::LIGHT_GREEN);
-        video::printf(" has been started.", VGA_COLOUR::LIGHT_GREEN);
-        video::printnl();
-
         return new_process->id;
     }
 
     // On PIT tick (called from assembly).
     extern "C" void on_scheduler_timer_interrupt_main() {
         // Add time to elapsed time.
-        elapsed_ms += 4;
+        elapsed_ms += 2;
 
         // If process finished running.
         if (current_process != 0) {
@@ -198,7 +184,7 @@ namespace scheduler {
             }
 
             // Add CPU time.
-            process->total_cpu_time += 4;
+            process->total_cpu_time += 2;
 
             // Schedule process for execution.
             process_queue->push(current_process);

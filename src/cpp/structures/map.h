@@ -19,7 +19,7 @@ namespace structures {
             map(uint32_t initialCapacity = 10) {
                 capacity = initialCapacity;
 
-                storage_ptr = heap::malloc<entry>(sizeof(entry) * initialCapacity, true);
+                storage_ptr = (entry*)heap::malloc(sizeof(entry) * initialCapacity, true);
 
                 for (int i = 0; i < capacity; i++) {
                     storage_ptr[i] = entry();
@@ -52,7 +52,7 @@ namespace structures {
                 uint32_t oldCapacity = capacity;
 
                 entry* old_storage_ptr = storage_ptr;
-                entry* new_storage_ptr = heap::malloc<entry>(sizeof(entry) * newCapacity, false);
+                entry* new_storage_ptr = (entry*)heap::malloc(sizeof(entry) * newCapacity, false);
 
                 // Replace current storage with new storage for easy rehashing.
                 storage_ptr = new_storage_ptr;
@@ -75,7 +75,7 @@ namespace structures {
                 }
 
                 // Finally free the old table from memory.
-                heap::free<entry>(old_storage_ptr);
+                heap::free(old_storage_ptr);
             }
 
             ValT& fetch(uint32_t key) {
