@@ -11,13 +11,14 @@ namespace structures {
     template <class T>
     class flexible_array {
         public:
-            flexible_array(unsigned int initialSize = 10) {
+            flexible_array(unsigned int initialSize = 10, bool dealloc_entries = false) {
                 if (initialSize > 2147483646) {
                     kernel::panic("A flexible array has been created with a size which exhausts a signed integer.");
                 }
-
-                storage_ptr = heap::malloc<entry>(sizeof(entry) * initialSize);
+    
+                storage_ptr = (entry*)heap::malloc(sizeof(entry) * initialSize);
                 capacity = initialSize;
+                this->dealloc_entries = dealloc_entries;
 
                 for (int i = 0; i < capacity; i++) {
                     storage_ptr[i] = entry();
@@ -25,6 +26,22 @@ namespace structures {
             }
 
             ~flexible_array() {
+                // If dealloc entries is enabled.
+                // Attempts to deallocate all entries which are expected to be pointers
+                // upon array being disposed.
+                if (dealloc_entries) {
+                    for (uint32_t i = 0; i < capacity; i++) {
+                        entry* e = &storage_ptr[i];
+                        if (e->empty) continue;
+
+                        // Deallocate.
+                        // The syntax is unusual since it bypasses
+                        // C++ compile-time safety checks which
+                        // are over-sensitive due to templating.
+                        heap::free(*((void**)(&e->value)));
+                    }
+                }
+
                 heap::free(storage_ptr);
             }
 
@@ -42,7 +59,7 @@ namespace structures {
                 }
 
                 // Create a new storage area.
-                entry* new_storage_ptr = heap::malloc<entry>(newCapacity * sizeof(entry), false);
+                entry* new_storage_ptr = (entry*)heap::malloc(newCapacity * sizeof(entry), false);
 
                 // Move data from old area to new area.
                 for (int i = 0; i < capacity; i++) {
@@ -185,7 +202,9 @@ namespace structures {
             // Override [] operator.
             T& operator[](unsigned int index) {
                 if (capacity < index + 1) kernel::panic("An operation has been attempted on a flexible array which exhausts the capacity ranges.");
-                if (is_empty_at(index)) kernel::panic("An operation has been attempted on an flexible array empty bucket.");
+                if (is_empty_at(index)) {
+                    kernel::panic("An operation has been attempted on a flexible array empty bucket.");
+                }
 
                 return storage_ptr[index].value;
             }
@@ -211,6 +230,8 @@ namespace structures {
             unsigned int capacity = 0;
 
             unsigned int next_index = 0;
+
+            bool dealloc_entries = false;
 
             bool fragmented = false;
     };
