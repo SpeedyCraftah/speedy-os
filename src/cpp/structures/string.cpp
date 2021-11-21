@@ -5,10 +5,11 @@
 #include "../misc/str.h"
 #include "../panic/panic.h"
 #include "../misc/algorithm.h"
+#include "../misc/conversions.h"
 
 structures::string::string(char character) {
     _length = 2;
-    storage_ptr = heap::malloc<char>(2);
+    storage_ptr = (char*)heap::malloc(2);
 
     storage_ptr[0] = character;
     storage_ptr[1] = '\0';
@@ -28,7 +29,7 @@ structures::string::string(char* str) {
 
     // Length + terminator.
     _length = i;
-    storage_ptr = heap::malloc<char>(i);
+    storage_ptr = (char*)heap::malloc(i);
 
     i = 0;
 
@@ -63,7 +64,7 @@ structures::string& structures::string::concat(char* src) {
         srcLength++;
     }
 
-    char* new_storage_ptr = heap::malloc<char>(srcLength + _length);
+    char* new_storage_ptr = (char*)heap::malloc(srcLength + _length);
 
     int previous = 0;
     int i = 0;
@@ -118,6 +119,77 @@ structures::string::operator char*() {
     return char_reference();
 }
 
+// Check if the string starts with paremeter string.
+bool structures::string::starts_with(char* str) {
+    bool pass = false;
+
+    uint32_t i = 0;
+
+    while (true) {
+        char src_char = str[i];
+        if (src_char == '\0') break;
+
+        if (storage_ptr[i] == src_char) pass = true;
+        else {
+            pass = false;
+            break;
+        }
+
+        i++;
+    }
+
+    return pass;
+}
+
+structures::flexible_array<char*> structures::string::split_by(char delim) {
+    auto array = flexible_array<char*>(10, true);
+
+    uint32_t i = 0;
+    uint32_t prev_next = 0;
+
+    while (true) {
+        char c = storage_ptr[i];
+        if (c == '\0') {
+            uint32_t length = i - prev_next;
+            char* ptr = new char[length + 1];
+
+            for (uint32_t j = 0; j < length; j++) {
+                ptr[j] = storage_ptr[prev_next + j];
+            }
+
+            // Add deliminater.
+            ptr[length] = '\0';
+
+            // Push to array.
+            array.push(ptr);
+
+            break;
+        }
+
+        if (c == delim) {
+            uint32_t length = i - prev_next;
+            char* ptr = new char[length + 1];
+
+            for (uint32_t j = 0; j < length; j++) {
+                ptr[j] = storage_ptr[prev_next + j];
+            }
+
+            // Add deliminater.
+            ptr[length] = '\0';
+
+            // Push to array.
+            array.push(ptr);
+
+            // Set previous next.
+            prev_next = i + 1;
+        }
+
+        i++;
+    }
+
+    return array;
+}
+
 // Check if the strings are equal via hash.
 bool structures::string::hash_equal_to(structures::string& str) {
     return str.get_weak_hash() == _hash;
@@ -144,7 +216,7 @@ structures::string structures::string::operator+(char* src) {
         srcLength++;
     }
 
-    char* new_storage_ptr = heap::malloc<char>(srcLength + _length);
+    char* new_storage_ptr = (char*)heap::malloc(srcLength + _length);
 
     int previous = 0;
     int i = 0;
@@ -188,7 +260,7 @@ char* structures::string::char_reference() {
 smart_ptr<char> structures::string::char_copy() {
     if (storage_ptr == nullptr) kernel::panic("Copy attempted on an uninitialised string.");
 
-    auto str = smart_ptr<char>(heap::malloc<char>(_length));
+    auto str = smart_ptr<char>((char*)heap::malloc(_length));
 
     int i = 0;
 

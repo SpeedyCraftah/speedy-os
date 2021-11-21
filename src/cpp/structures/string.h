@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../misc/smart_ptr.h"
+#include "../structures/flex_array.h"
 
 namespace structures {
     class string {
@@ -23,6 +24,9 @@ namespace structures {
             // Retrieve the hash.
             unsigned int get_weak_hash();
             
+            bool starts_with(char* str);
+            structures::flexible_array<char*> split_by(char delim);
+
             // Assertion of equalness.
             bool hash_equal_to(char* str);
             bool hash_equal_to(string& str);
