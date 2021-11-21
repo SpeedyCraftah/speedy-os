@@ -12,7 +12,9 @@ enum ProcessFlag : uint32_t {
     // Drivers will not be allocated a spot in heap & will not run.
     // Will only be allocated a virtual process in order for registering
     // & dispatching to take place.
-    SYSTEM_DRIVER = 2
+    SYSTEM_DRIVER = 2,
+
+    INTERFACE_PROVIDER = 4
 };
 
 struct Process {
