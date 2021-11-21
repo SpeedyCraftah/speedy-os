@@ -50,8 +50,10 @@ void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_
             data_meta[i].reserved = true;
 
             // If contents should be reset.
-            for (uint32_t i = 0; i < meta.size; i++) {
-                meta.location[i] = 0;
+            if (reset) {
+                for (uint32_t i = 0; i < meta.size; i++) {
+                    meta.location[i] = 0;
+                }
             }
 
             // Update statistics.
