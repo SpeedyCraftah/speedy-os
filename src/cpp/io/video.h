@@ -7,6 +7,7 @@
 
 class video {
     public:
+        static unsigned short* address;
         static unsigned short* current_address;
         
         static unsigned int VGA_WIDTH;
@@ -39,8 +40,6 @@ class video {
         );
 
     private:
-        static unsigned short* address;
-
         static unsigned short default_background;
 
         static uint16_t add_colour_to_char(
