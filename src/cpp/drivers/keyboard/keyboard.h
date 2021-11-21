@@ -28,6 +28,8 @@ namespace drivers {
         public:
 			static char keys_pressed_map[256];
 			static char keys_released_map[256];
+			static char modifiers_pressed_map[256];
+			static char modifiers_released_map[256];
 
             static void load();
 
@@ -37,6 +39,7 @@ namespace drivers {
             static __attribute__((fastcall)) char keycode_to_ascii(uint8_t keycode, bool pressed);
 			static __attribute__((fastcall)) void ascii_to_uppercase(structures::string& text);
 			static __attribute__((fastcall)) char ascii_to_uppercase(char character);
+			static __attribute__((fastcall)) bool modifier_supported(uint8_t key, bool pressed);
 
 			static void setup_char_table();
     };

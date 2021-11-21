@@ -7,6 +7,12 @@
 #include "../../scheduling/scheduler.h"
 #include "../../scheduling/events.h"
 
+// Keyboard driver events.
+// ID 1 - On key press.
+// ID 2 - On key release.
+// ID 4 - On modifier key press.
+// ID 8 - On modifier key release.
+
 namespace drivers {
     static uint32_t process_id;
 
@@ -26,14 +32,35 @@ namespace drivers {
     
     // Inlined for performance.
     void keyboard::handle_interrupt() {
-        uint8_t key = io_port::bit_8::in(0x60);
+        uint8_t key_raw = io_port::bit_8::in(0x60);
+        
+        // Key presses.
+        char char_press = keyboard::keycode_to_ascii(key_raw, true);
+        if (char_press != 0) {
+            scheduler::events::emit_event(process_id, 1, char_press);
+            return;
+        }
 
-        // To be implemented properly.
-        char c = keyboard::keycode_to_ascii(key, true);
-        if (c == '\0') return;
+        // Key releases.
+        char char_release = keyboard::keycode_to_ascii(key_raw, false);
+        if (char_release != 0) {
+            scheduler::events::emit_event(process_id, 2, char_release);
+            return;
+        }
 
-        // On key press.
-        scheduler::events::emit_event(process_id, 1, c);
+        // Modifier press.
+        bool modifier_pressed = keyboard::modifier_supported(key_raw, true);
+        if (modifier_pressed) {
+            scheduler::events::emit_event(process_id, 4, key_raw);
+            return;
+        }
+
+        // Modifier released.
+        bool modifier_released = keyboard::modifier_supported(key_raw, false);
+        if (modifier_released) {
+            scheduler::events::emit_event(process_id, 8, key_raw);
+            return;
+        }
     }
 
     void __attribute__((fastcall)) keyboard::ascii_to_uppercase(structures::string& string) {
@@ -44,21 +71,24 @@ namespace drivers {
         }
     }
 
+    inline bool __attribute__((fastcall)) keyboard::modifier_supported(uint8_t key, bool pressed) {
+        return pressed ? modifiers_pressed_map[key] != 0 : modifiers_released_map[key] != 0;
+    }
+
     char __attribute__((fastcall)) keyboard::ascii_to_uppercase(char character) {
         if (character >= 97 && character <= 122) {
             return character - 32;
         } else return character;
     }
 
-    char __attribute__((fastcall)) keyboard::keycode_to_ascii(uint8_t keycode, bool pressed) {
-        char code = pressed ? keys_pressed_map[keycode] : keys_released_map[keycode];
-        if (code == 0) return '\0';
-
-        return code;
+    inline char __attribute__((fastcall)) keyboard::keycode_to_ascii(uint8_t keycode, bool pressed) {
+        return pressed ? keys_pressed_map[keycode] : keys_released_map[keycode];
     }
 
     char keyboard::keys_pressed_map[256];
     char keyboard::keys_released_map[256];
+    char keyboard::modifiers_pressed_map[256];
+    char keyboard::modifiers_released_map[256];
 
     void keyboard::setup_char_table() {
         // Scan set 1 pressed normal characters.
@@ -126,7 +156,7 @@ namespace drivers {
         keys_released_map[0x8A] = '9';
         keys_released_map[0x92] = 'e';
         keys_released_map[0x96] = 'u';
-        keys_released_map[0x0E] = 'a';
+        keys_released_map[0x9E] = 'a';
         keys_released_map[0xA2] = 'g';
         keys_released_map[0xA6] = 'l';
         keys_released_map[0xAE] = 'c';
@@ -165,5 +195,27 @@ namespace drivers {
         keys_released_map[0xA7] = ';';
         keys_released_map[0xAB] = '\\';
         keys_released_map[0xB3] = ',';
+
+        // Modifier keys.
+        // Set up will be improved eventually.
+        // More keys will also be added soon.
+
+        // Modifier pressed.
+        modifiers_pressed_map[0x1C] = 1;
+        modifiers_pressed_map[0x01] = 1;
+        modifiers_pressed_map[0x0E] = 1;
+        modifiers_pressed_map[0x3A] = 1;
+        modifiers_pressed_map[0x2A] = 1;
+        modifiers_pressed_map[0x1D] = 1;
+
+        // Modifier released.
+        // Contains code of pressed keys for filtering of
+        // pressed down keys.
+        modifiers_released_map[0x9C] = 0x1C;
+        modifiers_released_map[0x81] = 0x01;
+        modifiers_released_map[0x8E] = 0x0E;
+        modifiers_released_map[0xBA] = 0x3A;
+        modifiers_released_map[0xAA] = 0x2A;
+        modifiers_released_map[0x9D] = 0x1D;
     }
 }
