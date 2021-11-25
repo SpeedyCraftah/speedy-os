@@ -31,12 +31,24 @@ static structures::map<Process*>* process_list;
 static structures::map<Process*>* process_list_string;
 static structures::flexible_array<uint32_t>* process_queue;
 
+static uint32_t process_id;
+
 namespace scheduler {
     void initialise() {
         // Initialise queue & process map.
         process_list = new structures::map<Process*>(15);
         process_list_string = new structures::map<Process*>(15);
         process_queue = new structures::flexible_array<uint32_t>(15);
+        
+        // Start event process.
+        process_id = start_process(
+            structures::string("Scheduler"),
+            0,
+            TaskStatus::RUNNING_WAITING_FOR_DATA,
+            ProcessFlag::SYSTEM_DRIVER, 
+            false, 
+            true
+        );
     }
 
     void __attribute__((fastcall)) switch_to_task(uint32_t process_id) {
@@ -78,6 +90,12 @@ namespace scheduler {
             // Deallocate stack.
             heap::free(process->event_receiver.stack_base);
         }
+        
+        // Emit event.
+        scheduler::events::emit_event(process_id, 2, process->id);
+        
+        // Deallocate process name.
+        delete process->name;
 
         // Remove process.
         process_list->remove(process->id);
@@ -85,9 +103,9 @@ namespace scheduler {
 
         // Free heap used by the process.
         heap::free_by_process_id(process_id);
-
-        // Deallocate process name.
-        delete process->name;
+        
+        // Deallocate process object.
+        delete process;
     }
 
     uint32_t start_process(structures::string name, void(*entry)(), TaskStatus status, uint32_t flags, bool event_receiver_support, bool event_emitter_support) {
@@ -162,6 +180,9 @@ namespace scheduler {
         process_list->set(new_process->id, new_process);
         process_list_string->set(new_process->name.char_reference(), new_process);
 
+        // Emit event.
+        scheduler::events::emit_event(process_id, 1, new_process->id);
+        
         return new_process->id;
     }
 
