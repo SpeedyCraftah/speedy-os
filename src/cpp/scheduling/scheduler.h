@@ -15,8 +15,6 @@ namespace scheduler {
         extern "C" uint32_t kernel_stack_base;
         extern "C" uint32_t kernel_stack_pointer;
         extern "C" bool event_running;
-        
-        static uint32_t process_id;
 
         void initialise();
 
