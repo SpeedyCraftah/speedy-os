@@ -31,7 +31,7 @@ static structures::map<Process*>* process_list;
 static structures::map<Process*>* process_list_string;
 static structures::flexible_array<uint32_t>* process_queue;
 
-static uint32_t process_id;
+static uint32_t scheduler_process_id;
 
 namespace scheduler {
     void initialise() {
@@ -41,7 +41,7 @@ namespace scheduler {
         process_queue = new structures::flexible_array<uint32_t>(15);
         
         // Start event process.
-        process_id = start_process(
+        scheduler_process_id = start_process(
             structures::string("Scheduler"),
             0,
             TaskStatus::RUNNING_WAITING_FOR_DATA,
@@ -90,20 +90,21 @@ namespace scheduler {
             // Deallocate stack.
             heap::free(process->event_receiver.stack_base);
         }
-        
-        // Emit event.
-        scheduler::events::emit_event(process_id, 2, process->id);
-        
-        // Deallocate process name.
-        delete process->name;
 
-        // Remove process.
-        process_list->remove(process->id);
+        // Emit event.
+        scheduler::events::emit_event(scheduler_process_id, 2, process->id);
+
         process_list_string->remove(process->name);
 
         // Free heap used by the process.
         heap::free_by_process_id(process_id);
-        
+
+        // Remove process.
+        process_list->remove(process->id);
+
+        // Deallocate process name.
+        delete process->name;
+
         // Deallocate process object.
         delete process;
     }
@@ -120,7 +121,7 @@ namespace scheduler {
         // Set process attributes.
         Process* new_process = new Process;
         new_process->id = next_process_id++;
-        new_process->name = structures::string(name.char_reference());
+        new_process->name = name.char_copy().norm();
         new_process->priority = TaskPriority::NORMAL;
         new_process->current_status = 
             (flags & ProcessFlag::SYSTEM_DRIVER) == 0 ? status : TaskStatus::RUNNING_WAITING_FOR_DATA;
@@ -178,10 +179,10 @@ namespace scheduler {
 
         // Add process to registry.
         process_list->set(new_process->id, new_process);
-        process_list_string->set(new_process->name.char_reference(), new_process);
+        process_list_string->set(new_process->name, new_process);
 
         // Emit event.
-        scheduler::events::emit_event(process_id, 1, new_process->id);
+        scheduler::events::emit_event(scheduler_process_id, 1, new_process->id);
         
         return new_process->id;
     }

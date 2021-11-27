@@ -1,8 +1,11 @@
 // Kernel now has all control.
 
+#include "kernel.h"
+
 #include "chips/fpu.h"
 #include "chips/pit.h"
 
+#include "misc/conversions.h"
 #include "structures/string.h"
 
 #include "tables/gdt.h"
@@ -17,7 +20,7 @@
 #include "drivers/keyboard/keyboard.h"
 #include "scheduling/scheduler.h"
 
-#include "programs/test.h"
+#include "software/system/speedyshell/main.h"
 
 void kernelControlHandOver() {
     // Clear screen for QEMU.
@@ -86,19 +89,26 @@ void kernelControlHandOver() {
 
     // END OF LOADING DRIVERS.
 
-    // Start a test process.
+    video::printf_log("Kernel", "Selecting SpeedyShell as interfacing method...");
+
+    isTerminalInterface = true;
+
+    video::printf_log("Kernel", "Preparing SpeedyShell...");
+
+    // Start shell.
     scheduler::start_process(
-        structures::string("test program"), 
-        TestProgramCPP::main, 
-        TaskStatus::RUNNING, 0, true
+        structures::string("SpeedyShell"), 
+        speedyshell::start,
+        TaskStatus::RUNNING,
+        ProcessFlag::SYSTEM_PROCESS | ProcessFlag::INTERFACE_PROVIDER,
+        true, true
     );
-    
-    video::printf_log("Kernel", "Enabling PIT timer...");
+
+    video::printf_log("Kernel", "Enabling scheduler (PIT)...");
+    video::printnl();
 
     // Unmask the PIT as scheduler is now ready.
     chips::pic::unmask_line(0);
-
-    video::printf_log("Kernel", "Waiting for next PIT tick...");
 
     // Wait for first tick of the PIT after which control will be handed to the scheduler.
     while (true) {

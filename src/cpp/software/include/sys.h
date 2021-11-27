@@ -14,6 +14,26 @@ namespace speedyos {
         RUNNING_BUSY = 3  // Process will only run on its own accord and will ignore incoming events.
     };
 
+    enum ModifierKeys {
+        ENTER_PRESSED = 0x1C,
+        ENTER_RELEASED = 0x9C,
+
+        ESCAPE_PRESSED = 0x01,
+        ESCAPE_RELEASED = 0x81,
+
+        BACKSPACE_PRESSED = 0x0E,
+        BACKSPACE_RELEASED = 0x8E,
+
+        CAPSLOCK_PRESSED = 0x3A,
+        CAPSLOCK_RELEASED = 0xBA,
+
+        LEFTSHIFT_PRESSED = 0x2A,
+        LEFTSHIFT_RELEASED = 0xAA,
+
+        LEFTCTRL_PRESSED = 0x1D,
+        LEFTCTRL_RELEASED = 0x9D
+    };
+
     // Queries the kernel for the process ID.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id();
 

@@ -18,7 +18,7 @@ enum ProcessFlag : uint32_t {
 };
 
 struct Process {
-    structures::string name;
+    char* name;
 
     uint32_t id;
     uint32_t flags;

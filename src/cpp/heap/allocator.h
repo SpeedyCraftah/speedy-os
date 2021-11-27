@@ -23,7 +23,7 @@ namespace heap {
 
     // Functions.
     void* malloc(uint32_t size, bool reset = true, bool skip_reuse = false, uint32_t process_id = 0);
-    bool free(void* ptr);
+    bool free(void* ptr, bool o = false);
 
     void free_by_process_id(uint32_t process_id);
 

@@ -63,7 +63,7 @@ extern "C" __attribute__((fastcall)) void HandleGeneralCPUException(uint8_t vect
         asm volatile("cli; hlt");
     }
 
-    video::printnl();
+    //video::printnl();
     video::printf("Exception Interrupt No. ");
     video::printf(conversions::s_int_to_char(vector));
     
