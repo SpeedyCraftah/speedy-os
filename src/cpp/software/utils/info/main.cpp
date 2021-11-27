@@ -13,9 +13,7 @@ void software::info::start() {
 
     if (args.get_size() == 1) {
         speedyos::speedyshell::printf("Use this tool to gather information about your system.");
-    }
-
-    else if (string("heap").hash_equal_to(args[1])) {
+    } else if (string("heap").hash_equal_to(args[1])) {
         string allocated_bytes = "Reserved heap bytes: ";
         string percent_reserved = "Percentage of reserved blocks: ";
         string percent_used = "Percentage of used heap: ";

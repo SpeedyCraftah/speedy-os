@@ -6,6 +6,7 @@
 #include "../../../misc/conversions.h"
 #include "../../../drivers/keyboard/keyboard.h"
 #include "../../../panic/panic.h"
+#include "../../../scheduling/scheduler.h"
 
 #include "commands.h"
 #include "events.h"
@@ -14,6 +15,7 @@ using namespace structures;
 
 uint32_t speedyshell::running_process_id = 0;
 uint32_t speedyshell::process_id = 0;
+bool speedyshell::input_mode = false;
 
 char speedyshell::terminal_buffer[25][80];
 char speedyshell::text_input[80];
@@ -70,7 +72,7 @@ namespace speedyshell {
         return false;
     }
 
-    void printf(char* text, VGA_COLOUR colour, VGA_COLOUR back_colour) {
+    void printf(char* text, bool new_line, VGA_COLOUR colour, VGA_COLOUR back_colour) {
         uint32_t i = 0;
 
         while (true) {
@@ -91,18 +93,46 @@ namespace speedyshell {
             i++;
         }
 
-        video::printnl();
+        if (new_line) video::printnl();
         shift_video_if_required();
     }
 
     void __attribute__((fastcall)) on_modifier_event(uint32_t id, uint32_t data) {
-        if (running_process_id != 0) return speedyos::end_event();
+        if (running_process_id != 0) {
+            if (!input_mode) speedyos::end_event();
+
+            if (data == speedyos::ModifierKeys::ENTER_PRESSED) {
+                // Submit input.
+
+                uint32_t remaining_spaces = video::VGA_WIDTH - ((video::current_address - video::address) % video::VGA_WIDTH);
+
+                // Remove cursor.
+                if (remaining_spaces > 0) video::printf_reverse("  ");
+
+                video::printnl();
+
+                Process* process = scheduler::get_process_list()->fetch(running_process_id);
+
+                // Unsuspend process.
+                process->current_status = process->main_status;
+                process->suspended_until = 0;
+
+                // Disable input mode.
+                input_mode = false;
+
+                // Re-schedule process.
+                scheduler::get_process_queue()->push(process->id);
+
+                speedyos::end_event();
+            }
+        }
 
         if (data == speedyos::ModifierKeys::CAPSLOCK_PRESSED) caps_lock = !caps_lock;
         else if (data == speedyos::ModifierKeys::BACKSPACE_PRESSED) {
             uint32_t remaining_spaces = video::VGA_WIDTH - ((video::current_address - video::address) % video::VGA_WIDTH);
 
-            if (remaining_spaces >= 61) speedyos::end_event();
+            if (!input_mode && remaining_spaces >= 61) speedyos::end_event();
+            else if (input_mode && remaining_spaces >= video::VGA_WIDTH - 1) speedyos::end_event();
             else if (remaining_spaces == 0) {
                 video::printf_reverse("  ");
             }
@@ -129,22 +159,15 @@ namespace speedyshell {
 
             clear_input();
             print_prefix();
-        } else if (data == speedyos::ModifierKeys::ESCAPE_PRESSED) {
-            text_input[0] = 'i';
-            text_input[1] = 'n';
-            text_input[2] = 'f';
-            text_input[3] = 'o';
-
-            text_input_position = 4;
-
-            return on_modifier_event(1, speedyos::ModifierKeys::ENTER_PRESSED);
         }
 
         return speedyos::end_event();
     }
 
     void __attribute__((fastcall)) on_key_press(uint32_t id, uint32_t data) {
-        if (running_process_id != 0) return speedyos::end_event();
+        if (running_process_id != 0) {
+            if (!input_mode) return speedyos::end_event();
+        }
 
         uint32_t remaining_spaces = video::VGA_WIDTH - ((video::current_address - video::address) % video::VGA_WIDTH);
 
@@ -158,7 +181,7 @@ namespace speedyshell {
         if ((caps_lock && !shift) || (!caps_lock && shift)) c = drivers::keyboard::ascii_to_uppercase(data);
         else c = data;
 
-        video::printf(c, VGA_COLOUR::WHITE);
+        video::printf(c, input_mode ? VGA_COLOUR::LIGHT_GREY : VGA_COLOUR::WHITE);
 
         text_input[text_input_position] = c;
         text_input_position++;

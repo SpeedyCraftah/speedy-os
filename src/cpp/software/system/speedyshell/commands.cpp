@@ -7,6 +7,7 @@
 #include "../../../scheduling/scheduler.h"
 
 #include "../../utils/info/main.h"
+#include "../../random/main.h"
 
 using namespace structures;
 
@@ -20,8 +21,14 @@ namespace speedyshell {
         if (string("info").hash_equal_to(args[0])) {
             running_process_id =
                 scheduler::start_process("Info", software::info::start, TaskStatus::RUNNING, 0, false, false);
+        }
+        
+        else if (string("random").hash_equal_to(args[0])) {
+            running_process_id =
+                scheduler::start_process("Random", software::random::start, TaskStatus::RUNNING, 0, false, false);
+        }
 
-        } else printf("Command not found.");
+        else printf("Command not found.");
     }
 
     void handle_command() {
