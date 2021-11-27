@@ -10,17 +10,11 @@
 
 using namespace structures;
 
-void test() {
-    //speedyshell::printf("hello world");
-    return speedyos::end_process();
-}
-
 namespace speedyshell {
     void handle_command() {
         if (!get_text_input_position()) return;
 
         string input = get_text_input();
-        //auto args = input.split_by(' ');
 
         if (input.hash_equal_to("heap")) {
             string allocated_bytes = "Reserved heap bytes: ";
@@ -138,11 +132,7 @@ namespace speedyshell {
             asm volatile("cli");
             asm volatile("hlt");
         } else if (input.hash_equal_to("info")) {
-            running_process_id = scheduler::start_process("Info", test, TaskStatus::RUNNING, 0, true, true);
-            clear_input();
-
-            //for (int i = 0; i )
-
+            running_process_id = scheduler::start_process("Info", software::info::start, TaskStatus::RUNNING, 0, true, true);
             return speedyos::end_event();
         } else printf("Unknown command entered.");
     }

@@ -84,7 +84,7 @@ void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_
     return data_meta[block_id].location;
 }
 
-bool heap::free(void* ptr, bool o) {
+bool heap::free(void* ptr) {
     for (uint32_t i = 0; i <= total_blocks; i++) {
         record meta = data_meta[i];
 
@@ -93,8 +93,6 @@ bool heap::free(void* ptr, bool o) {
         
         // If address does not match block.
         if (meta.location != ptr) continue;
-
-        if (o) return true;
 
         // Free block.
         data_meta[i].reserved = false;

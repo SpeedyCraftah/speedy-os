@@ -49,8 +49,6 @@ namespace speedyshell {
 
     bool shift_video_if_required() {
         if ((video::current_address - video::address) / video::VGA_WIDTH + 1 >= video::VGA_HEIGHT) {
-            video::clearscr();
-            return true;
             // Clear first line.
             for (uint32_t i = 0; i < 80; i++) {
                 *(video::address + i) = 0;

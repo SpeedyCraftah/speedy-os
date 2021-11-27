@@ -4,7 +4,7 @@
 #include "../../include/sys.h"
 
 void software::info::start() {
-   //speedyshell::printf("hello world");
+    speedyshell::printf("hello world");
 
     return speedyos::end_process();
 }
