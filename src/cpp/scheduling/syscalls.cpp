@@ -3,6 +3,8 @@
 #include "scheduler.h"
 #include "../kernel.h"
 #include "../software/system/speedyshell/main.h"
+#include "structures/state.h"
+#include "../misc/random.h"
 
 extern "C" Registers TEMP_REGISTERS;
 
@@ -19,11 +21,13 @@ extern "C" Registers TEMP_REGISTERS;
 // ID 8 = Emit event for registered processes.
 // ID 9 = Change program status.
 // ID 10 = Find process ID of string.
+// ID 14 = Get hardware-supported random 32-bit number.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
 //       - 0 = Get whole command string.
 // ID 12 = Print text to terminal with colour.
+// ID 13 = Get input from user.
 
 // Return 0 = Resume program execution.
 // Return 1 = Halt and wait for next interrupt.
@@ -48,7 +52,7 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
             data2 != SuspensionType::FULL &&
             data2 != SuspensionType::EVENTS_ONLY
         ) return 0;
-
+        
         Process* process = scheduler::get_process_list()->fetch(scheduler::current_process);
 
         // Save process registers.
@@ -179,6 +183,41 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
         uint32_t data2 = TEMP_REGISTERS.eax;
 
         speedyshell::printf(reinterpret_cast<char*>(data), (VGA_COLOUR)data2);
+    } else if (id == 13) {
+        // If interface method is not SpeedyShell.
+        // Does not support events at the moment.
+        if (!isTerminalInterface || scheduler::event_running) {
+            TEMP_REGISTERS.eax = 0;
+            return 0;
+        }
+
+        Process* process = scheduler::get_process_list()->fetch(scheduler::current_process);
+
+        // Activate input mode.
+        speedyshell::input_mode = true;
+
+        // Suspend program.
+        process->current_status = TaskStatus::SUSPENDED;
+        process->suspended_type = SuspensionType::FULL;
+        process->suspended_until = 0;
+
+        // Save registers.
+        process->registers = TEMP_REGISTERS;
+
+        scheduler::current_process = 0;
+
+        // Reset inputs.
+        speedyshell::clear_input();
+
+        // Print cursor.
+        video::printf(" ", VGA_COLOUR::LIGHT_GREY, VGA_COLOUR::LIGHT_GREY);
+
+        // Saving resources by not re-scheduling
+        // as it will be scheduled manually.
+
+        return 1;
+    } else if (id == 14) {
+        TEMP_REGISTERS.eax = random::next();
     }
 
     return 0;

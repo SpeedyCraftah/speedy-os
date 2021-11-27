@@ -99,6 +99,12 @@ namespace speedyos {
         asm volatile("ret");
     }
 
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random() {
+        asm volatile("mov $14, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
     namespace speedyshell {
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input() {
             asm volatile("mov $11, %ecx");
@@ -111,6 +117,12 @@ namespace speedyos {
             asm volatile("mov %edx, %eax");
             asm volatile("mov %ecx, %edx");
             asm volatile("mov $12, %ecx");
+            asm volatile("int $128");
+            asm volatile("ret");
+        }
+
+        __attribute__((naked)) __attribute__((fastcall)) void request_input() {
+            asm volatile("mov $13, %ecx");
             asm volatile("int $128");
             asm volatile("ret");
         }

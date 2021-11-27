@@ -86,11 +86,17 @@ namespace speedyos {
     // Requests the kernel to return the process ID of a program. 0 if does not exist.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id_by_string(char* process_name);
 
+    // Returns a hardware & time entropied random 32-bit number.
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random();
+
     namespace speedyshell {
-        // Requests the whole command input from SpeedyShell.
+        // Requests input. If at start of program, command will be returned. Otherwise run-time input will be returned if requested.
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input();
 
         // Sends a message in the SpeedyShell terminal.
         __attribute__((naked)) __attribute__((fastcall)) void printf(char* text, VGAColour colour = VGAColour::WHITE);
+    
+        // Notifies the kernel & SpeedyShell to suspend the process until an input is submitted.
+        __attribute__((naked)) __attribute__((fastcall)) void request_input();
     }
 }
