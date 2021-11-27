@@ -1,6 +1,8 @@
 #include "syscalls.h"
 #include "events.h"
 #include "scheduler.h"
+#include "../kernel.h"
+#include "../software/system/speedyshell/main.h"
 
 extern "C" Registers TEMP_REGISTERS;
 
@@ -17,6 +19,11 @@ extern "C" Registers TEMP_REGISTERS;
 // ID 8 = Emit event for registered processes.
 // ID 9 = Change program status.
 // ID 10 = Find process ID of string.
+
+// SpeedyShell Only
+// ID 11 = Query SpeedyShell for data.
+//       - 0 = Get whole command string.
+// ID 12 = Print text to terminal with colour.
 
 // Return 0 = Resume program execution.
 // Return 1 = Halt and wait for next interrupt.
@@ -152,6 +159,26 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         Process* process = scheduler::get_process_list_string()->fetch((char*)data);
         TEMP_REGISTERS.eax = process->id;
+    } else if (id == 11) {
+        // If interface method is not SpeedyShell.
+        if (!isTerminalInterface) {
+            TEMP_REGISTERS.eax = 0;
+            return 0;
+        }
+
+        // To-do: copy text instead of direct pointer.
+        char* input = speedyshell::get_text_input();
+        TEMP_REGISTERS.eax = reinterpret_cast<uint32_t>(input);
+    } else if (id == 12) {
+        // If interface method is not SpeedyShell.
+        if (!isTerminalInterface) {
+            TEMP_REGISTERS.eax = 0;
+            return 0;
+        }
+
+        uint32_t data2 = TEMP_REGISTERS.eax;
+
+        speedyshell::printf(reinterpret_cast<char*>(data), (VGA_COLOUR)data2);
     }
 
     return 0;

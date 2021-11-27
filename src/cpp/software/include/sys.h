@@ -34,6 +34,25 @@ namespace speedyos {
         LEFTCTRL_RELEASED = 0x9D
     };
 
+    enum VGAColour {
+        BLACK = 0,
+        BLUE = 1,
+        GREEN = 2,
+        CYAN = 3,
+        RED = 4,
+        MAGENTA = 5,
+        BROWN = 6,
+        LIGHT_GREY = 7,
+        DARK_GREY = 8,
+        LIGHT_BLUE = 9,
+        LIGHT_GREEN = 10,
+        LIGHT_CYAN = 11,
+        LIGHT_RED = 12,
+        LIGHT_MAGENTA = 13,
+        LIGHT_BROWN = 14,
+        WHITE = 15,
+    };
+
     // Queries the kernel for the process ID.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id();
 
@@ -66,4 +85,12 @@ namespace speedyos {
 
     // Requests the kernel to return the process ID of a program. 0 if does not exist.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id_by_string(char* process_name);
+
+    namespace speedyshell {
+        // Requests the whole command input from SpeedyShell.
+        __attribute__((naked)) __attribute__((fastcall)) char* fetch_input();
+
+        // Sends a message in the SpeedyShell terminal.
+        __attribute__((naked)) __attribute__((fastcall)) void printf(char* text, VGAColour colour = VGAColour::WHITE);
+    }
 }
