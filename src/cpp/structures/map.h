@@ -107,10 +107,6 @@ namespace structures {
                 while (1) {
                     shift_index++;
 
-                    // Boundary checks.
-                    if (shift_index > capacity - 1) shift_index = 0;
-                    else if (shift_index < 0) shift_index = capacity - 1;
-
                     // If empty, break.
                     if (storage_ptr[shift_index].probes == 0) break;
                     
