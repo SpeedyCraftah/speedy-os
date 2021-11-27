@@ -6,6 +6,7 @@
 #include "../../chips/pic.h"
 #include "../../scheduling/scheduler.h"
 #include "../../scheduling/events.h"
+#include "../../misc/random.h"
 
 // Keyboard driver events.
 // ID 1 - On key press.
@@ -33,6 +34,9 @@ namespace drivers {
     // Inlined for performance.
     void keyboard::handle_interrupt() {
         uint8_t key_raw = io_port::bit_8::in(0x60);
+
+        // Add entropy for random generator.
+        random::add_entropy(key_raw);
         
         // Key presses.
         char char_press = keyboard::keycode_to_ascii(key_raw, true);
