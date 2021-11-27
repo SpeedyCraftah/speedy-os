@@ -22,6 +22,8 @@
 
 #include "software/system/speedyshell/main.h"
 
+bool isTerminalInterface = false;
+
 void kernelControlHandOver() {
     // Clear screen for QEMU.
     video::clearscr();

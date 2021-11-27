@@ -2,5 +2,5 @@
 
 #include "stdint.h"
 
-static bool isTerminalInterface;
+extern bool isTerminalInterface;
 void kernelControlHandOver();
