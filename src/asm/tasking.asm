@@ -1,5 +1,5 @@
 ; Not sure how to include files in different directories without full path at the moment.
-%include "/home/speedy/Code/speedyosv2/src/asm/taskingutil.asm"
+%include "/home/speedy/Code/speedyosv22/src/asm/taskingutil.asm"
 
 extern TEMP_REGISTERS
 extern on_scheduler_timer_interrupt
