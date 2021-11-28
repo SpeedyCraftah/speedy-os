@@ -40,7 +40,7 @@ namespace scheduler {
         process_list = new structures::map<Process*>(15);
         process_list_string = new structures::map<Process*>(15);
         process_queue = new structures::flexible_array<uint32_t>(15);
-        
+
         // Start event process.
         scheduler_process_id = start_process(
             structures::string("Scheduler"),
@@ -183,7 +183,9 @@ namespace scheduler {
         process_list_string->set(new_process->name, new_process);
 
         // Emit event.
-        scheduler::events::emit_event(scheduler_process_id, 1, new_process->id);
+        // Only emit if it is not the first process.
+        if (process_list->get_occupied_buckets() != 1)
+            scheduler::events::emit_event(scheduler_process_id, 1, new_process->id);
         
         return new_process->id;
     }
