@@ -182,7 +182,7 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         uint32_t data2 = TEMP_REGISTERS.eax;
 
-        speedyshell::printf(reinterpret_cast<char*>(data), (VGA_COLOUR)data2);
+        speedyshell::printf(reinterpret_cast<char*>(data), true, (VGA_COLOUR)data2);
     } else if (id == 13) {
         // If interface method is not SpeedyShell.
         // Does not support events at the moment.
