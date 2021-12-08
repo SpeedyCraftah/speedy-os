@@ -171,7 +171,7 @@ namespace speedyshell {
 
         uint32_t remaining_spaces = video::VGA_WIDTH - ((video::current_address - video::address) % video::VGA_WIDTH);
 
-        if (remaining_spaces == 0) speedyos::end_event();
+        if (remaining_spaces <= 0) speedyos::end_event();
 
         // Overwrite cursor.
         video::current_address--;

@@ -195,13 +195,6 @@ namespace scheduler {
         // Add time to elapsed time.
         elapsed_ms += 2;
 
-        // Add entropy to random generator.
-        if (elapsed_ms % 30) {
-            random::add_entropy(
-                ((current_process == 0 ? 1923 : current_process) * elapsed_ms)
-            );
-        }
-
         // If process finished running.
         if (current_process != 0) {
             Process* process = process_list->fetch(current_process);
