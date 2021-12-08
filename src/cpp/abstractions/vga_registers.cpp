@@ -46,11 +46,11 @@ namespace vga_registers {
        // Send index.
        io_port::bit_8::out(port, index);
        
-       // Send data.
-       io_port::bit_8::out(port + 1, value);
+       // Read data.
+       return io_port::bit_8::in(port + 1);
      } else if (port == 0x3C6) {
-       // Send data.
-       io_port::bit_8::out(0x3C6, value);
+       // Read data.
+       return io_port::bit_8::in(0x3C6);
      }
    }
 }
