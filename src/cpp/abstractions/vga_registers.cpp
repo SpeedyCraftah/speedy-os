@@ -1,5 +1,7 @@
 #include "vga_registers.h"
 
+#include "io_port.h"
+
 namespace vga_registers {
    void set_value(uint16_t port, uint8_t index, uint8_t value) {
      if (port == 0x3C0) {
@@ -52,5 +54,7 @@ namespace vga_registers {
        // Read data.
        return io_port::bit_8::in(0x3C6);
      }
+
+     return 0;
    }
 }
