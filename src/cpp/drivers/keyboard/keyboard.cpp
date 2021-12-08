@@ -34,9 +34,6 @@ namespace drivers {
     // Inlined for performance.
     void keyboard::handle_interrupt() {
         uint8_t key_raw = io_port::bit_8::in(0x60);
-
-        // Add entropy for random generator.
-        random::add_entropy((key_raw * scheduler::elapsed_ms) % 100000000);
         
         // Key presses.
         char char_press = keyboard::keycode_to_ascii(key_raw, true);
