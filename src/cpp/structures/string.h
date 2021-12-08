@@ -40,6 +40,9 @@ namespace structures {
             // Overload + operator.
             string operator+(char* src);
 
+            // Overload == operator.
+            bool operator==(char* src);
+
             // Overload cast operator.
             operator char*();
         

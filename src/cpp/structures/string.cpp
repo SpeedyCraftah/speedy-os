@@ -201,6 +201,11 @@ bool structures::string::hash_equal_to(char* str) {
     return char_hash == _hash;
 }
 
+// Overload == operator.
+bool structures::string::operator==(char* src) {
+    return hash_equal_to(src);
+}
+
 // Overload + operator (strings).
 structures::string structures::string::operator+(string& src) {
     return operator+(src.char_reference());
