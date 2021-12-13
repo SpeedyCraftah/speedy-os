@@ -12,6 +12,9 @@ class video {
         
         static unsigned int VGA_WIDTH;
         static unsigned int VGA_HEIGHT;
+    
+        static void savescr();
+        static void restorescr();
 
         static void clearscr(const VGA_COLOUR bg = VGA_COLOUR::BLACK);
         static void printnl();
