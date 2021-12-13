@@ -18,4 +18,13 @@ namespace math {
     
     return sqrt(as + bs);
   }
+  
+  float sin(float x) {
+    asm volatile("flds %0" : : "m"(x));
+    asm volatile("fsin");
+    asm volatile("sub $4, %esp");
+    asm volatile("fstps %esp");
+    asm volatile("pop %eax");
+    asm volatile("ret $4");
+  }
 }
