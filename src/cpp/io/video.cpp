@@ -15,6 +15,22 @@ inline uint16_t video::add_colour_to_char(const char c, const VGA_COLOUR text, c
     return (uint16_t)c | (text | bg << 4) << 8;
 }
 
+void video::savescr() {
+    saved_current_address = current_address;
+    
+    for (uint32_t i = 0; i < 80 * 25; i++) {
+        saved_screen_state[i] = address[i];
+    }
+}
+
+void video::restorescr() {
+    current_address = saved_current_address;
+    
+    for (uint32_t i = 0; i < 80 * 25; i++) {
+        address[i] = saved_screen_state[i];
+    }
+}
+
 void video::clearscr(const VGA_COLOUR bg) {
     for (int i = 0; i < VGA_HEIGHT * VGA_WIDTH; i++) {
         address[i] = add_colour_to_char(' ', bg, bg);
