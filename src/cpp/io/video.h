@@ -43,6 +43,9 @@ class video {
         );
 
     private:
+        static unsigned short saved_screen_state[80 * 25];
+        static unsigned short* saved_current_address;
+    
         static unsigned short default_background;
 
         static uint16_t add_colour_to_char(
