@@ -36,4 +36,12 @@ namespace math {
     asm volatile("pop %eax");
     asm volatile("ret $4");
   }
+  
+  float PI() {
+    asm volatile("fldpi");
+    asm volatile("sub $4, %esp");
+    asm volatile("fstps %esp");
+    asm volatile("pop %eax");
+    asm volatile("ret");
+  }
 }
