@@ -11,4 +11,11 @@ namespace math {
     asm volatile("pop %eax");
     asm volatile("ret $4");
   }
+  
+  float hypot(float a, float b) {
+    float as = a*a;
+    float bs = b*b;
+    
+    return sqrt(as + bs);
+  }
 }
