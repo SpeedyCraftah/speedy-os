@@ -15,11 +15,23 @@ namespace graphics {
   }
   
   void draw_rectangle(uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill) {
-    // Draw top outline.
+    // Draw horizontal lines.
     for (uint32_t i = 0; i < width_length; i++) {
-      draw_pixel
+      draw_pixel(x + i, y, outline_colour);
+      draw_pixel(x + i, y + height_length, outline_colour);
     }
     
+    // Draw vertical lines.
+    for (uint32_t i = 0; i < height_length; i++) {
+      draw_pixel(x, y + i, outline_colour);
+      draw_pixel(x + width_length, y + i, outline_colour);
+    }
     
+    // Fill rectangle.
+    if (fill) {
+      for (uint32_t i = 0; i < height_length * width_length; i++) {
+        draw_pixel((i % width_length) + width_length, (uint32_t)(i / height_length), fill_colour); 
+      }
+    }
   }
 }
