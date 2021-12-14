@@ -8,7 +8,7 @@
 namespace graphics {
   extern VGA_COLOUR fill_colour = 1;
   extern VGA_COLOUR outline_colour = 1;
-  extern uint32_t outline_width = 2;
+  extern uint32_t outline_width = 1;
   
   // Plots a single pixel at the x and y coordinates.
   void draw_pixel(uint32_t x, uint32_t y, VGA_COLOUR colour);
