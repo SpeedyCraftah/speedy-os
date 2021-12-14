@@ -16,9 +16,13 @@ namespace graphics {
   
   void draw_line(uint32_t x, uint32_t y, uint32_t length, bool vertical) {
     if (vertical) {
-      for (uint32_t i = 0; i < length; i++) draw_pixel(x + i, y, outline_colour);
+      for (uint32_t j = 0; j < outline_width; j++) {
+        for (uint32_t i = 0; i < length; i++) draw_pixel(x + i, y + j, outline_colour);
+      }
     } else {
-      for (uint32_t i = 0; i < length; i++) draw_pixel(x, y + i, outline_colour);
+      for (uint32_t j = 0; j < outline_width; j++) {
+        for (uint32_t i = 0; i < length; i++) draw_pixel(x + j, y + i, outline_colour);
+      }
     }
   }
   
