@@ -14,6 +14,14 @@ namespace graphics {
     *location = VGA_COLOR;
   }
   
+  void draw_line(uint32_t x, uint32_t y, uint32_t length, bool vertical) {
+    if (vertical) {
+      for (uint32_t i = 0; i < length; i++) draw_pixel(x + i, y, outline_colour);
+    } else {
+      for (uint32_t i = 0; i < length; i++) draw_pixel(x, y + i, outline_colour);
+    }
+  }
+  
   void draw_rectangle(uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill) {
     // Draw horizontal lines.
     for (uint32_t i = 0; i < width_length; i++) {
