@@ -1,5 +1,5 @@
 # -ffunction-sections -fdata-sections -Wl,–gc-sections 
-GPPPARAMS = -g -O2 -ffreestanding -Wno-write-strings -Wno-register -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -fno-stack-protector
+GPPPARAMS = -msse -msse2 -msse3 -mfpmath=sse -g -O2 -ffreestanding -Wno-write-strings -Wno-register -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -fno-stack-protector
 ASPARAMS = --32
 LDPARAMS = -g -melf_i386
 
@@ -13,7 +13,6 @@ replacedAsm = $(subst .asm,.o,$(replacedCpp))
 objects = $(subst .s,.o,$(replacedAsm))
 
 %.o: %.cpp
-	export PATH="$$HOME/opt/cross/bin:$$PATH"
 	i686-elf-g++ $(GPPPARAMS) -o $@ -c $<
 
 %.o: %.asm # For nasm compiler
