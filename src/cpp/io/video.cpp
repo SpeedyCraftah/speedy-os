@@ -1,54 +1,40 @@
 #include "video.h"
 
+#include "fonts.h"
+#include "fonts/internal.h"
+#include "graphics.h"
+
 // Video dimensions and constants.
-unsigned int video::VGA_HEIGHT = 25;
-unsigned int video::VGA_WIDTH = 80;
+unsigned int video::VGA_HEIGHT = 600;
+unsigned int video::VGA_WIDTH = 800;
+
+uint32_t video::x_offset = 0;
+uint32_t video::y_offset = 0;
+
+uint32_t video::saved_x_offset = 0;
+uint32_t video::saved_y_offset = 0;
+
+structures::flexible_array<video::character_record> video::character_records
+    = structures::flexible_array<video::character_record>(80 * 100);
 
 // Video memory address.
-unsigned short* video::address = (unsigned short*)0xb8000;
-unsigned short* video::current_address = (unsigned short*)0xb8000;
+uint32_t* video::address = (uint32_t*)0xA0000;
+uint32_t* video::current_address = (uint32_t*)0xA0000;
+
+// Video saving.
+uint32_t video::saved_screen_state[800 * 600];
+uint32_t* video::saved_current_address = video::address;
 
 // Current background.
-unsigned short video::default_background = VGA_COLOUR::BLACK;
-
-inline uint16_t video::add_colour_to_char(const char c, const VGA_COLOUR text, const VGA_COLOUR bg) {
-    return (uint16_t)c | (text | bg << 4) << 8;
-}
-
-void video::savescr() {
-    saved_current_address = current_address;
-    
-    for (uint32_t i = 0; i < 80 * 25; i++) {
-        saved_screen_state[i] = address[i];
-    }
-}
-
-void video::restorescr() {
-    current_address = saved_current_address;
-    
-    for (uint32_t i = 0; i < 80 * 25; i++) {
-        address[i] = saved_screen_state[i];
-    }
-}
-
-void video::clearscr(const VGA_COLOUR bg) {
-    for (int i = 0; i < VGA_HEIGHT * VGA_WIDTH; i++) {
-        address[i] = add_colour_to_char(' ', bg, bg);
-    }
-    
-    default_background = bg;
-    current_address = address;
-}
+uint32_t video::default_background = 0x000000;
 
 void video::printnl() {
-    int used_addresses = current_address - address;
-    int addresses_to_skip = VGA_WIDTH - (used_addresses % VGA_WIDTH);
-
-    current_address = current_address + (addresses_to_skip == 0 ? VGA_WIDTH : addresses_to_skip);
+    y_offset += 15;
+    x_offset = 0;
 }
 
 // Prints following char stream to display with optional colours.
-void video::printf(char* input, const VGA_COLOUR text_colour, const VGA_COLOUR bg_colour) {
+void video::printf(char* input, const uint32_t text_colour, const uint32_t bg_colour) {
     int i = 0;
 
     while (1) {
@@ -57,44 +43,155 @@ void video::printf(char* input, const VGA_COLOUR text_colour, const VGA_COLOUR b
         } else if (input[i] == '\n') {
             printnl();
         } else {
-            current_address[0] = add_colour_to_char(input[i], text_colour, bg_colour);
-            current_address++;
+            // Load character.
+            uint16_t* data = font_interpreter::load_char(
+                internal_fonts::bios_port_improved, input[i]
+            );
+
+            uint16_t width = data[0];
+            uint16_t height = data[1];
+
+            // Save character.
+            character_record record;
+            record.x = x_offset;
+            record.y = y_offset;
+            record.width = width;
+            record.height = height;
+
+            character_records.push(record);
+
+            data = data + 2;
+
+            if (width + x_offset > VGA_WIDTH) {
+                y_offset += height + 1;
+                x_offset = 0;
+            }
+            
+            for (uint32_t y = 0; y < height; y++) {
+                uint32_t offset_y = y * width;
+
+                for (uint32_t x = 0; x < width; x++) {
+                    if (data[offset_y + x] == 1) {
+                        // Draw pixel.
+                        graphics::draw_pixel(x + x_offset, y + y_offset, text_colour);
+                    } else {
+                        // Draw background.
+                        if (default_background != bg_colour)
+                            graphics::draw_pixel(x + x_offset, y + y_offset, bg_colour);
+                    }
+                }
+            }
+
+            x_offset += width + 2;
         }
 
         i++;
     }
 }
 
-// Print char.
-void video::printf(char input, const VGA_COLOUR text_colour, const VGA_COLOUR bg_colour) {
-    current_address[0] = add_colour_to_char(input, text_colour, bg_colour);
-    current_address++;
-}
+// Prints a single character.
+void video::printf(char input, const uint32_t text_colour, const uint32_t bg_colour) {
+    // Load character.
+    uint16_t* data = font_interpreter::load_char(
+        internal_fonts::bios_port_improved, input
+    );
 
-// Prints to the screen but in reverse.
-void video::printf_reverse(char* input, const VGA_COLOUR text_colour, const VGA_COLOUR bg_colour) {
-    int i = 0;
+    uint16_t width = data[0];
+    uint16_t height = data[1];
 
-    while (1) {
-        if (input[i] == '\0') {
-            break;
-        } else if (input[i] == '\n') {
-            printnl();
-        } else {
-            current_address[0] = add_colour_to_char(input[i], text_colour, bg_colour);
-            current_address--;
+    // Save character.
+    character_record record;
+    record.x = x_offset;
+    record.y = y_offset;
+    record.width = width;
+    record.height = height;
+
+    character_records.push(record);
+
+    data = data + 2;
+
+    if (width + x_offset > VGA_WIDTH) {
+        y_offset += height + 1;
+        x_offset = 0;
+    }
+    
+    for (uint32_t y = 0; y < height; y++) {
+        uint32_t offset_y = y * width;
+
+        for (uint32_t x = 0; x < width; x++) {
+            if (data[offset_y + x] == 1) {
+                // Draw pixel.
+                graphics::draw_pixel(x + x_offset, y + y_offset, text_colour);
+            } else {
+                // Draw background.
+                if (default_background != bg_colour)
+                    graphics::draw_pixel(x + x_offset, y + y_offset, bg_colour);
+            }
         }
-
-        i++;
     }
 
-    current_address++;
+    x_offset += width + 2;
 }
 
-void video::printf_log(char* name, char* input, const VGA_COLOUR name_colour, const VGA_COLOUR input_colour) {
-    video::printf("[", VGA_COLOUR::WHITE);
+void video::printf_log(char* name, char* input, const uint32_t name_colour, const uint32_t input_colour) {
+    video::printf("[", 0xFFFFFF);
     video::printf(name, name_colour);
-    video::printf("] ", VGA_COLOUR::WHITE);
+    video::printf("] ", 0xFFFFFF);
     video::printf(input, input_colour);
     video::printnl();
+}
+
+void video::clearscr(const uint32_t bg) {
+    video::default_background = bg;
+
+    graphics::fill_colour = bg;
+    graphics::outline_colour = bg;
+
+    graphics::draw_rectangle(0, 0, VGA_WIDTH, VGA_HEIGHT, true);
+
+    video::x_offset = 0;
+    video::y_offset = 0;
+
+    video::character_records.reset();
+}
+
+void video::savescr() {
+    for (uint32_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
+        video::saved_screen_state[i] = graphics::double_buffer[i];
+    }
+
+    video::saved_x_offset = video::x_offset;
+    video::saved_y_offset = video::y_offset;
+}
+
+void video::restorescr() {
+    video::x_offset = video::saved_x_offset;
+    video::y_offset = video::saved_y_offset;
+
+    for (uint32_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
+        video::address[i] = video::saved_screen_state[i];
+        graphics::double_buffer[i] = video::saved_screen_state[i];
+    }
+}
+
+void video::printf_reverse(uint32_t distance) {
+    if (character_records.get_size() < distance) 
+        distance = character_records.get_size();
+
+    for (uint32_t i = 0; i < distance; i++) {
+        // Get last character.
+        character_record record = character_records.pop();
+        x_offset = record.x;
+        y_offset = record.y;
+
+        graphics::fill_colour = video::default_background;
+        graphics::outline_colour = video::default_background;
+
+        // Draw over the character.
+        graphics::draw_rectangle(
+            x_offset, y_offset,
+            record.width + 1, record.height + 1,
+            true
+        );
+    }
 }

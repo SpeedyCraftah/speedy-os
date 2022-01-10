@@ -2,55 +2,66 @@
 
 #include <stdint.h>
 
-#include "vga_colours.h"
+#include "graphics.h"
 #include "../structures/string.h"
 
 class video {
     public:
-        static unsigned short* address;
-        static unsigned short* current_address;
+        static uint32_t x_offset;
+        static uint32_t y_offset;
+
+        static uint32_t* address;
+        static uint32_t* current_address;
         
         static unsigned int VGA_WIDTH;
         static unsigned int VGA_HEIGHT;
-    
-        static void savescr();
-        static void restorescr();
 
-        static void clearscr(const VGA_COLOUR bg = VGA_COLOUR::BLACK);
+        struct character_record {
+            uint32_t x;
+            uint32_t y;
+            uint32_t width;
+            uint32_t height;
+        };
+
+        static structures::flexible_array<character_record> character_records;
+
         static void printnl();
+
         static void printf(
             char* input,
-            const VGA_COLOUR text_colour = VGA_COLOUR::LIGHT_GREY,
-            const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
+            const uint32_t text_colour = 0xD3D3D3,
+            const uint32_t bg_colour = default_background
         );
+
         static void printf(
             char input,
-            const VGA_COLOUR text_colour = VGA_COLOUR::LIGHT_GREY,
-            const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
-        );
-
-        static void printf_reverse(
-            char* input,
-            const VGA_COLOUR text_colour = VGA_COLOUR::LIGHT_GREY,
-            const VGA_COLOUR bg_colour = (VGA_COLOUR)default_background
+            const uint32_t text_colour = 0xD3D3D3,
+            const uint32_t bg_colour = default_background
         );
 
         static void printf_log(
             char* name,
             char* input,
-            const VGA_COLOUR name_colour = VGA_COLOUR::LIGHT_BLUE,
-            const VGA_COLOUR input_colour = VGA_COLOUR::WHITE
+            const uint32_t name_colour = VGA_COLOUR::LIGHT_BLUE,
+            const uint32_t input_colour = VGA_COLOUR::WHITE
+        );
+
+        static void clearscr(const uint32_t bg = VGA_COLOUR::BLACK);
+
+        static void savescr();
+        static void restorescr();
+
+        // Clears the latest character and puts the cursor there.
+        static void printf_reverse(
+            uint32_t distance = 1
         );
 
     private:
-        static unsigned short saved_screen_state[80 * 25];
-        static unsigned short* saved_current_address;
-    
-        static unsigned short default_background;
+        static uint32_t saved_x_offset;
+        static uint32_t saved_y_offset;
 
-        static uint16_t add_colour_to_char(
-            const char c,
-            const VGA_COLOUR text = VGA_COLOUR::WHITE,
-            const VGA_COLOUR bg = (VGA_COLOUR)default_background
-        );
+        static uint32_t saved_screen_state[800 * 600];
+        static uint32_t* saved_current_address;
+    
+        static uint32_t default_background;
 };
