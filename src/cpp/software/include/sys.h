@@ -34,23 +34,23 @@ namespace speedyos {
         LEFTCTRL_RELEASED = 0x9D
     };
 
-    enum VGAColour {
-        BLACK = 0,
-        BLUE = 1,
-        GREEN = 2,
-        CYAN = 3,
-        RED = 4,
-        MAGENTA = 5,
-        BROWN = 6,
-        LIGHT_GREY = 7,
-        DARK_GREY = 8,
-        LIGHT_BLUE = 9,
-        LIGHT_GREEN = 10,
-        LIGHT_CYAN = 11,
-        LIGHT_RED = 12,
-        LIGHT_MAGENTA = 13,
-        LIGHT_BROWN = 14,
-        WHITE = 15,
+    enum VGAColour : uint32_t {
+        BLACK = 0x000000,
+        BLUE = 0x0000FF,
+        GREEN = 0x00FF00,
+        CYAN = 0x00FFFF,
+        RED = 0xFF0000,
+        MAGENTA = 0xFF00FF,
+        BROWN = 0xA52A2A,
+        LIGHT_GREY = 0xD3D3D3,
+        DARK_GREY = 0x808080,
+        LIGHT_BLUE = 0x00b3ff,
+        LIGHT_GREEN = 0x90EE90,
+        LIGHT_CYAN = 0xE0FFFF,
+        LIGHT_RED = 0xFFA07A,
+        LIGHT_MAGENTA = 0xFFE4E1,
+        LIGHT_BROWN = 0xFFDEAD,
+        WHITE = 0xFFFFFF
     };
 
     // Queries the kernel for the process ID.
@@ -63,7 +63,7 @@ namespace speedyos {
     __attribute__((naked)) __attribute__((fastcall)) void end_process(uint32_t code = 0);
 
     // Notifies the kernel to suspend the process for a specified amount of time.
-    __attribute__((naked)) __attribute__((fastcall)) void suspend_process(uint32_t ms, SuspensionType type);
+    __attribute__((naked)) __attribute__((fastcall)) void suspend_process(uint32_t ms, SuspensionType type = SuspensionType::FULL);
 
     // Notifies the kernel an event has been processed.
     __attribute__((naked)) __attribute__((fastcall)) void end_event();
