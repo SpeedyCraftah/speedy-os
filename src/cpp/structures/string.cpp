@@ -55,6 +55,33 @@ unsigned int structures::string::get_weak_hash() {
     return _hash;
 }
 
+structures::string& structures::string::concat(char src) {
+    unsigned int srcLength = 1;
+
+    char* new_storage_ptr = (char*)heap::malloc(srcLength + _length);
+
+    for (unsigned int i = 0; i < _length; i++) {
+        new_storage_ptr[i] = storage_ptr[i];
+    }
+
+    new_storage_ptr[_length] = src;
+    new_storage_ptr[_length + 1] = '\0';
+
+    // Deallocate old storage pointer.
+    if (storage_ptr != nullptr) heap::free(storage_ptr);
+
+    // Assign new storage pointer.
+    storage_ptr = new_storage_ptr;
+    
+    // Update length.
+    _length = srcLength + _length;
+
+    // Update hash.
+    _update_hash();
+
+    return *this;
+}
+
 structures::string& structures::string::concat(char* src) {
     unsigned int srcLength = 0;
 
@@ -204,6 +231,11 @@ bool structures::string::hash_equal_to(char* str) {
 // Overload == operator.
 bool structures::string::operator==(char* src) {
     return hash_equal_to(src);
+}
+
+// Overload += operator.
+structures::string& structures::string::operator+=(char* src) {
+    return concat(src);
 }
 
 // Overload + operator (strings).

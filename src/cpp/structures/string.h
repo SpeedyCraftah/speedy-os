@@ -18,8 +18,9 @@ namespace structures {
             // Copies the string into another memory location and returns it.
             smart_ptr<char> char_copy();
 
-            // Concats a char* to string.
+            // Concats a char*/char to string.
             string& concat(char* src);
+            string& concat(char src);
 
             // Retrieve the hash.
             unsigned int get_weak_hash();
@@ -42,6 +43,9 @@ namespace structures {
 
             // Overload == operator.
             bool operator==(char* src);
+
+            // Overload += operator.
+            structures::string& operator+=(char* src);
 
             // Overload cast operator.
             operator char*();
