@@ -166,37 +166,57 @@ namespace structures {
             }
 
             // Pops the last element and returns it.
-            T pop() {
+            T pop(uint32_t amount = 1) {
                 if (fragmented) {
                     kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
                 }
 
-                entry element = storage_ptr[next_index - 1];
-                
-                storage_ptr[next_index - 1].empty = true;
+                entry element;
 
-                occupied--;
-                next_index--;
+                for (uint32_t i = 0; i < amount; i++) {
+                    element = storage_ptr[next_index - 1];
+                    if (element.empty) continue;
+                    
+                    storage_ptr[next_index - 1].empty = true;
+
+                    occupied--;
+                    next_index--;
+                }
 
                 return element.value;
             }
 
             // Pops the first element and returns it.
             // Inefficient as it has to defragment the whole array afterwards to maintain linear structure.
-            T shift() {
+            T shift(uint32_t amount = 1) {
                 if (fragmented) {
                     kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
                 }
 
-                entry element = storage_ptr[0];
+                entry element;
 
-                storage_ptr[0].empty = true;
+                for (uint32_t i = 0; i < amount; i++) {
+                    element = storage_ptr[i];
+                    if (element.empty) continue;
 
-                occupied--;
+                    storage_ptr[0].empty = true;
+                    occupied--;
+                }
 
                 defragment();
 
                 return element.value;
+            }
+
+            // Resets the whole array back to default.
+            void reset() {
+                for (int i = 0; i < capacity; i++) {
+                    storage_ptr[i].empty = true;
+                }
+
+                occupied = 0;
+                next_index = 0;
+                fragmented = false;
             }
 
             // Override [] operator.
