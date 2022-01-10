@@ -19,6 +19,7 @@ extern "C" void callConstructors()
 extern "C" void kernelMain(void* multiboot_structure, uint32_t magicnumber)
 {
     // Final polishing.
+    asm("call enable_sse");
     asm("call disable_vga_cursor");
     asm("call fix_blinking_text");
 
