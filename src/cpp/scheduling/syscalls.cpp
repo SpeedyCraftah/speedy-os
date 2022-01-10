@@ -68,6 +68,9 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
         process->suspended_type = (SuspensionType)data2;
         process->suspended_until = data == 0 ? 0 : (scheduler::elapsed_ms + data);
 
+        // Add processing time.
+        process->total_cpu_time += 2;
+
         scheduler::get_process_queue()->push(process->id);
 
         scheduler::current_process = 0;
@@ -85,6 +88,9 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
         if (!scheduler::event_running) return 0;
         
         Process* process = scheduler::get_process_list()->fetch(scheduler::current_process);
+
+        // Add processing time.
+        process->total_cpu_time += 2;
 
         // Remove event from queue (mark as done).
         process->event_receiver.queue->shift();
@@ -171,7 +177,7 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
         }
 
         // To-do: copy text instead of direct pointer.
-        char* input = speedyshell::get_text_input();
+        char* input = speedyshell::text_buffer;
         TEMP_REGISTERS.eax = reinterpret_cast<uint32_t>(input);
     } else if (id == 12) {
         // If interface method is not SpeedyShell.
@@ -182,7 +188,10 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         uint32_t data2 = TEMP_REGISTERS.eax;
 
-        speedyshell::printf(reinterpret_cast<char*>(data), true, (VGA_COLOUR)data2);
+        speedyshell::printf(reinterpret_cast<char*>(data), (VGA_COLOUR)data2);
+
+        // will be removed.
+        speedyshell::printf("\n");
     } else if (id == 13) {
         // If interface method is not SpeedyShell.
         // Does not support events at the moment.
@@ -195,6 +204,7 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
 
         // Activate input mode.
         speedyshell::input_mode = true;
+        speedyshell::allow_typing = true;
 
         // Suspend program.
         process->current_status = TaskStatus::SUSPENDED;
@@ -207,7 +217,7 @@ extern "C" uint32_t __attribute__((fastcall)) on_system_call(uint32_t id, uint32
         scheduler::current_process = 0;
 
         // Reset inputs.
-        speedyshell::clear_input();
+        speedyshell::clear_buffer();
 
         // Print cursor.
         video::printf(" ", VGA_COLOUR::LIGHT_GREY, VGA_COLOUR::LIGHT_GREY);
