@@ -137,7 +137,6 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
 
         // Check if execution policy is valid.
         if (data < 0 || data > 2) return 0;
-        if (data == ThreadExecutionPolicy::BUSY && scheduler::current_thread->state.processing_event) return 0;
 
         // If a different thread is referenced.
         if (data2 != 0 && scheduler::current_thread->id != data2) {
