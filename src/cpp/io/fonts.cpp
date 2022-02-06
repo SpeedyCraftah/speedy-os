@@ -10,10 +10,10 @@ namespace font_interpreter {
         // Skip over meta data.
         font = font + 2;
 
-        double x_ratio = width /( double)target_width;
-        double y_ratio = height / (double)target_height;
+        float x_ratio = width /( float)target_width;
+        float y_ratio = height / (float)target_height;
 
-        double px, py; 
+        float px, py; 
         for (int i = 0; i < target_height; i++) {
             for (int j = 0; j < target_width; j++) {
                 px = uint16_t(j * x_ratio);
