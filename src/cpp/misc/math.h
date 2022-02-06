@@ -14,8 +14,13 @@ namespace math {
    
    // Returns the cos of x.
    float cos(float x);
+
+   // Returns the tan of x.
+   float tan(float x);
+
+   // Returns the absolute value of x.
+   int abs(int x);
    
-   // Returns value of PI (non-cached).
-   float PI();
-   
+   // Returns value of PI.
+   const float PI = 3.1415926535897932384626433832795028841971;
 }
