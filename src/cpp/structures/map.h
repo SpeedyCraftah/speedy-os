@@ -38,13 +38,6 @@ namespace structures {
                 return occupiedBuckets;
             }
 
-            // Unsafe raw method to getting bucket data.
-            entry get_raw_bucket_at(uint32_t index) {
-                if (index > capacity || index < 0) return entry();
-
-                return storage_ptr[index];
-            }
-
             void resize(uint32_t newCapacity) {
                 // Safety checks to prevent overflowing allocated memory.
                 if (newCapacity <= capacity) return;
