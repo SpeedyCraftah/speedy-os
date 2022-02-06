@@ -1,28 +1,36 @@
-// Handles the clock, ticking and program switching as well as task management.
-
 #pragma once
 
-#include <stdint.h>
+#include "stdint.h"
 
-#include "./structures/process.h"
-
-#include "../structures/flex_array.h"
 #include "../structures/map.h"
+#include "../structures/linked_array.h"
+
+#include "structures/thread.h"
+#include "structures/process.h"
+#include "structures/events.h"
 
 namespace scheduler {
-        extern "C" uint32_t current_process;
-        extern "C" uint32_t elapsed_ms;
-        extern "C" uint32_t kernel_stack_base;
-        extern "C" uint32_t kernel_stack_pointer;
-        extern "C" bool event_running;
+    extern uint32_t elapsed_ms;
 
-        void initialise();
+    extern "C" Thread* current_thread;
 
-        structures::map<Process*>* get_process_list();
-        structures::flexible_array<uint32_t>* get_process_queue();
-        
-        structures::map<Process*>* get_process_list_string();
+    extern structures::map<Thread*>* thread_list;
+    extern structures::map<Process*>* process_list;
 
-        uint32_t start_process(structures::string name, void(*entry)() = 0, TaskStatus status = TaskStatus::RUNNING, uint32_t flags = 0, bool event_receiver_support = false, bool event_emitter_support = false);
-        void end_process(uint32_t process_id, uint32_t code);
+    extern structures::map<Process*>* process_name_list;
+
+    extern structures::linked_array<ThreadEvent>* thread_event_queue;
+    extern structures::linked_array<Thread*>* thread_execution_queue;
+
+    void initialise();
+    extern "C" void handle_context_switch();
+
+    Process* create_process(char* name, void (*entry)(), ProcessFlags flags = ProcessFlags());
+    Thread* create_thread(Process* process, void (*entry)());
+
+    void kill_process(Process* process, uint32_t code = 1);
+    void kill_thread(Thread* thread, uint32_t code = 1);
+
+    // Utility function.
+    void manual_context_switch_return();
 }

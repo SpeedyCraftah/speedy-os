@@ -9,6 +9,13 @@ namespace speedyos {
         asm volatile("ret");
     }
 
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_thread_id() {
+        asm volatile("mov $1, %ecx");
+        asm volatile("mov $2, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
     // Queries the kernel for the elapsed time from startup.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time() {
         asm volatile("mov $1, %ecx");
@@ -23,8 +30,7 @@ namespace speedyos {
         asm volatile("int $128");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void suspend_process(uint32_t ms, SuspensionType type) {
-        asm volatile("mov %edx, %eax");
+    __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $3, %ecx");
         asm volatile("int $128");
@@ -53,10 +59,10 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool register_event_for_process(
-        uint32_t target_process_id,
+    __attribute__((naked)) __attribute__((fastcall)) bool register_event_for_thread(
+        uint32_t target_thread_id,
         uint32_t enabled_events,
-        void(__attribute__((fastcall)) *handler)(uint32_t, uint32_t)
+        void(*handler)(uint32_t, uint32_t)
     ) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
@@ -85,7 +91,11 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void update_status(TaskStatus new_status) {
+    __attribute__((naked)) __attribute__((fastcall)) void update_execution_policy(
+        ThreadExecutionPolicy policy,
+        uint32_t thread_id
+    ) {
+        asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $9, %ecx");
         asm volatile("int $128");
@@ -101,6 +111,34 @@ namespace speedyos {
 
     __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random() {
         asm volatile("mov $14, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)()) {
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $15, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) void kill_thread(uint32_t thread_id) {
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $16, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) bool park_thread(uint32_t thread_id) {
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $17, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) bool awake_thread(uint32_t thread_id) {
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $18, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }

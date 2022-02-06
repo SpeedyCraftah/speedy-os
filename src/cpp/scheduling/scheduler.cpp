@@ -1,302 +1,363 @@
 #include "scheduler.h"
 
-#include "../abstractions/io_port.h"
-#include "../heap/allocator.h"
-#include "../abstractions/cpu.h"
-#include "../chips/pic.h"
 #include "events.h"
+#include "stdint.h"
+
+#include "../structures/flex_array.h"
+#include "../structures/map.h"
+
+#include "structures/events.h"
+#include "structures/process.h"
+#include "structures/thread.h"
+#include "events.h"
+
+// remove after
+#include "../software/system/speedyshell/main.h"
 #include "../misc/conversions.h"
-#include "../misc/random.h"
+#include "../software/include/sys.h"
 
-#include <stdint.h>
+extern "C" Registers temporary_registers = Registers();
 
-// Keep track of elapsed time.
-extern "C" uint32_t elapsed_ms = 0;
-
-// 0 = Scheduler idling.
-extern "C" uint32_t current_process = 0;
-static uint32_t next_process_id = 1;
-
-extern "C" bool event_running = false;
-
-// Allows ASM and C++ to access registers.
-extern "C" Registers TEMP_REGISTERS = Registers();
-
-// Assembly functions.
-extern "C" void scheduler_switch_to_task();
+// Import the assembly functions.
 extern "C" void scheduler_sleep();
+extern "C" void scheduler_execute();
 
-extern "C" uint8_t kernel_stack;
-
-static structures::map<Process*>* process_list;
-static structures::map<Process*>* process_list_string;
-static structures::flexible_array<uint32_t>* process_queue;
-
-static uint32_t scheduler_process_id;
 
 namespace scheduler {
+    uint32_t elapsed_ms = 0;
+
+    Thread* current_thread = nullptr;
+
+    uint32_t next_thread_id = 1;
+    uint32_t next_process_id = 1;
+
+    structures::map<Thread*>* thread_list;
+    structures::map<Process*>* process_list;
+    structures::linked_array<ThreadEvent>* thread_event_queue;
+    structures::linked_array<Thread*>* thread_execution_queue;
+    structures::map<Process*>* process_name_list;
+
+    // Iterators.
+    structures::linked_array<ThreadEvent>::iterator thread_event_iterator;
+    structures::linked_array<Thread*>::iterator thread_execution_iterator;
+
+    Process* scheduler_event_process;
+
     void initialise() {
-        // Initialise queue & process map.
-        process_list = new structures::map<Process*>(15);
-        process_list_string = new structures::map<Process*>(15);
-        process_queue = new structures::flexible_array<uint32_t>(15);
+        // Create the structures.
+        thread_list = new structures::map<Thread*>(20);
+        process_list = new structures::map<Process*>(10);
+        thread_event_queue = new structures::linked_array<ThreadEvent>(15);
+        thread_execution_queue = new structures::linked_array<Thread*>(15);
+        process_name_list = new structures::map<Process*>(10);
 
-        // Start event process.
-        scheduler_process_id = start_process(
-            structures::string("Scheduler"),
-            0,
-            TaskStatus::RUNNING_WAITING_FOR_DATA,
-            ProcessFlag::SYSTEM_DRIVER, 
-            false, 
-            true
-        );
+        // Create the iterators.
+        thread_event_iterator = thread_event_queue->create_iterator();
+        thread_execution_iterator = thread_execution_queue->create_iterator();
+
+        ProcessFlags flags;
+        flags.system_process = true;
+        flags.virtual_process = true;
+
+        scheduler_event_process = create_process("Scheduler Events", 0, flags);
     }
 
-    void __attribute__((fastcall)) switch_to_task(uint32_t process_id) {
-        Process* process = process_list->fetch(process_id);
+    extern "C" void handle_context_switch() {
+        // If a thread was previously running.
+        if (current_thread != nullptr) {
+            // Save the registers.
+            current_thread->registers = temporary_registers;
 
-        TEMP_REGISTERS = process->registers;
-        current_process = process->id;
+            // Reschedule the thread.
+            thread_execution_queue->push(current_thread);
 
-        event_running = false;
-
-        return scheduler_switch_to_task();
-    }
-
-    structures::map<Process*>* get_process_list() {
-        return process_list;
-    }
-
-    structures::map<Process*>* get_process_list_string() {
-        return process_list_string;
-    }
-
-    structures::flexible_array<uint32_t>* get_process_queue() {
-        return process_queue;
-    }
-    // allocator.
-    void end_process(uint32_t process_id, uint32_t code) {
-        Process* process = process_list->fetch(process_id);
-
-        // Deallocate stack.
-        heap::free(process->stack_base);
-
-        if (process->event_emitter.supported) {
-            delete process->event_emitter.subscribed;
+            // Clear current thread.
+            current_thread = nullptr;
         }
 
-        if (process->event_receiver.supported) {
-            delete process->event_receiver.queue;
+        // Reset iterator.
+        thread_event_iterator.reset();
 
-            // Deallocate stack.
-            heap::free(process->event_receiver.stack_base);
+        // Check the event queue for outstanding events (to be improved).
+        while (thread_event_iterator.hasNext()) {
+            ThreadEvent event = thread_event_iterator.next();
+
+            // If the thread is already running an event, continue.
+            if (event.thread->state.processing_event) continue;
+
+            // If the threads execution policy blocks events, remove.
+            if (event.thread->execution_policy == ThreadExecutionPolicy::BUSY) {
+                thread_event_iterator.remove();
+                continue;
+            }
+
+            // If the thread is parked, unpark the thread.
+            event.thread->state.parked = false;
+
+            // Backup the current threads registers.
+            event.thread->backup_registers = event.thread->registers;
+
+            // Set the EIP to the event handler.
+            event.thread->registers.eip = reinterpret_cast<uint32_t>(event.handler);
+
+            // Mark the thread as busy to queue future events.
+            event.thread->state.processing_event = true;
+
+            // Create a stack frame.
+            uint32_t* stack = 
+                reinterpret_cast<uint32_t*>(event.thread->registers.esp) - 3;
+
+            // Push the event data.
+            *(stack + 1) = event.event_id;
+            *(stack + 2) = event.event_data;
+
+            event.thread->registers.esp = reinterpret_cast<uint32_t>(stack);
+
+            // Remove the event from the queue.
+            thread_event_iterator.remove();
         }
 
-        // Emit event.
-        scheduler::events::emit_event(scheduler_process_id, 2, process->id);
+        // Check if any thread needs executing.
+        for (uint32_t i = 0; i < thread_execution_queue->get_size(); i++) {            
+            // Fetch thread from queue.
+            Thread* thread = thread_execution_queue->shift();
 
-        process_list_string->remove(process->name);
+            // If thread only reacts on events, continue.
+            if (thread->execution_policy == ThreadExecutionPolicy::EVENT_ONLY && !thread->state.processing_event) {
+                thread_execution_queue->push(thread);
+                continue;
+            }
 
-        // Free heap used by the process.
-        heap::free_by_process_id(process_id);
+            // If the process is suspended, continue.
+            if (thread->process->state.suspended) {
+                thread_execution_queue->push(thread);
+                continue;
+            }
 
-        // Remove process.
+            // If the thread is parked, continue.
+            if (thread->state.parked) {
+                thread_execution_queue->push(thread);
+                continue;
+            }
+
+            // If the thread is suspended and the suspension is temporary.
+            if (thread->state.suspended) {
+                if (thread->suspension_details.resume_time != 0) {
+                    // If the suspension time has passed, resume the thread.
+                    if (thread->suspension_details.resume_time <= elapsed_ms) {
+                        thread->state.suspended = false;
+                        thread->suspension_details.resume_time = 0;
+                    } else {
+                        // Reschedule.
+                        thread_execution_queue->push(thread);
+                        continue;
+                    }
+                } else {
+                    // Suspension is permanent, reschedule.
+                    thread_execution_queue->push(thread);
+                    continue;
+                }
+            }
+
+            // Execute the thread.
+
+            // Set the current thread.
+            current_thread = thread;
+
+            // Load threads registers to temporary storage.
+            temporary_registers = thread->registers;
+
+            // Switch to assembly side of scheduler to begin execution.
+            return scheduler_execute();
+        }
+
+        // If there is nothing available to execute, sleep.
+        return scheduler_sleep();
+    }
+
+    extern "C" void handle_timer_tick() {
+        // Increment the elapsed time.
+        elapsed_ms += 2;
+
+        // Handle context switch side of the timer.
+        return handle_context_switch();
+    }
+
+    Process* create_process(char* name, void (*entry)(), ProcessFlags flags) {
+        // Create the process.
+        Process* process = new Process;
+        process->id = next_process_id++;
+        process->name = structures::string(name).char_copy().norm();
+        process->flags = flags;
+        process->threads = new structures::linked_array<Thread*>(8);
+        process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
+
+        // Add the process to the map.
+        process_list->set(process->id, process);
+        process_name_list->set(process->name, process);
+        
+        // If the process is not a virtual process.
+        // Create main thread.
+        // Virtual processes have no running thread.
+        if (!flags.virtual_process) {
+            Thread* thread = new Thread;
+            thread->id = next_thread_id++;
+            thread->process = process;
+            thread->flags.main_thread = true;
+            thread->registers.eip = reinterpret_cast<uint32_t>(entry);
+            
+            // Create an 8KB stack.
+            thread->stack = heap::malloc(8192);
+
+            // Point to top of stack.
+            thread->registers.esp = reinterpret_cast<uint32_t>(thread->stack) + 8192;
+
+            // Add the thread to the map.
+            thread_list->set(thread->id, thread);
+            
+            // Add thread to process.
+            process->threads->push(thread);
+
+            // Schedule the thread.
+            thread_execution_queue->push(thread);
+        }
+
+        // Emit process create event.
+        scheduler::events::emit_event(scheduler_event_process, 1, process->id);
+
+        // Return the process.
+        return process;
+    }
+
+    Thread* create_thread(Process* process, void (*entry)()) {
+        Thread* thread = new Thread;
+        thread->id = next_thread_id++;
+        thread->process = process;
+        thread->registers.eip = reinterpret_cast<uint32_t>(entry);
+        
+        // Create an 8KB stack.
+        thread->stack = heap::malloc(8192);
+
+        // Point to top of stack.
+        thread->registers.esp = reinterpret_cast<uint32_t>(thread->stack) + 8192;
+
+        // Add the thread to the map.
+        thread_list->set(thread->id, thread);
+
+        // Add thread to process.
+        process->threads->push(thread);
+
+        // Schedule the thread.
+        thread_execution_queue->push(thread);
+
+        return thread;
+    }
+
+    void kill_thread(Thread* thread, uint32_t code) {
+        // If the thread is the main thread for the process, kill the process.
+        if (thread->flags.main_thread) {
+            return kill_process(thread->process, code);
+        }
+
+        // Iterate through thread process list and remove.
+        auto thread_process_iterator = thread->process->threads->create_iterator();
+
+        while (thread_process_iterator.hasNext()) {
+            Thread* p_thread = thread_process_iterator.next();
+
+            if (p_thread == thread) thread_process_iterator.remove();
+        }
+
+        // Reset iterator.
+        thread_event_iterator.reset();
+
+        // Iterate through threads in event queue and remove.
+        while (thread_event_iterator.hasNext()) {
+            ThreadEvent event = thread_event_iterator.next();
+
+            // If process owns the thread, remove.
+            if (event.thread == thread) thread_event_iterator.remove();
+        }
+
+        // Reset iterator.
+        thread_execution_iterator.reset();
+
+        // Iterate through execution queue and remove.
+        while (thread_execution_iterator.hasNext()) {
+            Thread* q_thread = thread_execution_iterator.next();
+
+            // If process owns the thread, remove.
+            if (q_thread == thread) thread_execution_iterator.remove();
+        }
+
+        // Deallocate and remove.
+        heap::free(thread->stack);
+        delete thread;
+    }
+
+    void kill_process(Process* process, uint32_t code) {
+        // Remove the process from map.
         process_list->remove(process->id);
+        process_name_list->remove(process->name);
 
-        // Deallocate process name.
-        delete process->name;
+        // Reset iterator.
+        thread_event_iterator.reset();
 
-        // Deallocate process object.
+        // Iterate through threads in event queue and remove.
+        while (thread_event_iterator.hasNext()) {
+            ThreadEvent event = thread_event_iterator.next();
+
+            // If process owns the thread, remove.
+            if (event.thread->process == process) thread_event_iterator.remove();
+        }
+
+        // Reset iterator.
+        thread_execution_iterator.reset();
+
+        // Iterate through execution queue and remove.
+        while (thread_execution_iterator.hasNext()) {
+            Thread* thread = thread_execution_iterator.next();
+
+            // If process owns the thread, remove.
+            if (thread->process == process) thread_execution_iterator.remove();
+        }
+
+        // Iterate through the processes threads and terminate.
+        auto process_threads_iterator = process->threads->create_iterator();
+
+        while (process_threads_iterator.hasNext()) {
+            Thread* thread = process_threads_iterator.next();
+
+            thread_list->remove(thread->id);
+
+            // Deallocate objects.
+            heap::free(thread->stack);
+            heap::free(thread);
+        }
+
+        // Emit process end event.
+        scheduler::events::emit_event(scheduler_event_process, 2, process->id);
+
+        // Free all memory used by process.
+        heap::free_by_process_id(process->id);
+
+        // Free process objects.
+        delete process->threads;
+        delete process->hooked_threads;
+        heap::free(process->name);
+
+        // Remove the process itself.
         delete process;
     }
 
-    uint32_t start_process(structures::string name, void(*entry)(), TaskStatus status, uint32_t flags, bool event_receiver_support, bool event_emitter_support) {
-        // If name is too long.
-        if (name.length() > 20) return 0;
+    void manual_context_switch_return() {
+        // Save the registers.
+        current_thread->registers = temporary_registers;
 
-        // If name is already taken.
-        if (process_list_string->exists(name)) {
-            return 0;
-        }
+        // Schedule the thread.
+        thread_execution_queue->push(current_thread);
 
-        // Set process attributes.
-        Process* new_process = new Process;
-        new_process->id = next_process_id++;
-        new_process->name = name.char_copy().norm();
-        new_process->priority = TaskPriority::NORMAL;
-        new_process->current_status = 
-            (flags & ProcessFlag::SYSTEM_DRIVER) == 0 ? status : TaskStatus::RUNNING_WAITING_FOR_DATA;
-        new_process->main_status = new_process->current_status;
-        new_process->flags = flags;
-        new_process->total_cpu_time = 0;
-
-        // If process will support receiving events.
-        if (event_receiver_support) {
-            new_process->event_receiver.supported = true;
-            new_process->event_receiver.queue = new structures::flexible_array<TaskEvent>();
-
-            // Create stack for event handler (1kb).
-            uint8_t* stack = (uint8_t*)heap::malloc(1 * 1024);
-            new_process->event_receiver.stack_base = (void*)stack;
-
-            // Setup separate registers for event handler.
-            Registers new_registers;
-            new_registers.esp = reinterpret_cast<uint32_t>(stack) + (1 * 1024);
-
-            new_process->event_receiver.registers = new_registers;
-        } else new_process->event_receiver.supported = false;
-
-        // If process will support dispatching events.
-        if (event_emitter_support) {
-            new_process->event_emitter.supported = true;
-            new_process->event_emitter.subscribed = new structures::flexible_array<TaskEventSubscription>();
-        } else new_process->event_emitter.supported = false;
-
-        // If process is a driver, it does not need registers or a stack.
-        if ((flags & ProcessFlag::SYSTEM_DRIVER) == 0) {
-            // Create a stack for the new process (2kb).
-            uint8_t* stack = (uint8_t*)heap::malloc(2 * 1024);
-            new_process->stack_base = (void*)stack;
-
-            // Setup registers (only load eflags due to bugs).
-            Registers new_registers;
-            new_registers.eflags = TEMP_REGISTERS.eflags;
-
-            // Point to the top of the stack.
-            new_registers.esp = reinterpret_cast<uint32_t>(stack) + (2 * 1024);
-            
-            // Set entry location.
-            new_registers.eip = (uint32_t)entry;
-
-            // Save registers.
-            new_process->registers = new_registers;
-        }
-
-        // If process is either not a driver or a driver with an event receiver.
-        // Schedule execution.
-        if ((flags & ProcessFlag::SYSTEM_DRIVER) == 0 && event_receiver_support) {
-            process_queue->push(new_process->id);
-        } else process_queue->push(new_process->id);
-
-        // Add process to registry.
-        process_list->set(new_process->id, new_process);
-        process_list_string->set(new_process->name, new_process);
-
-        // Emit event.
-        // Only emit if it is not the first process.
-        if (process_list->get_occupied_buckets() != 1)
-            scheduler::events::emit_event(scheduler_process_id, 1, new_process->id);
-        
-        return new_process->id;
-    }
-
-    // On PIT tick (called from assembly).
-    extern "C" void on_scheduler_timer_interrupt_main() {
-        // Add time to elapsed time.
-        elapsed_ms += 2;
-
-        // If process finished running.
-        if (current_process != 0) {
-            Process* process = process_list->fetch(current_process);
-
-            // If previous execution was an event.
-            // Save process registers.
-            if (event_running) {
-                process->event_receiver.registers = TEMP_REGISTERS;
-                process->event_receiver.queue->get_at(0).overtime = true;
-            } else {
-                process->registers = TEMP_REGISTERS;
-            }
-
-            // Add CPU time.
-            process->total_cpu_time += 2;
-
-            // Schedule process for execution.
-            process_queue->push(current_process);
-        }
-
-        uint32_t iter_count = 0;
-
-        while (true) {
-            iter_count++;
-
-            // If scheduler has nothing to do.
-            if (process_queue->get_size() == 0 || iter_count > process_queue->get_size()) {
-                current_process = 0;
-
-                // Halt the CPU and wait until next interrupt.
-                return scheduler_sleep();
-            }
-
-            uint32_t id = process_queue->shift();
-
-            // If process no longer exists.
-            if (!process_list->exists(id)) {
-                continue;
-            }
-
-            // If CPU has a process to execute.
-            Process* process = process_list->fetch(id);
-
-            if (process->current_status == TaskStatus::SUSPENDED) {
-                // If suspension period expired.
-                if (process->suspended_until != 0 && elapsed_ms >= process->suspended_until) {
-                    // Unsuspend process.
-                    process->current_status = process->main_status;
-                } else {
-                    // Check next time.
-                    process_queue->push(id);
-                    
-                    // If suspension is event only and events are present, it can run.
-                    if (
-                        process->suspended_type != SuspensionType::EVENTS_ONLY ||
-                        !process->event_receiver.supported ||
-                        process->event_receiver.queue->get_size() == 0
-                    ) continue;
-                }
-            }
-
-            // If process supports events and has a supported state.
-            if (
-                process->event_receiver.supported &&
-                (process->main_status == TaskStatus::RUNNING 
-                || process->main_status == TaskStatus::RUNNING_WAITING_FOR_DATA)
-            ) {
-                // If process has events pending.
-                if (process->event_receiver.queue->get_size() != 0) {
-                    // Run event.
-                    TaskEvent event = process->event_receiver.queue->get_at(0);
-
-                    TEMP_REGISTERS = process->event_receiver.registers;
-
-                    current_process = process->id;
-
-                    // If first time processing event.
-                    if (!event.overtime) {
-                        // Set handler pointer.
-                        TEMP_REGISTERS.eip = reinterpret_cast<uint32_t>(event.handler_ptr);
-
-                        // Provide event params (function must be fastcall).
-                        TEMP_REGISTERS.ecx = event.event_id;
-                        TEMP_REGISTERS.edx = event.event_data;
-                    }
-
-                    event_running = true;
-
-                    return scheduler_switch_to_task();
-                }
-            }
-
-            // If process still has nothing to do and is only waiting for events.
-            if (process->current_status == TaskStatus::RUNNING_WAITING_FOR_DATA) {
-                process_queue->push(id);
-                continue;
-            }
-
-            // Switch to the process.
-            return switch_to_task(id);
-        }
-
-        return scheduler_sleep();
+        // Clear current thread.
+        current_thread = nullptr;
     }
 }
