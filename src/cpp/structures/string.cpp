@@ -18,27 +18,25 @@ structures::string::string(char character) {
 }
 
 structures::string::string(char* str) {
-    if (str == nullptr) return;
-
-    // Determine char length.
-    int i = 0;
+    // Calculate string length (excl terminator).
+    uint32_t length = 0;
 
     while (1) {
-        if (str[i++] == '\0') break;
+        if (str[length] == '\0') break;
+        length++;
     }
 
-    // Length + terminator.
-    _length = i;
-    storage_ptr = (char*)heap::malloc(i);
+    _length = length + 1;
 
-    i = 0;
+    storage_ptr = new char[_length];
 
-    while (1) {
+    // Copy over to pointer.
+    for (uint32_t i = 0; i < length; i++) {
         storage_ptr[i] = str[i];
-        if (str[i] == '\0') break;
-
-        i++;
     }
+
+    // Add terminator.
+    storage_ptr[length] = '\0';
 
     _update_hash();
 }
@@ -48,7 +46,7 @@ structures::string::~string() {
 }
 
 unsigned int structures::string::length() {
-    return _length;
+    return _length - 1;
 }
 
 unsigned int structures::string::get_weak_hash() {
@@ -56,25 +54,35 @@ unsigned int structures::string::get_weak_hash() {
 }
 
 structures::string& structures::string::concat(char src) {
-    unsigned int srcLength = 1;
+    // Safety mechanism for null ptrs (will be fixed).
+    if (storage_ptr == nullptr) kernel::panic("Attempted to concat a nullptr string.");
 
-    char* new_storage_ptr = (char*)heap::malloc(srcLength + _length);
+    // Get length of strings (excl terminator).
+    uint32_t srcLength = 1;
+    uint32_t currentLength = _length - 1;
 
-    for (unsigned int i = 0; i < _length; i++) {
+    // Create place in heap (including terminator).
+    char* new_storage_ptr = new char[srcLength + currentLength + 1];
+
+    // Copy old string to new string.
+    for (uint32_t i = 0; i < currentLength; i++) {
         new_storage_ptr[i] = storage_ptr[i];
     }
 
-    new_storage_ptr[_length] = src;
-    new_storage_ptr[_length + 1] = '\0';
+    // Copy src to new string.
+    new_storage_ptr[currentLength] = src;
+
+    // Add terminator.
+    new_storage_ptr[srcLength + currentLength] = '\0';
 
     // Deallocate old storage pointer.
     if (storage_ptr != nullptr) heap::free(storage_ptr);
 
     // Assign new storage pointer.
     storage_ptr = new_storage_ptr;
-    
+
     // Update length.
-    _length = srcLength + _length;
+    _length = srcLength + currentLength + 1;
 
     // Update hash.
     _update_hash();
@@ -83,49 +91,43 @@ structures::string& structures::string::concat(char src) {
 }
 
 structures::string& structures::string::concat(char* src) {
-    unsigned int srcLength = 0;
+    // Safety mechanism for null ptrs (will be fixed).
+    if (storage_ptr == nullptr) kernel::panic("Attempted to concat a nullptr string.");
 
-    // Terminator is ignored in length.
+    // Get length of strings (excl terminator).
+    uint32_t srcLength = 0;
+
     while (1) {
         if (src[srcLength] == '\0') break;
         srcLength++;
     }
 
-    char* new_storage_ptr = (char*)heap::malloc(srcLength + _length);
+    uint32_t currentLength = _length - 1;
 
-    int previous = 0;
-    int i = 0;
+    // Create place in heap (including terminator).
+    char* new_storage_ptr = new char[srcLength + currentLength + 1];
 
-    if (storage_ptr != nullptr) {
-        // Copy original.
-        while (1) {
-            // Do not copy over terminator.
-            if (storage_ptr[i] == '\0') break;
-            new_storage_ptr[i] = storage_ptr[i];
-
-            previous++;
-            i++;
-        }
-
-        i = 0;
+    // Copy old string to new string.
+    for (uint32_t i = 0; i < currentLength; i++) {
+        new_storage_ptr[i] = storage_ptr[i];
     }
 
-    // Copy over source char.
-    while (1) {
-        new_storage_ptr[previous + i] = src[i];
-        if (src[i] == '\0') break;
-
-        i++;
+    // Copy src to new string.
+    for (uint32_t i = 0; i < srcLength; i++) {
+        new_storage_ptr[currentLength + i] = src[i];
     }
+
+    // Add terminator.
+    new_storage_ptr[srcLength + currentLength] = '\0';
 
     // Deallocate old storage pointer.
     if (storage_ptr != nullptr) heap::free(storage_ptr);
 
     // Assign new storage pointer.
     storage_ptr = new_storage_ptr;
-    
+
     // Update length.
-    _length = srcLength + _length;
+    _length = srcLength + currentLength + 1;
 
     // Update hash.
     _update_hash();
@@ -235,7 +237,9 @@ bool structures::string::operator==(char* src) {
 
 // Overload += operator.
 structures::string& structures::string::operator+=(char* src) {
-    return concat(src);
+    concat(src);
+
+    return *this;
 }
 
 // Overload + operator (strings).
@@ -245,45 +249,8 @@ structures::string structures::string::operator+(string& src) {
 
 // Overload + operator.
 structures::string structures::string::operator+(char* src) {
-    unsigned int srcLength = 0;
-
-    // Terminator is ignored in length.
-    while (1) {
-        if (src[srcLength] == '\0') break;
-        srcLength++;
-    }
-
-    char* new_storage_ptr = (char*)heap::malloc(srcLength + _length);
-
-    int previous = 0;
-    int i = 0;
-
-    if (storage_ptr != nullptr) {
-        // Copy original.
-        while (1) {
-            // Do not copy over terminator.
-            if (storage_ptr[i] == '\0') break;
-            new_storage_ptr[i] = storage_ptr[i];
-
-            previous++;
-            i++;
-        }
-
-        i = 0;
-    }
-
-    // Copy over source char.
-    while (1) {
-        new_storage_ptr[previous + i] = src[i];
-        if (src[i] == '\0') break;
-
-        i++;
-    }
-
-    // New string.
-    string new_string;
-    new_string.storage_ptr = new_storage_ptr;
-    new_string._length = srcLength + _length;
+    string new_string = string(storage_ptr);
+    new_string.concat(src);
 
     return new_string;
 }
