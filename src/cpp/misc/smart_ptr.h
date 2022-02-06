@@ -13,6 +13,11 @@ class smart_ptr {
             if (dealloc) heap::free(storage_ptr);
         }
 
+        // Overload casting operator.
+        operator T*() {
+            return storage_ptr;
+        }
+
         // Overload [] operator.
         T& operator[](int index) {
             return storage_ptr[index];
