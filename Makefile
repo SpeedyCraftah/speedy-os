@@ -1,7 +1,7 @@
 # -ffunction-sections -fdata-sections -Wl,–gc-sections 
-GPPPARAMS = -msse -msse2 -msse3 -mfpmath=sse -g -O2 -ffreestanding -Wno-write-strings -Wno-register -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -fno-stack-protector
+GPPPARAMS = -ffunction-sections -fdata-sections -Wl,–gc-sections  -msse -msse2 -msse3 -mfpmath=sse -g -O2 -ffat-lto-objects -flto -ffreestanding -Wno-write-strings -Wno-register -m32 -fno-use-cxa-atexit -nostdlib -fno-builtin -fno-rtti -fno-exceptions -fno-leading-underscore -fno-stack-protector
 ASPARAMS = --32
-LDPARAMS = -g -melf_i386
+LDPARAMS = -g -melf_i386 
 
 ASMFILE = src/boot/loader.asm
 
