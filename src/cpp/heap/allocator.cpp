@@ -28,8 +28,9 @@ uint32_t heap::get_reserved_blocks() {
 }
 
 void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_id) {
-    // For temporary use.
-    if (process_id == 0) process_id = scheduler::current_process;
+    // Will be made thread-wide eventually.
+    if (process_id == 0) process_id = 
+        scheduler::current_thread == nullptr ? 0 : scheduler::current_thread->process->id;
     
     // If blocks exist and allocation allows block reuse.
     if (total_blocks != 0 && !skip_reuse) {

@@ -15,19 +15,20 @@
 // ID 8 - On modifier key release.
 
 namespace drivers {
-    static uint32_t process_id;
+    static Process* process;
 
     void keyboard::load() {
         setup_char_table();
 
+        ProcessFlags flags;
+        flags.system_process = true;
+        flags.virtual_process = true;
+
         // Create virtual process for events to take place.
-        process_id = scheduler::start_process(
-            structures::string("Keyboard Driver"),
+        process = scheduler::create_process(
+            "Keyboard Driver",
             0,
-            TaskStatus::RUNNING_WAITING_FOR_DATA,
-            ProcessFlag::SYSTEM_DRIVER,
-            false,
-            true
+            flags
         );
     }
     
@@ -38,28 +39,28 @@ namespace drivers {
         // Key presses.
         char char_press = keyboard::keycode_to_ascii(key_raw, true);
         if (char_press != 0) {
-            scheduler::events::emit_event(process_id, 1, char_press);
+            scheduler::events::emit_event(process, 1, char_press);
             return;
         }
 
         // Key releases.
         char char_release = keyboard::keycode_to_ascii(key_raw, false);
         if (char_release != 0) {
-            scheduler::events::emit_event(process_id, 2, char_release);
+            scheduler::events::emit_event(process, 2, char_release);
             return;
         }
 
         // Modifier press.
         bool modifier_pressed = keyboard::modifier_supported(key_raw, true);
         if (modifier_pressed) {
-            scheduler::events::emit_event(process_id, 4, key_raw);
+            scheduler::events::emit_event(process, 4, key_raw);
             return;
         }
 
         // Modifier released.
         bool modifier_released = keyboard::modifier_supported(key_raw, false);
         if (modifier_released) {
-            scheduler::events::emit_event(process_id, 8, key_raw);
+            scheduler::events::emit_event(process, 8, key_raw);
             return;
         }
     }
