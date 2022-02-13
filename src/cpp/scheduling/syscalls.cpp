@@ -33,6 +33,7 @@ extern "C" Registers temporary_registers;
 // ID 16 = Kill a thread.
 // ID 17 = Park a thread.
 // ID 18 = Unpark a thread.
+// ID 19 = Upgrade the graphics mode.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
@@ -183,8 +184,8 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
         char* input = speedyshell::text_buffer;
         temporary_registers.eax = reinterpret_cast<uint32_t>(input);
     } else if (id == 12) {
-        // If interface method is not SpeedyShell.
-        if (!isTerminalInterface) {
+        // If interface method is not SpeedyShell or graphics mode is pixel.
+        if (!isTerminalInterface || speedyshell::pixel_mode) {
             temporary_registers.eax = 0;
             return 0;
         }
@@ -196,8 +197,8 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
         // will be removed.
         speedyshell::printf("\n");
     } else if (id == 13) {
-        // If interface method is not SpeedyShell.
-        if (!isTerminalInterface) {
+        // If interface method is not SpeedyShell or graphics mode is pixel.
+        if (!isTerminalInterface || speedyshell::pixel_mode) {
             temporary_registers.eax = 0;
             return 0;
         }
@@ -300,6 +301,24 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
 
         // Park the thread.
         scheduler::thread_list->fetch(data)->state.parked = false;
+
+        // Return success status.
+        temporary_registers.eax = 1;
+    } else if (id == 19) {
+        // If graphics are already upgraded, return.
+        if (speedyshell::pixel_mode) {
+            temporary_registers.eax = 0;
+            return 0;
+        }
+
+        // Save current shell contents.
+        video::savescr();
+
+        // Clear the screen.
+        video::clearscr();
+
+        // Update state.
+        speedyshell::pixel_mode = true;
 
         // Return success status.
         temporary_registers.eax = 1;

@@ -110,6 +110,10 @@ namespace speedyos {
     // Requests the kernel to awake (unpark) the specified thread.
     __attribute__((naked)) __attribute__((fastcall)) bool awake_thread(uint32_t thread_id);
 
+    // Requests the kernel to upgrade the graphics to pixel mode.
+    // This will place SpeedyShell in a read-only mode.
+    __attribute__((naked)) __attribute__((fastcall)) bool upgrade_graphics();
+
     namespace speedyshell {
         // Requests input. If at start of program, command will be returned. Otherwise run-time input will be returned if requested.
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input();

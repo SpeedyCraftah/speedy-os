@@ -143,6 +143,12 @@ namespace speedyos {
         asm volatile("ret");
     }
 
+    __attribute__((naked)) __attribute__((fastcall)) bool upgrade_graphics() {
+        asm volatile("mov $19, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
     namespace speedyshell {
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input() {
             asm volatile("mov $11, %ecx");
