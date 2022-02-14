@@ -34,7 +34,12 @@ namespace drivers {
     
     // Inlined for performance.
     void keyboard::handle_interrupt() {
-        uint8_t key_raw = io_port::bit_8::in(0x60);
+        uint32_t key_raw = io_port::bit_8::in(0x60);
+
+        // If the key requires more than one data packet (only supports two max at the moment).
+        if (key_raw == 0xE0) {
+            key_raw = 0xFF + io_port::bit_8::in(0x60);
+        }
         
         // Key presses.
         char char_press = keyboard::keycode_to_ascii(key_raw, true);
@@ -87,10 +92,10 @@ namespace drivers {
         return pressed ? keys_pressed_map[keycode] : keys_released_map[keycode];
     }
 
-    char keyboard::keys_pressed_map[256];
-    char keyboard::keys_released_map[256];
-    char keyboard::modifiers_pressed_map[256];
-    char keyboard::modifiers_released_map[256];
+    char keyboard::keys_pressed_map[512];
+    char keyboard::keys_released_map[512];
+    char keyboard::modifiers_pressed_map[512];
+    char keyboard::modifiers_released_map[512];
 
     void keyboard::setup_char_table() {
         // Scan set 1 pressed normal characters.
@@ -209,6 +214,10 @@ namespace drivers {
         modifiers_pressed_map[0x3A] = 1;
         modifiers_pressed_map[0x2A] = 1;
         modifiers_pressed_map[0x1D] = 1;
+        modifiers_pressed_map[0xFF + 0x48] = 1;
+        modifiers_pressed_map[0xFF + 0x50] = 1;
+        modifiers_pressed_map[0xFF + 0x4B] = 1;
+        modifiers_pressed_map[0xFF + 0x4D] = 1;
 
         // Modifier released.
         // Contains code of pressed keys for filtering of
@@ -219,5 +228,9 @@ namespace drivers {
         modifiers_released_map[0xBA] = 0x3A;
         modifiers_released_map[0xAA] = 0x2A;
         modifiers_released_map[0x9D] = 0x1D;
+        modifiers_pressed_map[0xFF + 0xC8] = 1;
+        modifiers_pressed_map[0xFF + 0xD0] = 1;
+        modifiers_pressed_map[0xFF + 0xCB] = 1;
+        modifiers_pressed_map[0xFF + 0xCD] = 1;
     }
 }
