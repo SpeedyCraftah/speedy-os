@@ -75,6 +75,15 @@ void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_
     data_meta[block_id].process_id = process_id;
     data_meta[block_id].reserved = true;
 
+    // If contents should be reset.
+    // Still clear despite being a new block as memory contents can be unpredictable
+    // on real hardware after a boot (e.g. hardware cache).
+    if (reset) {
+        for (uint32_t i = 0; i < size; i++) {
+            next_data_location[i] = 0;
+        }
+    }
+
     // Update statistics.
     total_reserved_bytes += size;
     reserved_blocks += 1;
