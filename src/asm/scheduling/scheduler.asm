@@ -1,8 +1,10 @@
 ; Assembly side of the scheduler.
 
-%include "/home/speedy/Code/speedyosv22/src/asm/scheduling/utils.asm" 
+%include "/mnt/c/Users/jacek/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
 extern temporary_registers
+extern temporary_eip
+extern timer_preempt
 
 global scheduler_sleep
 scheduler_sleep:
@@ -19,6 +21,9 @@ scheduler_sleep:
 
 global scheduler_execute
 scheduler_execute:
+  ; Set to false.
+  mov byte [timer_preempt], 0
+
   ; Send EOI.
   send_eoi
 
@@ -29,5 +34,4 @@ scheduler_execute:
   sti
 
   ; Jump to programs EIP.
-  jmp [temporary_registers_eip]
-  
+  jmp [temporary_eip]
