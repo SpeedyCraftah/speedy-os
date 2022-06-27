@@ -30,6 +30,11 @@ namespace structures {
                 heap::free(storage_ptr);
             }
 
+            // I was forced to make this method due to countless early destruction calls (thanks C++).
+            bool allocated() {
+                return heap::allocated(storage_ptr);
+            }
+
             uint32_t get_capacity() {
                 return capacity;
             }
@@ -102,7 +107,6 @@ namespace structures {
 
                     // Boundary checks.
                     if (shift_index > capacity - 1) shift_index = 0;
-                    else if (shift_index < 0) shift_index = capacity - 1;
 
                     // If empty, break.
                     if (storage_ptr[shift_index].probes == 0) break;
@@ -164,7 +168,6 @@ namespace structures {
 
                         // Boundary checks.
                         if (index > capacity - 1) index = 0;
-                        else if (index < 0) index = capacity - 1;
 
                         entry bucket = storage_ptr[index];
 
@@ -224,8 +227,7 @@ namespace structures {
 
                     // If bounds are exceeded, loop round.
                     if (index > capacity - 1) index = 0;
-                    else if (index < 0) index = capacity - 1;
-
+                    
                     entry bucket = storage_ptr[index];
 
                     // Not found.

@@ -9,6 +9,7 @@ namespace structures {
             string(char character);
             string(char* str = nullptr);
             ~string();
+            bool allocated();
 
             unsigned int length();
 

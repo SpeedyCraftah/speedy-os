@@ -4,6 +4,9 @@
 #include "../panic/panic.h"
 #include "stdint.h"
 
+#include "../io/video.h"
+#include "../misc/conversions.h"
+
 namespace structures {
 
     // A special array used for stack-like storing and retrieval of elements.
@@ -15,7 +18,7 @@ namespace structures {
     class linked_array {
         public:
             linked_array(uint32_t initialSize = 10) {
-                storage_ptr = new entry[initialSize];
+                storage_ptr = (entry*)heap::malloc(sizeof(entry) * initialSize);
                 capacity = initialSize;
 
                 // Add head and tail entries.
@@ -34,6 +37,11 @@ namespace structures {
             ~linked_array() {
                 // Free storage pointer.
                 heap::free(storage_ptr);
+            }
+
+            // I was forced to make this method due to countless early destruction calls (thanks C++).
+            bool allocated() {
+                return heap::allocated(storage_ptr);
             }
 
             struct entry {
@@ -319,8 +327,9 @@ namespace structures {
                         return &storage_ptr[i];
                     }
                 }
-
+                
                 kernel::panic("A linked array was full.");
+                __builtin_unreachable();
             }
 
             entry head_entry;

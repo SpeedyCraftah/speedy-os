@@ -45,6 +45,11 @@ namespace structures {
                 heap::free(storage_ptr);
             }
 
+            // I was forced to make this method due to countless early destruction calls (thanks C++).
+            bool allocated() {
+                return heap::allocated(storage_ptr);
+            }
+
             void resize(unsigned int newCapacity, bool unsafe_resize = false) {
                 if (newCapacity > 2147483646) {
                     kernel::panic("A flexible array has attempted to be resized with a size which exhausts a signed integer.");

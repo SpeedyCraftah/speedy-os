@@ -45,6 +45,10 @@ structures::string::~string() {
     heap::free(storage_ptr);
 }
 
+bool structures::string::allocated() {
+    return heap::allocated(storage_ptr);
+}
+
 unsigned int structures::string::length() {
     return _length - 1;
 }
@@ -171,49 +175,30 @@ bool structures::string::starts_with(char* str) {
 }
 
 structures::flexible_array<char*> structures::string::split_by(char delim) {
-    auto array = flexible_array<char*>(10, true);
+    auto array = flexible_array<char*>(7, true);
+    int prev_delim_i = -1;
 
-    uint32_t i = 0;
-    uint32_t prev_next = 0;
-
-    while (true) {
+    for (uint32_t i = 0; i < _length; i++) {
         char c = storage_ptr[i];
-        if (c == '\0') {
-            uint32_t length = i - prev_next;
-            char* ptr = new char[length + 1];
+
+        // If character is the deliminator or terminator.
+        if (c == delim || c == '\0') {
+            // Push previous index and current index boundary to array.
+
+            uint32_t length = i - (prev_delim_i + 1);
+            char* part = new char[length + 1];
+            part[length] = 0;
 
             for (uint32_t j = 0; j < length; j++) {
-                ptr[j] = storage_ptr[prev_next + j];
+                part[j] = storage_ptr[prev_delim_i + j + 1];
             }
 
-            // Add deliminater.
-            ptr[length] = '\0';
+            // Push to the array.
+            array.push(part);
 
-            // Push to array.
-            array.push(ptr);
-
-            break;
+            // Update deliminator location.
+            prev_delim_i = i;
         }
-
-        if (c == delim) {
-            uint32_t length = i - prev_next;
-            char* ptr = new char[length + 1];
-
-            for (uint32_t j = 0; j < length; j++) {
-                ptr[j] = storage_ptr[prev_next + j];
-            }
-
-            // Add deliminater.
-            ptr[length] = '\0';
-
-            // Push to array.
-            array.push(ptr);
-
-            // Set previous next.
-            prev_next = i + 1;
-        }
-
-        i++;
     }
 
     return array;
