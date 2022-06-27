@@ -12,7 +12,7 @@ namespace io_port {
     }
 
     inline __attribute__((always_inline)) uint8_t in(uint16_t port) {
-      register uint8_t data;
+      uint8_t data;
       asm volatile("inb %1, %0" : "=a" (data) : "dN" (port));
 
       return data;
@@ -31,7 +31,7 @@ namespace io_port {
     }
 
     inline __attribute__((always_inline)) uint16_t in(uint16_t port) {
-      register uint16_t data;
+      uint16_t data;
       asm volatile("inw %1, %0" : "=a" (data) : "dN" (port));
 
       return data;
