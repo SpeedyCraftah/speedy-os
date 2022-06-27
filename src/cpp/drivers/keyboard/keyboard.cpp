@@ -40,7 +40,7 @@ namespace drivers {
         if (key_raw == 0xE0) {
             key_raw = 0xFF + io_port::bit_8::in(0x60);
         }
-        
+
         // Key presses.
         char char_press = keyboard::keycode_to_ascii(key_raw, true);
         if (char_press != 0) {
@@ -78,7 +78,7 @@ namespace drivers {
         }
     }
 
-    inline bool __attribute__((fastcall)) keyboard::modifier_supported(uint8_t key, bool pressed) {
+    inline bool __attribute__((fastcall)) keyboard::modifier_supported(uint16_t key, bool pressed) {
         return pressed ? modifiers_pressed_map[key] != 0 : modifiers_released_map[key] != 0;
     }
 
@@ -88,7 +88,7 @@ namespace drivers {
         } else return character;
     }
 
-    inline char __attribute__((fastcall)) keyboard::keycode_to_ascii(uint8_t keycode, bool pressed) {
+    inline char __attribute__((fastcall)) keyboard::keycode_to_ascii(uint16_t keycode, bool pressed) {
         return pressed ? keys_pressed_map[keycode] : keys_released_map[keycode];
     }
 

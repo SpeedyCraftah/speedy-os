@@ -48,10 +48,10 @@ namespace drivers {
 			static void handle_interrupt();
 
 			// Get some extra performance by passing params via registers.
-            static __attribute__((fastcall)) char keycode_to_ascii(uint8_t keycode, bool pressed);
+            static __attribute__((fastcall)) char keycode_to_ascii(uint16_t keycode, bool pressed);
 			static __attribute__((fastcall)) void ascii_to_uppercase(structures::string& text);
 			static __attribute__((fastcall)) char ascii_to_uppercase(char character);
-			static __attribute__((fastcall)) bool modifier_supported(uint8_t key, bool pressed);
+			static __attribute__((fastcall)) bool modifier_supported(uint16_t key, bool pressed);
 
 			static void setup_char_table();
     };
