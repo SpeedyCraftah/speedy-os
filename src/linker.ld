@@ -1,36 +1,36 @@
-ENTRY(loader)
-OUTPUT_FORMAT(elf32-i386)
-OUTPUT_ARCH(i386:i386)
+ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x0100000;
-    
-    .text :
-    {
-        *(.multiboot)
-        *(.text*)
-        *(.rodata)
-    }
-    
-    .data :
-    {
-        start_ctors = .;
+	. = 1M;
+ 
+	.text BLOCK(4K) : ALIGN(4K)
+	{
+		*(.multiboot)
+		*(.text)
+	}
+ 
+	/* Read-only data. */
+	.rodata BLOCK(4K) : ALIGN(4K)
+	{
+		*(.rodata)
+	}
+ 
+	/* Read-write data (initialized) */
+	.data BLOCK(4K) : ALIGN(4K)
+	{
+		start_ctors = .;
         KEEP(*(.init_array));
         KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
         end_ctors = .;
-        
-        *(.data)
-    }
-    
-    .bss :
-    {
-        *(.bss)
-    }
-    
-    /DISCARD/ :
-    {
-        *(.fini_array*)
-        *(.comment)
-    }
+		
+		*(.data)
+	}
+ 
+	/* Read-write data (uninitialized) */
+	.bss BLOCK(4K) : ALIGN(4K)
+	{
+		*(COMMON)
+		*(.bss)
+	}
 }
