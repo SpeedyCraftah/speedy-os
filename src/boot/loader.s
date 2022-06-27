@@ -34,11 +34,12 @@
 
 .section .text
 .extern kernelMain
-.extern callConstructors
 .extern structure_address
+.extern callConstructors
 .global loader
 
-loader:
+.global _start
+_start:
     mov %ebx, (structure_address)
     mov $kernel_stack, %esp
     call callConstructors
