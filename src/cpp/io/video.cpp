@@ -28,6 +28,17 @@ uint32_t* video::saved_current_address = video::address;
 // Current background.
 uint32_t video::default_background = 0x000000;
 
+// For C.
+extern "C" void printnl() {
+    video::printnl();
+}
+extern "C" void printf(char* input, uint32_t text_colour, uint32_t bg_colour) {
+    video::printf(input, text_colour, bg_colour);
+}
+extern "C" void printf_log(char* name, char* input, const uint32_t name_colour, const uint32_t input_colour) {
+    video::printf_log(name, input, name_colour, input_colour);
+}
+
 void video::printnl() {
     y_offset += 15;
     x_offset = 0;
@@ -169,8 +180,9 @@ void video::restorescr() {
     video::y_offset = video::saved_y_offset;
 
     for (uint32_t i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
-        video::address[i] = video::saved_screen_state[i];
-        graphics::double_buffer[i] = video::saved_screen_state[i];
+        //graphics::video_address[i] = video::saved_screen_state[i];
+        //graphics::double_buffer[i] = video::saved_screen_state[i];
+        graphics::draw_pixel_linear(i, video::saved_screen_state[i]);
     }
 }
 
