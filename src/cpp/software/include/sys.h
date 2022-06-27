@@ -110,8 +110,9 @@ namespace speedyos {
     // Returns a hardware & time entropied random 32-bit number.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random();
 
-    // Requests the kernel to create a new process thread.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)());
+    // Requests the kernel to createa a new process thread with a capture value.
+    // Ensure the pointer value is not released or copied before the thread ends otherwise undefined behaviour will occur.
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)(void*), void* capture = 0);
 
     // Requests the kernel to kill the specific thread.
     __attribute__((naked)) __attribute__((fastcall)) void kill_thread(uint32_t thread_id = 0);
@@ -125,6 +126,9 @@ namespace speedyos {
     // Requests the kernel to upgrade the graphics to pixel mode.
     // This will place SpeedyShell in a read-only mode.
     __attribute__((naked)) __attribute__((fastcall)) bool upgrade_graphics();
+
+    // Notifies the kernel that the thread has voluntarily given up execution.
+    __attribute__((naked)) __attribute__((fastcall)) void preempt_thread();
 
     namespace speedyshell {
         // Requests input. If at start of program, command will be returned. Otherwise run-time input will be returned if requested.

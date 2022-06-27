@@ -6,13 +6,14 @@
 #include "../software/system/speedyshell/main.h"
 #include "structures/events.h"
 #include "structures/thread.h"
+#include "../chips/pit.h"
 
 #include "../kernel.h"
 
 //temp
 #include "../misc/conversions.h"
 
-extern "C" Registers temporary_registers;
+extern "C" Registers* temporary_registers;
 
 // ID 0 = Do nothing (nop).
 // ID 1 = Query kernel for data.
@@ -34,6 +35,7 @@ extern "C" Registers temporary_registers;
 // ID 17 = Park a thread.
 // ID 18 = Unpark a thread.
 // ID 19 = Upgrade the graphics mode.
+// ID 20 = Voluntarily preempt the execution.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
@@ -53,22 +55,27 @@ new param for data (1)
 */
 
 // On system call (called from external program).
-extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, uint32_t data) {
-    if (id == 1) {
-        if (data == 0) temporary_registers.eax = scheduler::elapsed_ms;
-        else if (data == 1) temporary_registers.eax = scheduler::current_thread->process->id;
-        else if (data == 2) temporary_registers.eax = scheduler::current_thread->id;
+extern "C" uint32_t __attribute__((fastcall)) handle_system_call() {
+    uint32_t id = temporary_registers->ecx;
+    uint32_t data = temporary_registers->edx;
 
-        //video::printf(conversions::s_int_to_char(temporary_registers.esp));
-        //video::printf(" ");
+    if (id == 1) {
+        if (data == 0) temporary_registers->eax = scheduler::elapsed_ms;
+        else if (data == 1) temporary_registers->eax = scheduler::current_thread->process->id;
+        else if (data == 2) temporary_registers->eax = scheduler::current_thread->id;
     } else if (id == 2) {
         scheduler::kill_process(scheduler::current_thread->process, data);
         scheduler::current_thread = nullptr;
-
+        scheduler::temporary_registers = &scheduler::placeholder_registers;
         return 1;
     } else if (id == 3) {
         // May add conditional suspensions.
         // May add process wide suspensions.
+
+        // Add CPU time.
+        float used_cpu_time = scheduler::time_slice_ms - chips::pit::fetch_channel_0_remaining_countdown();
+        scheduler::current_thread->process->total_cpu_time += used_cpu_time;
+        scheduler::scheduler_running_time_ms += used_cpu_time;
 
         // Apply suspension.
         scheduler::current_thread->state.suspended = true;
@@ -82,14 +89,20 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
     // Todo - make memory allocations thread-wide.
     } else if (id == 4) {
         uint8_t* memory_ptr = (uint8_t*)heap::malloc(data, true, false, scheduler::current_thread->process->id);
-        temporary_registers.eax = reinterpret_cast<uint32_t>(memory_ptr);
+        temporary_registers->eax = reinterpret_cast<uint32_t>(memory_ptr);
     } else if (id == 5) {
         void* memory_ptr = reinterpret_cast<void*>(data);
         uint32_t deal_result = heap::free(memory_ptr);
-        temporary_registers.eax = deal_result;
+        temporary_registers->eax = deal_result;
     } else if (id == 6) {
         // If there is no event currently running, return.
         if (!scheduler::current_thread->state.processing_event) return 0;
+
+        float cpu_time_used = scheduler::time_slice_ms - chips::pit::fetch_channel_0_remaining_countdown();
+
+        // Add CPU time.
+        scheduler::current_thread->process->total_cpu_time += cpu_time_used;
+        scheduler::scheduler_running_time_ms += cpu_time_used;
 
         // Clear event flag.
         scheduler::current_thread->state.processing_event = false;
@@ -102,16 +115,17 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
 
         // Clear current thread.
         scheduler::current_thread = nullptr;
+        scheduler::temporary_registers = &scheduler::placeholder_registers;
 
         return 1;
     } else if (id == 7) {
         // May be moved to a function in events.cpp.
-        uint32_t data2 = temporary_registers.eax;
-        uint32_t data3 = temporary_registers.ebx;
+        uint32_t data2 = temporary_registers->eax;
+        uint32_t data3 = temporary_registers->ebx;
 
         // Check if process exists.
         if (!scheduler::process_list->exists(data)) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
@@ -127,17 +141,17 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
         emitter_process->hooked_threads->push(listener);
 
         // Return success response.
-        temporary_registers.eax = 1;
+        temporary_registers->eax = 1;
     } else if (id == 8) {
-        uint32_t data2 = temporary_registers.eax;
+        uint32_t data2 = temporary_registers->eax;
 
         scheduler::events::emit_event(scheduler::current_thread->process, data, data2);
     } else if (id == 9) {
         // Future: end event if processing event.
-        uint32_t data2 = temporary_registers.eax;
+        uint32_t data2 = temporary_registers->eax;
 
         // Check if execution policy is valid.
-        if (data < 0 || data > 2) return 0;
+        if (data > 2) return 0;
 
         // If a different thread is referenced.
         if (data2 != 0 && scheduler::current_thread->id != data2) {
@@ -166,31 +180,31 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
     } else if (id == 10) {
         // If process name string does not exist, return.
         if (!scheduler::process_name_list->exists((char*)data)) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
 
             return 0;
         }
 
         Process* process = scheduler::process_name_list->fetch((char*)data);
-        temporary_registers.eax = process->id;
+        temporary_registers->eax = process->id;
     } else if (id == 11) {
         // If interface method is not SpeedyShell.
         if (!isTerminalInterface) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
         // To-do: copy text instead of direct pointer.
         char* input = speedyshell::text_buffer;
-        temporary_registers.eax = reinterpret_cast<uint32_t>(input);
+        temporary_registers->eax = reinterpret_cast<uint32_t>(input);
     } else if (id == 12) {
         // If interface method is not SpeedyShell or graphics mode is pixel.
         if (!isTerminalInterface || speedyshell::pixel_mode) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
-        uint32_t data2 = temporary_registers.eax;
+        uint32_t data2 = temporary_registers->eax;
 
         speedyshell::printf(reinterpret_cast<char*>(data), (VGA_COLOUR)data2);
 
@@ -199,13 +213,13 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
     } else if (id == 13) {
         // If interface method is not SpeedyShell or graphics mode is pixel.
         if (!isTerminalInterface || speedyshell::pixel_mode) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
         // If another thread is already getting input, return.
         if (speedyshell::input_mode) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
@@ -234,16 +248,23 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
     } else if (id == 14) {
         // Hardware random int.
         // Will be brought back in the future.
-        temporary_registers.eax = 0;
+        temporary_registers->eax = 0;
     } else if (id == 15) {
+        uint32_t data2 = temporary_registers->eax;
+        uint32_t data3 = temporary_registers->ebx;
+
         // Create the thread.
         Thread* thread = 
-            scheduler::create_thread(scheduler::current_thread->process, reinterpret_cast<void(*)()>(data));
+            scheduler::create_thread(
+                scheduler::current_thread->process,
+                reinterpret_cast<void(*)()>(data), 
+                reinterpret_cast<void*>(data2)
+            );
 
         // Return the thread ID.
-        temporary_registers.eax = thread->id;
+        temporary_registers->eax = thread->id;
     } else if (id == 16) {
-        uint32_t data2 = temporary_registers.eax;
+        uint32_t data2 = temporary_registers->eax;
 
         // If the thread ID is 0, the currently running thread will be killed.
         if (data == 0 || data == scheduler::current_thread->id) {
@@ -252,13 +273,14 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
 
             // Clear current thread.
             scheduler::current_thread = nullptr;
+            scheduler::temporary_registers = &scheduler::placeholder_registers;
 
             return 1;
         }
 
         // Check if the thread exists.
         if (!scheduler::thread_list->exists(data)) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
@@ -268,7 +290,7 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
         scheduler::kill_thread(thread, data2);
 
         // Return success status.
-        temporary_registers.eax = 1;
+        temporary_registers->eax = 1;
     } else if (id == 17) {
         // If the thread ID is 0, the currently running thread will be parked.
         if (data == 0 || data == scheduler::current_thread->id) {
@@ -283,7 +305,7 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
 
         // Check if the thread exists.
         if (!scheduler::thread_list->exists(data)) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
@@ -291,23 +313,23 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
         scheduler::thread_list->fetch(data)->state.parked = true;
 
         // Return success status.
-        temporary_registers.eax = 1;
+        temporary_registers->eax = 1;
     } else if (id == 18) {
         // Check if the thread exists.
         if (!scheduler::thread_list->exists(data)) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
-        // Park the thread.
+        // Unpark the thread.
         scheduler::thread_list->fetch(data)->state.parked = false;
 
         // Return success status.
-        temporary_registers.eax = 1;
+        temporary_registers->eax = 1;
     } else if (id == 19) {
         // If graphics are already upgraded, return.
         if (speedyshell::pixel_mode) {
-            temporary_registers.eax = 0;
+            temporary_registers->eax = 0;
             return 0;
         }
 
@@ -321,7 +343,11 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call(uint32_t id, ui
         speedyshell::pixel_mode = true;
 
         // Return success status.
-        temporary_registers.eax = 1;
+        temporary_registers->eax = 1;
+    } else if (id == 20) {
+        // Save data and return.
+        scheduler::manual_context_switch_return();
+        return 1;
     }
 
     return 0;

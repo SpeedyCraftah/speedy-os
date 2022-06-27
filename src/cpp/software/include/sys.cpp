@@ -115,7 +115,8 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)()) {
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)(void* capture), void* capture) {
+        asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $15, %ecx");
         asm volatile("int $128");
@@ -145,6 +146,12 @@ namespace speedyos {
 
     __attribute__((naked)) __attribute__((fastcall)) bool upgrade_graphics() {
         asm volatile("mov $19, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) void preempt_thread() {
+        asm volatile("mov $20, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
