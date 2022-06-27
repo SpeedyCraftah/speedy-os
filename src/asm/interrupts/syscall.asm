@@ -1,9 +1,10 @@
-%include "/home/speedy/Code/speedyosv22/src/asm/scheduling/utils.asm"
+%include "/mnt/c/Users/jacek/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
 extern handle_system_call
 extern scheduler_sleep
 extern temporary_registers
 extern handle_context_switch
+extern temporary_eip
 
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
@@ -13,7 +14,7 @@ INTERRUPT_128:
 
   ; Save return EIP.
   mov eax, [esp]
-  mov [temporary_registers_eip], eax
+  mov [ecx+32], eax
 
   ; ECX = System call number.
   ; EDX = Data.
@@ -41,10 +42,10 @@ INTERRUPT_128:
 
   ; Normal return to program.
   .normal_return:
-    ; Subtract ESP to counter offset.
-
     ; Replace EIP in case it changed.
-    mov eax, [temporary_registers_eip]
+    
+    mov eax, [temporary_registers]
+    mov eax, [eax+32]
     mov [esp], eax
 
     ; Load registers and return.

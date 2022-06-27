@@ -2,48 +2,67 @@
 
 extern temporary_registers
 
-; Define location for EIP register.
-%define temporary_registers_eip temporary_registers+32
-
 ; Send EOI signal to PIC, signaling end of IRQ.
 %macro send_eoi 0
     mov al, 0x20
     out 0x20, al
 %endmacro
 
+; Return - ECX holds pointer to register data.
 %macro save_general_registers_to_temp 1
-    mov [temporary_registers], eax
-    mov [temporary_registers+4], ecx
-    mov [temporary_registers+8], edx
-    mov [temporary_registers+12], ebx
+    ; Preserve ECX.
+    push ecx
+
+    ; Load registers.
+    mov ecx, [temporary_registers]
+
+    mov [ecx], eax
+    mov [ecx+8], edx
+    mov [ecx+12], ebx
 
     ; Preserve the stack.
-    mov eax, esp
-    add eax, %1
-    mov [temporary_registers+16], eax
+    mov ebx, esp
+    add ebx, 4
+    add ebx, %1
+    mov [ecx+16], ebx
 
-    mov [temporary_registers+20], ebp
-    mov [temporary_registers+24], esi
-    mov [temporary_registers+28], edi
+    mov [ecx+20], ebp
+    mov [ecx+24], esi
+    mov [ecx+28], edi
 
     ; Dump EFLAGS.
     lahf
-    mov byte [temporary_registers+36], ah
+    mov byte [ecx+36], ah
+
+    ; Dump FPU.
+    fsave [ecx+37]
+
+    ; Save ecx.
+    pop eax
+    mov [ecx+4], eax
 %endmacro
 
+; Return - None.
 %macro load_general_registers_from_temp 0
+    mov ecx, [temporary_registers]
+
     ; Load EFLAGS.
-    mov ah, byte [temporary_registers+36]
+    mov ah, byte [ecx+36]
     sahf
 
-    mov eax, [temporary_registers]
-    mov ecx, [temporary_registers+4]
-    mov edx, [temporary_registers+8]
-    mov ebx, [temporary_registers+12]
-    mov esp, [temporary_registers+16]
-    mov ebp, [temporary_registers+20]
-    mov esi, [temporary_registers+24]
-    mov edi, [temporary_registers+28]
+    mov eax, [ecx]
+    mov edx, [ecx+8]
+    mov ebx, [ecx+12]
+    mov esp, [ecx+16]
+    mov ebp, [ecx+20]
+    mov esi, [ecx+24]
+    mov edi, [ecx+28]
+
+    ; Restore FPU.
+    frstor [ecx+37]
+
+    ; Restore ecx.
+    mov ecx, [ecx+4]
 %endmacro
 
 extern kernel_stack
