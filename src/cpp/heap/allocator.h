@@ -22,8 +22,10 @@ namespace heap {
     static uint8_t* next_data_location = (uint8_t*)0x1200000;
 
     // Functions.
-    void* malloc(uint32_t size, bool reset = true, bool skip_reuse = false, uint32_t process_id = 0);
-    bool free(void* ptr);
+    extern "C" void* malloc(uint32_t size, bool reset = true, bool skip_reuse = false, uint32_t process_id = 0);
+    extern "C" void* realloc(void* ptr, uint32_t size, bool reset = true, uint32_t process_id = 0);
+    extern "C" bool free(void* ptr);
+    extern "C" bool allocated(void* ptr);
 
     void free_by_process_id(uint32_t process_id);
 

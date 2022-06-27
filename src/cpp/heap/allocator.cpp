@@ -1,6 +1,7 @@
 #include "allocator.h"
 #include "../scheduling/scheduler.h"
 #include <stddef.h>
+#include "../misc/memory.h"
 
 // Overload heap allocation operators.
 void* operator new(size_t size) {
@@ -11,9 +12,13 @@ void* operator new[](size_t size) {
     return heap::malloc(size);
 }
 
-void operator delete(void* ptr, size_t size) {
+void operator delete(void* ptr) {
     heap::free(ptr);
 };
+
+void operator delete(void* ptr, size_t size) {
+    heap::free(ptr);
+}
 
 uint32_t heap::get_allocated_bytes() {
     return total_reserved_bytes;
@@ -27,7 +32,42 @@ uint32_t heap::get_reserved_blocks() {
     return reserved_blocks;
 }
 
-void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_id) {
+extern "C" void* heap::realloc(void* ptr, uint32_t size, bool reset, uint32_t process_id) {
+    if (process_id == 0) process_id = 
+        scheduler::current_thread == nullptr ? 0 : scheduler::current_thread->process->id;
+
+    // Find block.
+    for (uint32_t i = 0; i <= total_blocks; i++) {
+        record meta = data_meta[i];
+
+        // If block isn't reserved.
+        if (!meta.reserved) continue;
+        
+        // If address does not match block.
+        if (meta.location != ptr) continue;
+
+        // If size is smaller don't relocate.
+        if (size <= meta.size) {
+            return ptr;
+        }
+
+        // Create/find a new block.
+        void* new_block = malloc(size, reset, false, process_id);
+
+        // Copy over previous block data.
+        memcpy(new_block, ptr, meta.size);
+
+        // Free old block.
+        free(ptr);
+        
+        return new_block;
+    }
+
+    // If block isn't found, act as a normal malloc.
+    return malloc(size, reset, false, process_id);
+}
+
+extern "C" void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_id) {
     // Will be made thread-wide eventually.
     if (process_id == 0) process_id = 
         scheduler::current_thread == nullptr ? 0 : scheduler::current_thread->process->id;
@@ -94,7 +134,7 @@ void* heap::malloc(uint32_t size, bool reset, bool skip_reuse, uint32_t process_
     return data_meta[block_id].location;
 }
 
-bool heap::free(void* ptr) {
+extern "C" bool heap::free(void* ptr) {
     for (uint32_t i = 0; i <= total_blocks; i++) {
         record meta = data_meta[i];
 
@@ -111,6 +151,22 @@ bool heap::free(void* ptr) {
         // Update statistics.
         total_reserved_bytes -= meta.size;
         reserved_blocks -= 1;
+
+        return true;
+    }
+
+    return false;
+}
+
+extern "C" bool heap::allocated(void* ptr) {
+    for (uint32_t i = 0; i <= total_blocks; i++) {
+        record meta = data_meta[i];
+
+        // If block isn't reserved.
+        if (!meta.reserved) continue;
+        
+        // If address does not match block.
+        if (meta.location != ptr) continue;
 
         return true;
     }
