@@ -2,7 +2,7 @@
 
 #include "stdint.h"
 
-namespace random {
+class random {
     public:    
         uint32_t next();
         void set_seed(uint32_t seed);
@@ -10,4 +10,4 @@ namespace random {
     
     private:
         uint32_t entropy_value = 2312255697;
-}
+};
