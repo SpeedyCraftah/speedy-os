@@ -1,5 +1,6 @@
 #include "conversions.h"
 
+#include "smart_ptr.h"
 #include "stdint.h"
 #include "../structures/string.h"
 #include "../misc/str.h"
@@ -24,6 +25,22 @@ char* conversions::s_int_to_char(int i) {
     if (loc == 11) text[--loc] = '0';
     if (neg) text[--loc] = '-';
     
+    return &text[loc];
+}
+
+char* conversions::u_int_to_char(uint64_t i) {
+    static char text[12];
+    text[11] = 0;
+
+    int loc = 11;
+
+    while (i) {
+        text[--loc] = '0' + (i % 10);
+        i /= 10;
+    }
+
+    if (loc == 11) text[--loc] = '0';
+
     return &text[loc];
 }
 
@@ -101,20 +118,29 @@ int conversions::char_to_s_int(char* text) {
     return total_number;
 }
 
-inline double conversions::extract_fraction(double num) {
+inline float conversions::extract_fraction(float num) {
     return num - (uint32_t)num;
 }
 
-structures::string conversions::s_double_to_char(double num, uint32_t precision, bool roundLastImprecise) {
+smart_ptr<char> conversions::s_float_to_char(float num, uint32_t precision, bool roundLastImprecise) {
     // Setup string.
-    structures::string string;
+    char* string = (char*)heap::malloc(20);
+    uint32_t string_i = 0;
 
-    // Add integer part to string.
-    string.concat(s_int_to_char((uint32_t)num))
-        .concat(".");
+    char* whole_number = s_int_to_char((uint32_t)num);
+
+    // Copy whole number to string.
+    while (whole_number[string_i] != '\0') {
+        string[string_i] = whole_number[string_i];
+        string_i++;
+    }
+
+    // Add decimal point.
+    string[string_i] = '.';
+    string_i++;
 
     // Get decimal part of number.
-    double decimal = extract_fraction(num);
+    float decimal = extract_fraction(num);
 
     uint32_t i = 0;
 
@@ -137,7 +163,17 @@ structures::string conversions::s_double_to_char(double num, uint32_t precision,
     }
 
     // Add floating part to string.
-    string.concat(s_int_to_char(decimal_int));
+    char* decimal_number = s_int_to_char(decimal_int);
+    uint32_t decimal_i = 0;
+
+    while (decimal_number[decimal_i] != '\0') {
+        string[string_i] = decimal_number[decimal_i];
+        string_i++;
+        decimal_i++;
+    }
+
+    // Add terminator.
+    string[string_i] = '\0';
 
     // Copy string and return smart pointer.
     return string;
