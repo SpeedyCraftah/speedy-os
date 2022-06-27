@@ -1,7 +1,8 @@
-%include "/home/speedy/Code/speedyosv22/src/asm/scheduling/utils.asm"
+%include "/mnt/c/Users/jacek/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
 extern temporary_registers
 extern handle_timer_tick
+extern temporary_eip
 
 global INTERRUPT_33
 
@@ -14,7 +15,7 @@ INTERRUPT_33:
 
     ; Save returning program EIP to temporary register.
     mov eax, [esp]
-    mov [temporary_registers_eip], eax
+    mov [ecx+32], eax
 
     ; Jump to higher level interrupt handler.
     mov [esp], dword .far_return
