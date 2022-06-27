@@ -51,13 +51,16 @@ namespace graphics {
           data, width * scale, height * scale
       ).ptr();
 
+      // Take in a custom colour modifier.
+      uint32_t colour = fill_colour;
+
       for (int y = 0; y < height * scale; y++) {
           uint32_t y_value = y + y_start + offset_y;
           uint32_t index = (y * (width * scale));
 
           for (int x = 0; x < width * scale; x++) {
               if (resized_data[index + x] == 1) {
-                graphics::draw_pixel(x_start + x + offset_x, y_value, outline_colour);
+                graphics::draw_pixel(x_start + x + offset_x, y_value, colour);
               } 
           }
       }
@@ -66,6 +69,27 @@ namespace graphics {
 
       i++;
     }
+  }
+
+  uint32_t compute_text_width(uint16_t* font, char* str, float scale) {
+    uint32_t i = 0;
+    uint32_t total = 0;
+
+    while (true) {
+      char character = str[i];
+      if (character == '\0') break;
+
+      // Get character width from font interpreter.
+      uint32_t width = font_interpreter::char_width(font, character);
+
+      // Add onto total taking scale into account (with x-offset).
+      total += (width * scale) + 2;
+
+      i++;
+    }
+
+    // Return total.
+    return total;
   }
   
   void draw_line(uint32_t x, uint32_t y, uint32_t length, bool vertical) {
@@ -76,6 +100,70 @@ namespace graphics {
     } else {
       for (uint32_t j = 0; j < outline_width; j++) {
         for (uint32_t i = 0; i < length; i++) draw_pixel(x + j, y + i, outline_colour);
+      }
+    }
+  }
+
+  // Draws a line from start to end using the Bresenham line algorithm.
+  void draw_line_bresenham(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y) {
+    // Calculate deltas.
+    int32_t delta_x = end_x - start_x;
+    int32_t delta_y = end_y - start_y;
+
+    // Calculate error.
+    int32_t error = 0;
+
+    // Calculate step.
+    int32_t step_x = 1;
+    int32_t step_y = 1;
+
+    if (delta_x < 0) {
+      step_x = -1;
+      delta_x = -delta_x;
+    }
+
+    if (delta_y < 0) {
+      step_y = -1;
+      delta_y = -delta_y;
+    }
+
+    // Draw line.
+    for (uint32_t i = 0; i < delta_x + 1; i++) {
+      draw_pixel(start_x, start_y, outline_colour);
+
+      error += delta_y;
+
+      if (error > delta_x) {
+        error -= delta_x;
+        start_y += step_y;
+      }
+
+      start_x += step_x;
+    }
+  }
+
+  void draw_rectangle_from(uint32_t* buffer, uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill) {
+    uint32_t horizontal_start_1 = (y * graphics::resolution_width) + x;
+    uint32_t horizontal_start_2 = ((y + height_length) * graphics::resolution_width) + x + 1;
+    
+    // Draw horizontal lines from location in buffer.
+    for (uint32_t i = 0; i < width_length; i++) {
+      draw_pixel(x + i, y, buffer[horizontal_start_1 + i]);
+      draw_pixel(x + i + 1, y + height_length, buffer[horizontal_start_2 + i]);
+    }
+    
+    // Draw vertical lines.
+    for (uint32_t i = 0; i < height_length; i++) {
+      draw_pixel(x, y + i + 1, buffer[((y + i + 1) * 800) + x]);
+      draw_pixel(x + width_length, y + i, buffer[((y + i) * 800) + (x + width_length)]);
+    }
+    
+    // Fill rectangle.
+    if (fill) {
+      for (uint32_t i = 0; i < height_length - 1; i++) {
+        for (uint32_t j = 0; j < width_length - 1; j++) {
+          draw_pixel(x + j + 1, y + i + 1, buffer[((y + i + 1) * 800) + (x + j + 1)]);
+        }
       }
     }
   }

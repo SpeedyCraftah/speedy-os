@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdint.h"
+#include "fonts.h"
 
 // Graphics manipulation software, inspired partially by HTML canvas.
 
@@ -78,13 +79,77 @@ namespace graphics {
     return *(double_buffer + x);
   }
 
+  // Computes the width of the text in pixels.
+  uint32_t compute_text_width(uint16_t* font, char* str, float scale = 1);
+
+  void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale = 1);
+
   // Draws a string of any size.
-  void draw_text(uint16_t* font, uint32_t x, uint32_t y, char* str, float scale);
+  template <typename CMF>
+  void draw_text_mod(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, CMF colour_modifier, float scale = 1) {
+    uint32_t i = 0;
+    uint32_t offset_x = 0;
+    uint32_t offset_y = 0;
+
+    while (true) {
+      uint8_t character = str[i];
+
+      if (character == 0) {
+        break;
+      } else if (character == '\n') {
+        // Get width of likely highest character (all characters have same height right now).
+        uint8_t height_offset = font_interpreter::char_height(font, '!') * scale;
+
+        // Add offset.
+        offset_y += height_offset + 1;
+
+        // Reset X.
+        offset_x = 0;
+
+        i++;
+        continue;
+      }
+
+      // Load character.
+      uint16_t* data = font_interpreter::load_char(font, str[i]);
+
+      uint16_t width = data[0];
+      uint16_t height = data[1];
+
+      auto resized_data = font_interpreter::resize_char_nn(
+          data, width * scale, height * scale
+      ).ptr();
+
+      // Take in a custom colour modifier.
+      uint32_t colour = colour_modifier(character, i);
+
+      for (int y = 0; y < height * scale; y++) {
+          uint32_t y_value = y + y_start + offset_y;
+          uint32_t index = (y * (width * scale));
+
+          for (int x = 0; x < width * scale; x++) {
+              if (resized_data[index + x] == 1) {
+                graphics::draw_pixel(x_start + x + offset_x, y_value, colour);
+              } 
+          }
+      }
+
+      offset_x += 2 + width * scale;
+
+      i++;
+    }
+  }
+
+  // Draws a non-straight line using the Bresenham algorithm.
+  void draw_line_bresenham(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
   
   // Draws a rectangle. Outline width will be taken into account in the future.
   // X - Top left corner coordinate. Y - Top left corner Y coordinate. Length - Length in pixels from corner points.
   void draw_rectangle(uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill = false);
   
+  // Draws a rectangle. Same as above except colour will be taken from the location at the buffer.
+  void draw_rectangle_from(uint32_t* buffer, uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill = false);
+
   // Draws a line, straight or diagonal.
   // Width will be taken into account in the future.
   void draw_line(uint32_t x, uint32_t y, uint32_t length, bool vertical);
