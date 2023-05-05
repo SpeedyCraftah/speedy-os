@@ -11,3 +11,5 @@ WIP
 - Consolidate scheduler
 - Fix compiler warnings
 - Implement bash-like interface
+
+I had no idea what I was doing when I first started this project including 0 knowledge of assembly and little low-level programming knowledge, so this is quite an achievement?
