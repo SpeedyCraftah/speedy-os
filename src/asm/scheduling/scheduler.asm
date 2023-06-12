@@ -1,6 +1,6 @@
 ; Assembly side of the scheduler.
 
-%include "/mnt/c/Users/jacek/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
+%include "/mnt/c/Users/Speedy/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
 extern temporary_registers
 extern temporary_eip

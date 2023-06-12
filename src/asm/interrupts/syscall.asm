@@ -1,4 +1,4 @@
-%include "/mnt/c/Users/jacek/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
+%include "/mnt/c/Users/Speedy/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
 extern handle_system_call
 extern scheduler_sleep
