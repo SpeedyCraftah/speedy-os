@@ -101,8 +101,9 @@ INTERRUPT_12:
 INTERRUPT_13:
     ISRBody 13
 
-INTERRUPT_14:
-    ISRBody 14
+; removed in favour of paging handler
+;INTERRUPT_14:
+;    ISRBody 14
 
 INTERRUPT_16:
     ISRBody 16
