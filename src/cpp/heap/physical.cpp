@@ -2,8 +2,6 @@
 #include "../scheduling/structures/process.h"
 #include "../io/video.h"
 
-extern "C" void debug();
-
 extern "C" volatile int bpwatch = 0;
 
 namespace physical_allocator {
@@ -78,28 +76,6 @@ namespace physical_allocator {
         // TODO - add boundary checks
         // Start at 100MB.
         uint32_t offset = 104857600 / 4096;
-
-        /*
-        while (true) {
-            bool no_space = false;
-            for (uint32_t i = 0; i < count; i++) {
-                PageEntry* entry = fetch_page_index(process, offset + i, true);
-                if (entry == nullptr) [[unlikely]] {
-                    kernel::panic("Fetch page index lookup failed!");
-                }
-
-                // Check if entry is available.
-                if (*(uint32_t*)entry == 0) continue;
-                else {
-                    offset += i + 1;
-                    no_space = true;
-                    break;
-                }
-            }
-
-            if (!no_space) break;
-        }
-        */
     
         find_entry_loop:
         for (uint32_t i = 0; i < count; i++) {
