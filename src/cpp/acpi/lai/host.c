@@ -5,21 +5,21 @@
 
 void printnl();
 void printf(char* input, uint32_t text_colour, uint32_t bg_colour);
-void* malloc(uint32_t size, char reset, char skip_reuse, uint32_t process_id);
-void* realloc(void* ptr, uint32_t size, bool reset, uint32_t process_id);
-bool free(void* ptr);
+void* kmalloc(uint32_t size, char reset);
+void* krealloc(void* ptr, uint32_t size);
+bool kfree(void* ptr);
 void printf_log(char* name, char* input, const uint32_t name_colour, const uint32_t input_colour);
 
 void* laihost_malloc(size_t size) {
-    return malloc(size, false, false, 0);
+    return kmalloc(size, false);
 }
 
 void* laihost_realloc(void* ptr, size_t newsize, size_t oldsize) {
-    return realloc(ptr, newsize, true, 0);
+    return krealloc(ptr, newsize);
 }
 
 void laihost_free(void* ptr, size_t size) {
-    free(ptr);
+    kfree(ptr);
 }
 
 struct RSDPDescriptor {
