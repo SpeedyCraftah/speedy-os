@@ -15,6 +15,7 @@ struct Registers {
     uint32_t edi = 0; // 28
     uint32_t eip = 0; // 32
     uint8_t flags = 0; // 36
+    char fpu_state[108]; // 37
 };
 
 enum ThreadExecutionPolicy {
@@ -46,5 +47,6 @@ struct Thread {
         uint32_t resume_time;
     } suspension_details;
     
-    void* stack;
+    void* virtual_stack;
+    void* physical_stack;
 };
