@@ -11,13 +11,18 @@
 #include "structures/thread.h"
 #include "events.h"
 #include "../misc/memory.h"
+#include "../heap/physical.h"
+#include "../paging/paging.h"
 
 // remove after
-#include "../software/system/speedyshell/main.h"
+//#include "../software/system/speedyshell/main.h"
 #include "../misc/conversions.h"
-#include "../software/include/sys.h"
+//#include "../software/include/sys.h"
 #include "../chips/pit.h"
 #include "../misc/assert.h"
+#include "../io/video.h"
+
+extern "C" volatile int bpwatch;
 
 // Temporary registers switched to pointer for performance.
 extern "C" Registers placeholder_registers = Registers();
@@ -28,6 +33,7 @@ extern "C" void* temporary_eip = nullptr;
 extern "C" void scheduler_sleep();
 extern "C" void scheduler_execute();
 extern "C" void save_fpu_boot_state();
+extern "C" void debug();
 
 // If defined the scheduler debug runtime tools will be compiled and enabled.
 // Also enables asserts in areas where there is performance impact of doing so.
@@ -97,9 +103,20 @@ namespace scheduler {
         assert_eq("sch.procs.1.id.exists", process_list->exists(scheduler_event_process->id), true);
     }
 
+    // TODO - make paging inline asm functions
+    // TODO - dont disable paging, switch to kernel
     extern "C" void handle_context_switch() {
+        bpwatch = 1;
+
         // If a thread was previously running.
         if (current_thread != nullptr) {
+            // Disable paging.
+            if (!current_thread->process->flags.system_process) paging::disable();
+
+            // Copy registers.
+            // TODO - remove when using reference again.
+            memcpy(&scheduler::current_thread->registers, temporary_registers, sizeof(Registers));
+
             float cpu_time_used =
                 timer_preempt ? time_slice_ms : (time_slice_ms - chips::pit::fetch_channel_0_remaining_countdown());
             
@@ -133,7 +150,7 @@ namespace scheduler {
             ThreadEvent event = thread_event_iterator.next();
 
             #ifdef SCHEDULER_DEBUG
-                assert_eq("sch.events.thread.heap", heap::allocated(event.thread), true);
+                assert_eq("sch.events.thread.heap", kallocated(event.thread), true);
                 uint32_t old_ev_length = thread_event_queue->get_size();
             #endif
 
@@ -159,14 +176,14 @@ namespace scheduler {
             event.thread->state.processing_event = true;
 
             // Create a stack frame.
-            uint32_t* stack = 
-                reinterpret_cast<uint32_t*>(event.thread->registers.esp) - 3;
+            uint32_t virtual_difference = reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8192 - sizeof(uint32_t) - event.thread->registers.esp;
+            uint32_t* physical_stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(event.thread->physical_stack) + 8192 - sizeof(uint32_t) - virtual_difference);
 
             // Push the event data.
-            *(stack + 1) = event.event_id;
-            *(stack + 2) = event.event_data;
+            *(physical_stack - 1) = event.event_id;
+            *(physical_stack) = event.event_data;
 
-            event.thread->registers.esp = reinterpret_cast<uint32_t>(stack);
+            event.thread->registers.esp -= sizeof(uint32_t) * 2;
 
             // Remove the event from the queue.
             thread_event_iterator.remove();
@@ -217,6 +234,7 @@ namespace scheduler {
                     continue;
                 }
             }
+            bpwatch = 10;
 
             // Execute the thread.
 
@@ -224,8 +242,18 @@ namespace scheduler {
             current_thread = thread;
 
             // Load threads registers to temporary storage.
-            temporary_registers = &thread->registers;
+            //temporary_registers = &thread->registers;
             temporary_eip = reinterpret_cast<void*>(thread->registers.eip);
+
+            // TODO - switch back to reference as copying is slow for paging
+            temporary_registers = &placeholder_registers;
+            memcpy(&placeholder_registers, &thread->registers, sizeof(thread->registers));
+
+            // Enable paging.
+            // TODO - make switching to paging assembly if possible because C++ may break
+            if (!thread->process->flags.system_process) {
+                paging::enable(thread->process->paging.directories);
+            }
 
             // Switch to assembly side of scheduler to begin execution.
             return scheduler_execute();
@@ -262,8 +290,8 @@ namespace scheduler {
         process->threads = new structures::linked_array<Thread*>(8);
         process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
 
-        assert_eq("sch.procs.name.heap", heap::allocated(process->name), true);
-        assert_eq("sch.procs.heap", heap::allocated(process->name), true);
+        assert_eq("sch.procs.name.heap", kallocated(process->name), true);
+        assert_eq("sch.procs.heap", kallocated(process->name), true);
 
         // Add the process to the map.
         process_list->set(process->id, process);
@@ -273,24 +301,71 @@ namespace scheduler {
         // Create main thread.
         // Virtual processes have no running thread.
         if (!flags.virtual_process) {
+            video::printf("Starting");
+            debug();
             Thread* thread = new Thread;
             thread->id = next_thread_id++;
             thread->process = process;
             thread->flags.main_thread = true;
             thread->registers.eip = reinterpret_cast<uint32_t>(entry);
-            
+
+            process->paging.pixel_mapping_address = 0;
+
             // Load the setup FPU state.
             memcpy(thread->registers.fpu_state, fpu_boot_state, sizeof(fpu_boot_state));
 
-            // Create an 8KB stack.
-            thread->stack = heap::malloc(8192);
+            // Allocate a page directory.
+            process->paging.directories = (PageDirectory*)physical_allocator::alloc_physical_page();
+
+            // Set up the page directories.
+            for (uint32_t i = 0; i < 1024; i++) {
+                PageDirectory& directory = process->paging.directories[i];
+
+                // These properties are handled on a page-by-page level.
+                directory.UserSupervisor = true;
+                directory.Present = false;
+                directory.ReadWrite = true;
+            }
+
+            // Map first 100M of virtual memory to physical.
+            // Allocate directories needed for 100M of memory.
+            for (uint32_t i = 0; i < 104857600 / 4096 / 1024; i++) {
+                PageEntry* tables = (PageEntry*)physical_allocator::alloc_physical_page();
+
+                PageDirectory& directory = process->paging.directories[i];
+                directory.Present = true;
+                directory.Address = paging::address_to_pi(tables);
+            
+                // Map the individual pages.
+                for (uint32_t j = 0; j < 1024; j++) {
+                    PageEntry& entry = tables[j];
+                    entry.Address = (i * 1024) + j;
+                    entry.Present = true;
+                    entry.ReadWrite = true;
+                    entry.Global = true;
+                }
+            }
+
+            // TODO - temporarily map graphics memory to space
+
+            // Allocate 2 pages for the stack.
+            void* physical_stack_offset = physical_allocator::alloc_physical_page(2, true);
+            uint32_t virtual_stack_offset = physical_allocator::alloc_virtual_pages(process, 2, 0, true);
+
+            // Map to a virtual address.
+            // TODO - map to some pre-set area.
+            physical_allocator::map_virtual_pages(process, paging::address_to_pi(physical_stack_offset), virtual_stack_offset, 2);
+
+            // Set the stack addresses on thread.
+            thread->physical_stack = physical_stack_offset;
+            thread->virtual_stack = paging::pi_to_address(virtual_stack_offset);
 
             // Point to top of stack.
-            thread->registers.esp = reinterpret_cast<uint32_t>(thread->stack) + 8192;
+            thread->registers.esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
 
             // Add the thread to the map.
             thread_list->set(thread->id, thread);
-            
+        
             // Add thread to process.
             process->threads->push(thread);
 
@@ -311,23 +386,35 @@ namespace scheduler {
         thread->process = process;
         thread->registers.eip = reinterpret_cast<uint32_t>(entry);
 
-        assert_eq("sch.procs.threads.new.heap", heap::allocated(thread), true);
-        assert_eq("sch.procs.threads.new.proc.heap", heap::allocated(process), true);
+        assert_eq("sch.procs.threads.new.heap", kallocated(thread), true);
+        assert_eq("sch.procs.threads.new.proc.heap", kallocated(process), true);
 
         // Load the setup FPU state.
         memcpy(thread->registers.fpu_state, fpu_boot_state, sizeof(fpu_boot_state));
         
-        // Create an 8KB stack.
-        thread->stack = heap::malloc(8192);
+        // Allocate 2 pages for the stack.
+        void* physical_stack_offset = physical_allocator::alloc_physical_page(2, true);
+        uint32_t virtual_stack_offset = physical_allocator::alloc_virtual_pages(process, 2, 0, true);
+
+        // Map to a virtual address.
+        // TODO - map to some pre-set area.
+        physical_allocator::map_virtual_pages(process, paging::address_to_pi(physical_stack_offset), virtual_stack_offset, 2);
+
+        // Set the stack addresses on thread.
+        thread->physical_stack = physical_stack_offset;
+        thread->virtual_stack = paging::pi_to_address(virtual_stack_offset);
 
         // Point to top of stack.
-        thread->registers.esp = reinterpret_cast<uint32_t>(thread->stack) + 8192;
+        thread->registers.esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
 
         // Place the capture on the stack.
         thread->registers.esp -= sizeof(uint32_t) * 2;
-        uint32_t* stack = reinterpret_cast<uint32_t*>(thread->registers.esp);
-        stack[1] = reinterpret_cast<uint32_t>(capture);
-        
+        //uint32_t* stack = reinterpret_cast<uint32_t*>(thread->registers.esp);
+
+        // TODO - check this probably doesnt work.
+        uint32_t* stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(physical_stack_offset) + 8192 - sizeof(uint32_t));
+        *stack = reinterpret_cast<uint32_t>(capture);
+
         // Add the thread to the map.
         thread_list->set(thread->id, thread);
 
@@ -379,11 +466,12 @@ namespace scheduler {
             if (q_thread == thread) thread_execution_iterator.remove();
         }
 
+
         // Deallocate and remove.
-        heap::free(thread->stack);
+        physical_allocator::free_virtual_page(thread->process, paging::address_to_pi(thread->virtual_stack), 2);
         delete thread;
 
-        assert_eq("sch.procs.threads.delete.heap", heap::allocated(thread), false);
+        assert_eq("sch.procs.threads.delete.heap", kallocated(thread), false);
     }
 
     void kill_process(Process* process, uint32_t code) {
@@ -407,21 +495,39 @@ namespace scheduler {
         // Emit process end event.
         scheduler::events::emit_event(scheduler_event_process, 2, process->id);
 
-        // Free all memory used by process.
-        heap::free_by_process_id(process->id);
+        // Free all page directories and physical pages used by process.
+        for (uint32_t i = 0; i < 1024; i++) {
+            PageDirectory& directory = process->paging.directories[i];
+            if (!directory.Present) continue;
+
+            PageEntry* entries = (PageEntry*)paging::pi_to_address(directory.Address);
+            for (uint32_t j = 0; j < 1024; j++) {
+                PageEntry& entry = entries[j];
+                if (!entry.Present || (entry.KernelFlags & KernelPageFlags::PROCESS_RESERVED) == 0) continue;
+
+                // Free the physical page.
+                physical_allocator::free_physical_page(paging::pi_to_address(entry.Address));
+            }
+        }
+
+        // Free root page directory.
+        physical_allocator::free_physical_page(process->paging.directories);
 
         // Free process objects.
         delete process->threads;
         delete process->hooked_threads;
-        heap::free(process->name);
+        kfree(process->name);
 
         // Remove the process itself.
         delete process;
 
-        assert_eq("sch.procs.delete.heap", heap::allocated(process), false);
+        assert_eq("sch.procs.delete.heap", kallocated(process), false);
     }
 
     void manual_context_switch_return() {
+        // Disable paging.
+        if (!scheduler::current_thread->process->flags.system_process) paging::disable();
+
         // Schedule the thread.
         thread_execution_queue->push(current_thread);
 
