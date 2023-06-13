@@ -3,6 +3,7 @@
 #include "stdint.h"
 
 #include "../../structures/linked_array.h"
+#include "../../paging/paging.h"
 
 struct ProcessFlags {
     uint8_t system_process : 1;
@@ -22,8 +23,14 @@ struct Process {
         bool suspended : 1;
     } state;
 
+    struct paging {
+        PageDirectory* directories;
+        uint32_t pixel_mapping_address;
+    } paging;
+
     structures::linked_array<Thread*>* threads;
     structures::linked_array<ThreadEventListener>* hooked_threads;
 
     char* name;
+    float total_cpu_time;
 };
