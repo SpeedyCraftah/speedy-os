@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../heap/allocator.h"
+#include "../heap/kernelalloc.h"
 
 template <class T>
 class smart_ptr {
@@ -10,7 +10,7 @@ class smart_ptr {
         }
 
         ~smart_ptr() {
-            if (dealloc) heap::free(storage_ptr);
+            if (dealloc) kfree(storage_ptr);
         }
 
         // Overload casting operator.
@@ -45,7 +45,7 @@ class smart_ptr {
 
         // Overload delete operator.
         void operator delete(void* ptr) {
-            heap::free(ptr);
+            kfree(ptr);
         }
 
         // Returns the raw pointer.

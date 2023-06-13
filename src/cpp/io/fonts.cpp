@@ -2,7 +2,7 @@
 
 namespace font_interpreter {
     smart_ptr<uint16_t> resize_char_nn(uint16_t* font, uint8_t target_width, uint8_t target_height) {
-        uint16_t* temp = (uint16_t*)heap::malloc(target_width * target_height * sizeof(uint16_t));
+        uint16_t* temp = (uint16_t*)kmalloc(target_width * target_height * sizeof(uint16_t));
     
         uint16_t width = font[0];
         uint16_t height = font[1];

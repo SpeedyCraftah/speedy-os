@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../heap/allocator.h"
+#include "../heap/kernelalloc.h"
 #include "../panic/panic.h"
 #include "stdint.h"
 
@@ -18,7 +18,7 @@ namespace structures {
     class linked_array {
         public:
             linked_array(uint32_t initialSize = 10) {
-                storage_ptr = (entry*)heap::malloc(sizeof(entry) * initialSize);
+                storage_ptr = (entry*)kmalloc(sizeof(entry) * initialSize);
                 capacity = initialSize;
 
                 // Add head and tail entries.
@@ -36,12 +36,12 @@ namespace structures {
 
             ~linked_array() {
                 // Free storage pointer.
-                heap::free(storage_ptr);
+                kfree(storage_ptr);
             }
 
             // I was forced to make this method due to countless early destruction calls (thanks C++).
             bool allocated() {
-                return heap::allocated(storage_ptr);
+                return kallocated(storage_ptr);
             }
 
             struct entry {
@@ -283,7 +283,7 @@ namespace structures {
                 next_index_2 = nullptr;
 
                 // Free old area.
-                heap::free(storage_ptr);
+                kfree(storage_ptr);
 
                 capacity = newCapacity;
                 storage_ptr = new_storage_ptr;

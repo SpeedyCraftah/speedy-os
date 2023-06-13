@@ -1,5 +1,5 @@
 #include "./string.h"
-#include "../heap/allocator.h"
+#include "../heap/kernelalloc.h"
 #include "../misc/smart_ptr.h"
 #include "../io/video.h"
 #include "../misc/str.h"
@@ -9,7 +9,7 @@
 
 structures::string::string(char character) {
     _length = 2;
-    storage_ptr = (char*)heap::malloc(2);
+    storage_ptr = (char*)kmalloc(2);
 
     storage_ptr[0] = character;
     storage_ptr[1] = '\0';
@@ -42,11 +42,11 @@ structures::string::string(char* str) {
 }
 
 structures::string::~string() {
-    heap::free(storage_ptr);
+    kfree(storage_ptr);
 }
 
 bool structures::string::allocated() {
-    return heap::allocated(storage_ptr);
+    return kallocated(storage_ptr);
 }
 
 unsigned int structures::string::length() {
@@ -80,7 +80,7 @@ structures::string& structures::string::concat(char src) {
     new_storage_ptr[srcLength + currentLength] = '\0';
 
     // Deallocate old storage pointer.
-    if (storage_ptr != nullptr) heap::free(storage_ptr);
+    if (storage_ptr != nullptr) kfree(storage_ptr);
 
     // Assign new storage pointer.
     storage_ptr = new_storage_ptr;
@@ -125,7 +125,7 @@ structures::string& structures::string::concat(char* src) {
     new_storage_ptr[srcLength + currentLength] = '\0';
 
     // Deallocate old storage pointer.
-    if (storage_ptr != nullptr) heap::free(storage_ptr);
+    if (storage_ptr != nullptr) kfree(storage_ptr);
 
     // Assign new storage pointer.
     storage_ptr = new_storage_ptr;
@@ -249,7 +249,7 @@ char* structures::string::char_reference() {
 smart_ptr<char> structures::string::char_copy() {
     if (storage_ptr == nullptr) kernel::panic("Copy attempted on an uninitialised string.");
 
-    auto str = smart_ptr<char>((char*)heap::malloc(_length));
+    auto str = smart_ptr<char>((char*)kmalloc(_length));
 
     int i = 0;
 

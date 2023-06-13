@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../heap/allocator.h"
+#include "../heap/kernelalloc.h"
 #include "../misc/str.h"
 #include "../panic/panic.h"
 #include "../misc/algorithm.h"
@@ -19,7 +19,7 @@ namespace structures {
             map(uint32_t initialCapacity = 10) {
                 capacity = initialCapacity;
 
-                storage_ptr = (entry*)heap::malloc(sizeof(entry) * initialCapacity, true);
+                storage_ptr = (entry*)kmalloc(sizeof(entry) * initialCapacity, true);
 
                 for (int i = 0; i < capacity; i++) {
                     storage_ptr[i] = entry();
@@ -27,12 +27,12 @@ namespace structures {
             }
 
             ~map() {
-                heap::free(storage_ptr);
+                kfree(storage_ptr);
             }
 
             // I was forced to make this method due to countless early destruction calls (thanks C++).
             bool allocated() {
-                return heap::allocated(storage_ptr);
+                return kallocated(storage_ptr);
             }
 
             uint32_t get_capacity() {
@@ -50,7 +50,7 @@ namespace structures {
                 uint32_t oldCapacity = capacity;
 
                 entry* old_storage_ptr = storage_ptr;
-                entry* new_storage_ptr = (entry*)heap::malloc(sizeof(entry) * newCapacity, false);
+                entry* new_storage_ptr = (entry*)kmalloc(sizeof(entry) * newCapacity, false);
 
                 // Replace current storage with new storage for easy rehashing.
                 storage_ptr = new_storage_ptr;
@@ -73,7 +73,7 @@ namespace structures {
                 }
 
                 // Finally free the old table from memory.
-                heap::free(old_storage_ptr);
+                kfree(old_storage_ptr);
             }
 
             ValT& fetch(uint32_t key) {

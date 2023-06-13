@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../heap/allocator.h"
+#include "../heap/kernelalloc.h"
 #include "../panic/panic.h"
 
 namespace structures {
@@ -16,7 +16,7 @@ namespace structures {
                     kernel::panic("A flexible array has been created with a size which exhausts a signed integer.");
                 }
     
-                storage_ptr = (entry*)heap::malloc(sizeof(entry) * initialSize);
+                storage_ptr = (entry*)kmalloc(sizeof(entry) * initialSize);
                 capacity = initialSize;
                 this->dealloc_entries = dealloc_entries;
 
@@ -38,16 +38,16 @@ namespace structures {
                         // The syntax is unusual since it bypasses
                         // C++ compile-time safety checks which
                         // are over-sensitive due to templating.
-                        heap::free(*((void**)(&e->value)));
+                        kfree(*((void**)(&e->value)));
                     }
                 }
 
-                heap::free(storage_ptr);
+                kfree(storage_ptr);
             }
 
             // I was forced to make this method due to countless early destruction calls (thanks C++).
             bool allocated() {
-                return heap::allocated(storage_ptr);
+                return kallocated(storage_ptr);
             }
 
             void resize(unsigned int newCapacity, bool unsafe_resize = false) {
@@ -64,7 +64,7 @@ namespace structures {
                 }
 
                 // Create a new storage area.
-                entry* new_storage_ptr = (entry*)heap::malloc(newCapacity * sizeof(entry), false);
+                entry* new_storage_ptr = (entry*)kmalloc(newCapacity * sizeof(entry), false);
 
                 // Move data from old area to new area.
                 for (int i = 0; i < capacity; i++) {
@@ -72,7 +72,7 @@ namespace structures {
                 }
 
                 // Free old area.
-                heap::free(storage_ptr);
+                kfree(storage_ptr);
 
                 capacity = newCapacity;
                 storage_ptr = new_storage_ptr;

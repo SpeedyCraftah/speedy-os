@@ -124,7 +124,7 @@ inline float conversions::extract_fraction(float num) {
 
 smart_ptr<char> conversions::s_float_to_char(float num, uint32_t precision, bool roundLastImprecise) {
     // Setup string.
-    char* string = (char*)heap::malloc(20);
+    char* string = (char*)kmalloc(20);
     uint32_t string_i = 0;
 
     char* whole_number = s_int_to_char((uint32_t)num);

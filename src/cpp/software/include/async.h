@@ -1,6 +1,6 @@
-#pragma once
+/*#pragma once
 
-#include "../../heap/allocator.h"
+#include "../../heap/kernelalloc.h"
 #include "../../panic/panic.h"
 #include "../../misc/conversions.h"
 #include "sys.h"
@@ -419,4 +419,4 @@ class async_void {
         uint32_t parent_thread_id = 0;
         void* function;
         void* param_ptr = nullptr;
-};
+};*/
