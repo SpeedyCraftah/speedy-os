@@ -7,6 +7,8 @@
 #include "structures/events.h"
 #include "structures/thread.h"
 #include "../chips/pit.h"
+#include "../heap/physical.h"
+#include "../misc/memory.h"
 
 #include "../kernel.h"
 
@@ -36,6 +38,8 @@ extern "C" Registers* temporary_registers;
 // ID 18 = Unpark a thread.
 // ID 19 = Upgrade the graphics mode.
 // ID 20 = Voluntarily preempt the execution.
+// ID 21 = Allocate x virtual pages with flags.
+// ID 22 = Free a virtual page with flags.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
@@ -54,12 +58,20 @@ new param for data (1)
 
 */
 
-// On system call (called from external program).
-extern "C" uint32_t __attribute__((fastcall)) handle_system_call() {
+extern "C" volatile int bpwatch;
+
+uint32_t handle_system_call_hl() {
+    // Copy registers.
+    // TODO - remove when using reference again.
+    memcpy(&scheduler::current_thread->registers, temporary_registers, sizeof(Registers));
+
     uint32_t id = temporary_registers->ecx;
     uint32_t data = temporary_registers->edx;
 
-    if (id == 1) {
+    if (id == 0) {
+        // my birthday :)
+        temporary_registers->eax = 3009;
+    } else if (id == 1) {
         if (data == 0) temporary_registers->eax = scheduler::elapsed_ms;
         else if (data == 1) temporary_registers->eax = scheduler::current_thread->process->id;
         else if (data == 2) temporary_registers->eax = scheduler::current_thread->id;
@@ -88,11 +100,11 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call() {
         return 1;
     // Todo - make memory allocations thread-wide.
     } else if (id == 4) {
-        uint8_t* memory_ptr = (uint8_t*)heap::malloc(data, true, false, scheduler::current_thread->process->id);
+        uint8_t* memory_ptr = (uint8_t*)kmalloc(data, true);
         temporary_registers->eax = reinterpret_cast<uint32_t>(memory_ptr);
     } else if (id == 5) {
         void* memory_ptr = reinterpret_cast<void*>(data);
-        uint32_t deal_result = heap::free(memory_ptr);
+        uint32_t deal_result = kfree(memory_ptr);
         temporary_registers->eax = deal_result;
     } else if (id == 6) {
         // If there is no event currently running, return.
@@ -328,27 +340,90 @@ extern "C" uint32_t __attribute__((fastcall)) handle_system_call() {
         temporary_registers->eax = 1;
     } else if (id == 19) {
         // If graphics are already upgraded, return.
-        if (speedyshell::pixel_mode) {
+        if (scheduler::current_thread->process->paging.pixel_mapping_address != 0) {
             temporary_registers->eax = 0;
             return 0;
         }
 
-        // Save current shell contents.
-        video::savescr();
+        // If the program is a shell executed program.
+        if (speedyshell::running_process_id == scheduler::current_thread->process->id) {
+            // Save current shell contents.
+            video::savescr();
 
-        // Clear the screen.
-        video::clearscr();
+            // Clear the screen.
+            video::clearscr();
 
-        // Update state.
-        speedyshell::pixel_mode = true;
+            // Update state.
+            speedyshell::pixel_mode = true;
+        }
 
-        // Return success status.
-        temporary_registers->eax = 1;
+        // Allocate and map virtual space for GPU memory.
+        uint32_t* video_address_page = reinterpret_cast<uint32_t*>((reinterpret_cast<uint32_t>(graphics::video_address) / 4096) * 4096);
+        uint32_t address_index = physical_allocator::alloc_virtual_mmped_pages(scheduler::current_thread->process, paging::address_to_pi(video_address_page), ((graphics::resolution_width * graphics::resolution_height) / 4096) + 1);
+        
+        // Add offset into the page since buffer is not page aligned usually.
+        uint32_t map_address = reinterpret_cast<uint32_t>(paging::pi_to_address(address_index)) + (reinterpret_cast<uint32_t>(graphics::video_address) % 4096);
+
+        scheduler::current_thread->process->paging.pixel_mapping_address = address_index;
+
+        // Return mapped address.
+        temporary_registers->eax = reinterpret_cast<uint32_t>(paging::pi_to_address(map_address));
     } else if (id == 20) {
         // Save data and return.
         scheduler::manual_context_switch_return();
         return 1;
+    } else if (id == 21) {
+        uint32_t data2 = temporary_registers->eax;
+        
+        // Allocate pages.
+        uint32_t pi = physical_allocator::alloc_virtual_pages(scheduler::current_thread->process, data, data2);
+    
+        // Return address of pages.
+        temporary_registers->eax = reinterpret_cast<uint32_t>(paging::pi_to_address(pi));
+    } else if (id == 22) {
+        // Check if the address is page aligned or is protected.
+        if (data % 4096 != 0) {
+            // kill process
+        } else if (data < 104857600) {
+            // kill process
+        }
+
+        uint32_t addr = paging::address_to_pi(reinterpret_cast<void*>(data));
+
+        // Fetch the page.
+        PageEntry* page = physical_allocator::fetch_page_index(scheduler::current_thread->process, addr, false);
+        if (page == nullptr) {
+            temporary_registers->eax = false;
+            return 0;
+        }
+
+        // If the page is protected by the kernel.
+        if ((page->KernelFlags & KernelPageFlags::PROCESS_RESERVED) == 0) {
+            // kill process
+        }
+
+        uint32_t data2 = temporary_registers->eax;
+
+        // Free the page.
+        bool result = physical_allocator::free_virtual_page(scheduler::current_thread->process, addr, data2);
+    
+        // Return the result.
+        temporary_registers->eax = result;
     }
 
     return 0;
+}
+
+// On system call (called from external program).
+extern "C" uint32_t __attribute__((fastcall)) handle_system_call() {
+    // Disable paging.
+    if (!scheduler::current_thread->process->flags.system_process) paging::disable();
+
+    uint32_t result = handle_system_call_hl();
+    if (result == 0) {
+        // Enable paging.
+        if (!scheduler::current_thread->process->flags.system_process) paging::enable(scheduler::current_thread->process->paging.directories);
+    }
+
+    return result;
 }
