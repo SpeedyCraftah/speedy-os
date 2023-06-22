@@ -2,7 +2,7 @@
 
 extern handle_system_call
 extern scheduler_sleep
-extern temporary_registers
+extern virtual_temporary_registers
 extern handle_context_switch
 extern temporary_eip
 
@@ -44,7 +44,7 @@ INTERRUPT_128:
   .normal_return:
     ; Replace EIP in case it changed.
     
-    mov eax, [temporary_registers]
+    mov eax, [virtual_temporary_registers]
     mov eax, [eax+32]
     mov [esp], eax
 

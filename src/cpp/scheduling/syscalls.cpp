@@ -61,10 +61,6 @@ new param for data (1)
 extern "C" volatile int bpwatch;
 
 uint32_t handle_system_call_hl() {
-    // Copy registers.
-    // TODO - remove when using reference again.
-    memcpy(&scheduler::current_thread->registers, temporary_registers, sizeof(Registers));
-
     uint32_t id = temporary_registers->ecx;
     uint32_t data = temporary_registers->edx;
 
@@ -120,7 +116,7 @@ uint32_t handle_system_call_hl() {
         scheduler::current_thread->state.processing_event = false;
 
         // Restore registers.
-        scheduler::current_thread->registers = scheduler::current_thread->backup_registers;
+        memcpy(scheduler::current_thread->registers, &scheduler::current_thread->backup_registers, sizeof(Registers));
 
         // Schedule the thread.
         scheduler::thread_execution_queue->push(scheduler::current_thread);

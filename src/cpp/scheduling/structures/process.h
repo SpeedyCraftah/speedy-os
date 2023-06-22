@@ -4,11 +4,17 @@
 
 #include "../../structures/linked_array.h"
 #include "../../paging/paging.h"
+#include "registers.h"
 
 struct ProcessFlags {
     uint8_t system_process : 1;
     uint8_t virtual_process : 1;
     uint8_t interface_provider : 1;
+};
+
+struct ThreadKernelArea {
+    bool allocated;
+    Registers registers;
 };
 
 struct Thread;
@@ -24,6 +30,7 @@ struct Process {
     } state;
 
     struct paging {
+        ThreadKernelArea* kernel_thread_page;
         PageDirectory* directories;
         uint32_t pixel_mapping_address;
     } paging;

@@ -27,6 +27,7 @@ extern "C" volatile int bpwatch;
 // Temporary registers switched to pointer for performance.
 extern "C" Registers placeholder_registers = Registers();
 extern "C" Registers* temporary_registers = nullptr;
+extern "C" void* virtual_temporary_registers = nullptr;
 extern "C" void* temporary_eip = nullptr;
 
 // Import the assembly functions.
@@ -113,10 +114,6 @@ namespace scheduler {
             // Disable paging.
             if (!current_thread->process->flags.system_process) paging::disable();
 
-            // Copy registers.
-            // TODO - remove when using reference again.
-            memcpy(&scheduler::current_thread->registers, temporary_registers, sizeof(Registers));
-
             float cpu_time_used =
                 timer_preempt ? time_slice_ms : (time_slice_ms - chips::pit::fetch_channel_0_remaining_countdown());
             
@@ -167,23 +164,23 @@ namespace scheduler {
             event.thread->state.parked = false;
 
             // Backup the current threads registers.
-            event.thread->backup_registers = event.thread->registers;
+            memcpy(&event.thread->backup_registers, event.thread->registers, sizeof(Registers));
 
             // Set the EIP to the event handler.
-            event.thread->registers.eip = reinterpret_cast<uint32_t>(event.handler);
+            event.thread->registers->eip = reinterpret_cast<uint32_t>(event.handler);
 
             // Mark the thread as busy to queue future events.
             event.thread->state.processing_event = true;
 
             // Create a stack frame.
-            uint32_t virtual_difference = reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8192 - sizeof(uint32_t) - event.thread->registers.esp;
+            uint32_t virtual_difference = reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8192 - sizeof(uint32_t) - event.thread->registers->esp;
             uint32_t* physical_stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(event.thread->physical_stack) + 8192 - sizeof(uint32_t) - virtual_difference);
 
             // Push the event data.
             *(physical_stack - 1) = event.event_id;
             *(physical_stack) = event.event_data;
 
-            event.thread->registers.esp -= sizeof(uint32_t) * 2;
+            event.thread->registers->esp -= sizeof(uint32_t) * 2;
 
             // Remove the event from the queue.
             thread_event_iterator.remove();
@@ -242,12 +239,10 @@ namespace scheduler {
             current_thread = thread;
 
             // Load threads registers to temporary storage.
-            //temporary_registers = &thread->registers;
-            temporary_eip = reinterpret_cast<void*>(thread->registers.eip);
-
-            // TODO - switch back to reference as copying is slow for paging
-            temporary_registers = &placeholder_registers;
-            memcpy(&placeholder_registers, &thread->registers, sizeof(thread->registers));
+            // WARNING - this is a virtual address to the registers.
+            virtual_temporary_registers = thread->virtual_registers;
+            temporary_registers = (Registers*)thread->registers;
+            temporary_eip = reinterpret_cast<void*>(thread->registers->eip);
 
             // Enable paging.
             // TODO - make switching to paging assembly if possible because C++ may break
@@ -301,18 +296,28 @@ namespace scheduler {
         // Create main thread.
         // Virtual processes have no running thread.
         if (!flags.virtual_process) {
-            video::printf("Starting");
-            debug();
             Thread* thread = new Thread;
             thread->id = next_thread_id++;
             thread->process = process;
             thread->flags.main_thread = true;
-            thread->registers.eip = reinterpret_cast<uint32_t>(entry);
+
+            // Allocate physical page to store thread-kernel shared data.
+            // At the moment only used to store registers so that registers can be saved/loaded without any copying overhead due to paging.
+            void* shared_page = physical_allocator::alloc_physical_page(1, true);
+            process->paging.kernel_thread_page = (ThreadKernelArea*)shared_page;
+
+            // Allocate first block for main thread.
+            thread->kernel_thread_data = (ThreadKernelArea*)shared_page;
+            thread->kernel_thread_data->allocated = true;
+            thread->registers = &thread->kernel_thread_data->registers;
+            thread->virtual_registers = (void*)(104857600 + 4096);
+
+            thread->registers->eip = reinterpret_cast<uint32_t>(entry);
 
             process->paging.pixel_mapping_address = 0;
 
             // Load the setup FPU state.
-            memcpy(thread->registers.fpu_state, fpu_boot_state, sizeof(fpu_boot_state));
+            memcpy(thread->registers->fpu_state, fpu_boot_state, sizeof(fpu_boot_state));
 
             // Allocate a page directory.
             process->paging.directories = (PageDirectory*)physical_allocator::alloc_physical_page();
@@ -346,6 +351,14 @@ namespace scheduler {
                 }
             }
 
+            // Map the shared page to be positioned right after the 100M 1-1 mapped pages.
+            // Add one additional page before to act as a guard page.
+            // TODO - check if page is set to ring 0 + check for undefined behaviour on deallocate.
+            PageEntry* shared_virtual_page = physical_allocator::fetch_page_index(process, paging::address_to_pi((void*)(104857600 + 4096)), true);
+            shared_virtual_page->Present = true;
+            shared_virtual_page->Address = paging::address_to_pi(shared_page);
+            shared_virtual_page->ReadWrite = true;
+
             // TODO - temporarily map graphics memory to space
 
             // Allocate 2 pages for the stack.
@@ -361,7 +374,7 @@ namespace scheduler {
             thread->virtual_stack = paging::pi_to_address(virtual_stack_offset);
 
             // Point to top of stack.
-            thread->registers.esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
+            thread->registers->esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
 
             // Add the thread to the map.
             thread_list->set(thread->id, thread);
@@ -384,13 +397,39 @@ namespace scheduler {
         Thread* thread = new Thread;
         thread->id = next_thread_id++;
         thread->process = process;
-        thread->registers.eip = reinterpret_cast<uint32_t>(entry);
+        thread->kernel_thread_data = nullptr;
+
+        // Find first free shared block.
+        // TODO - add support for more than 4096/sizeof(ThreadKernelArea) blocks.
+        for (int i = 0; i < 4096 / sizeof(ThreadKernelArea); i++) {
+            ThreadKernelArea& block = process->paging.kernel_thread_page[i];
+            if (block.allocated) continue;
+            
+            // Allocate the block.
+            block.allocated = true;
+            thread->kernel_thread_data = &process->paging.kernel_thread_page[i];
+
+            // Clear block for use.
+            // TODO - strictly not needed, check if should be removed for performance.
+            memset(&thread->kernel_thread_data->registers, 0, sizeof(Registers));
+        }
+
+        // Check if block could not be allocated.
+        if (thread->kernel_thread_data == nullptr) [[unlikely]] {
+            kernel::panic("Shared data block for thread could not be allocated.");
+            __builtin_unreachable();
+        }
+        
+        thread->registers = &thread->kernel_thread_data->registers;
+        // WARNING - this is a virtual address.
+        thread->virtual_registers = (void*)(104857600 + 4096 + (reinterpret_cast<uint32_t>(thread->registers) - reinterpret_cast<uint32_t>(process->paging.kernel_thread_page)));
+        thread->registers->eip = reinterpret_cast<uint32_t>(entry);
 
         assert_eq("sch.procs.threads.new.heap", kallocated(thread), true);
         assert_eq("sch.procs.threads.new.proc.heap", kallocated(process), true);
 
         // Load the setup FPU state.
-        memcpy(thread->registers.fpu_state, fpu_boot_state, sizeof(fpu_boot_state));
+        memcpy(thread->registers->fpu_state, fpu_boot_state, sizeof(fpu_boot_state));
         
         // Allocate 2 pages for the stack.
         void* physical_stack_offset = physical_allocator::alloc_physical_page(2, true);
@@ -405,10 +444,10 @@ namespace scheduler {
         thread->virtual_stack = paging::pi_to_address(virtual_stack_offset);
 
         // Point to top of stack.
-        thread->registers.esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
+        thread->registers->esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
 
         // Place the capture on the stack.
-        thread->registers.esp -= sizeof(uint32_t) * 2;
+        thread->registers->esp -= sizeof(uint32_t) * 2;
         //uint32_t* stack = reinterpret_cast<uint32_t*>(thread->registers.esp);
 
         // TODO - check this probably doesnt work.
@@ -466,6 +505,8 @@ namespace scheduler {
             if (q_thread == thread) thread_execution_iterator.remove();
         }
 
+        // Mark shared kernel block as deallocated.
+        thread->kernel_thread_data->allocated = false;
 
         // Deallocate and remove.
         physical_allocator::free_virtual_page(thread->process, paging::address_to_pi(thread->virtual_stack), 2);
@@ -516,6 +557,7 @@ namespace scheduler {
         // Free process objects.
         delete process->threads;
         delete process->hooked_threads;
+        physical_allocator::free_physical_page(process->paging.kernel_thread_page);
         kfree(process->name);
 
         // Remove the process itself.

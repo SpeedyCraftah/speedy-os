@@ -1,6 +1,6 @@
 ; Common utility functions for tasking.
 
-extern temporary_registers
+extern virtual_temporary_registers
 
 ; Send EOI signal to PIC, signaling end of IRQ.
 %macro send_eoi 0
@@ -14,7 +14,7 @@ extern temporary_registers
     push ecx
 
     ; Load registers.
-    mov ecx, [temporary_registers]
+    mov ecx, [virtual_temporary_registers]
 
     mov [ecx], eax
     mov [ecx+8], edx
@@ -44,7 +44,7 @@ extern temporary_registers
 
 ; Return - None.
 %macro load_general_registers_from_temp 0
-    mov ecx, [temporary_registers]
+    mov ecx, [virtual_temporary_registers]
 
     ; Load EFLAGS.
     mov ah, byte [ecx+36]

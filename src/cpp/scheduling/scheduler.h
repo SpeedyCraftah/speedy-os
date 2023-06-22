@@ -22,6 +22,7 @@ namespace scheduler {
     
     extern "C" bool timer_preempt;
     extern "C" Thread* current_thread;
+    extern "C" void* virtual_temporary_registers;
     extern "C" Registers* temporary_registers;
     extern "C" Registers placeholder_registers;
 

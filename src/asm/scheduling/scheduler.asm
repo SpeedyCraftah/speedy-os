@@ -2,7 +2,7 @@
 
 %include "/mnt/c/Users/Speedy/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
-extern temporary_registers
+extern virtual_temporary_registers
 extern temporary_eip
 extern timer_preempt
 

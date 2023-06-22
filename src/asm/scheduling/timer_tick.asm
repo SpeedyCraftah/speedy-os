@@ -1,6 +1,6 @@
 %include "/mnt/c/Users/Speedy/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
 
-extern temporary_registers
+extern virtual_temporary_registers
 extern handle_timer_tick
 extern temporary_eip
 
