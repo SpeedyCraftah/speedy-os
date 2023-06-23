@@ -5,6 +5,7 @@ extern scheduler_sleep
 extern virtual_temporary_registers
 extern handle_context_switch
 extern temporary_eip
+extern syscall_esp_backup
 
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
@@ -16,15 +17,23 @@ INTERRUPT_128:
   mov eax, [esp]
   mov [ecx+32], eax
 
+  ; Backup the ESP.
+  mov [syscall_esp_backup], esp
+
+  ; Load the kernel stack.
+  load_kernel_stack
+
   ; ECX = System call number.
   ; EDX = Data.
-
   call handle_system_call
 
   cmp eax, 0
   jz .normal_return
 
   ; Halt until scheduler timer.
+
+  ; TODO - improve this performance wise, loading/saving 2 different stack pointers.
+  mov esp, [syscall_esp_backup]
 
   ; Push scheduler switch address and return.
   mov [esp], dword .far_return
@@ -35,7 +44,7 @@ INTERRUPT_128:
     ; cli
 
     ; Load the kernel stack.
-    load_kernel_stack
+    ; load_kernel_stack
 
     ; Jump to C++ code.
     jmp handle_context_switch
