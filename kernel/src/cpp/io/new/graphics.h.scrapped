@@ -1,0 +1,16 @@
+#include "stdint.h"
+
+namespace graphics {
+    struct layer_metadata {
+        bool active = false;
+        bool render = false;
+        bool transparent = false;
+    };
+
+    extern uint32_t width;
+    extern uint32_t height;
+    extern uint32_t size;
+
+    void initialise(uint32_t width, uint32_t height);
+    int setup_layer(int layer = -1);
+}

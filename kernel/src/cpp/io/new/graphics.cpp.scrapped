@@ -1,0 +1,73 @@
+// The new and improved graphics driver for SpeedyOS.
+// Now featuring layers and safe drawing!
+// The fun begins now.
+
+// optimise flex array
+
+#include "graphics.h"
+#include "stdint.h"
+#include "../../software/include/mutex.h"
+#include "../../scheduling/scheduler.h"
+#include "../../heap/allocator.h"
+
+// Private variables.
+uint32_t* visual_layer;
+uint32_t** layers;
+graphics::layer_metadata* layers_metadata;
+uint32_t start_rendering_index;
+
+namespace graphics {
+    uint32_t width;
+    uint32_t height;
+    uint32_t size;
+
+    void initialise(uint32_t _width, uint32_t _height) {
+        start_rendering_index = 0;
+
+        width = _width;
+        height = _height;
+        size = _width * _height;
+
+        visual_layer = (uint32_t*)kmalloc(sizeof(uint32_t) * size);
+        layers = (uint32_t**)kmalloc(sizeof(uint32_t) * 8);
+        layers_metadata = (layer_metadata*)kmalloc(sizeof(layer_metadata) * 8);
+    }
+
+    void render_layer_change(uint32_t layer, uint32_t ) {
+
+    }
+
+    void rerender_all() {
+        // Clear visual layer.
+        for (uint32_t i = 0; i < size; i++) {
+            visual_layer[i] = 0;
+        }
+
+        // Render layers one by one.
+        for (uint32_t i = 0; i < 8; i++) {
+            layer_metadata meta = layers_metadata[i];
+            if (!meta.active || !meta.render) continue;
+        }
+    }
+
+    int setup_layer(int layer) {
+        if (layer == -1) {
+            // Create layer automatically.
+            for (uint32_t i = 0; i < 8; i++) {
+                if (layers_metadata[i].active) continue;
+                layer = i;
+                break;
+            }
+
+            if (layer == -1) {
+                kernel::panic("No more layers available to be automatically allocated.");
+            }
+        } else if (layers_metadata[layer].active) return layer;
+
+        // ALlocate resources.
+        layers_metadata[layer] = layer_metadata();
+        layers_metadata[layer].active = true;
+        layers[layer] = (uint32_t*)kmalloc(sizeof(uint32_t) * size);
+        
+    }
+}
