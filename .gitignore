@@ -32,3 +32,4 @@ dist/*
 tmp/
 temp/
 tmp/
+*.bin
