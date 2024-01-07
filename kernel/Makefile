@@ -7,7 +7,6 @@ LDPARAMS = -static-libgcc -ffreestanding -O2 -nostdlib -lgcc -g
 
 ASMFILE = src/boot/loader.asm
 
-# compiledObjects = $(wildcard src/*.asm) $(wildcard src/*/*.asm) $(wildcard src/*/*/*.asm) $(wildcard src/*.s) $(wildcard src/*/*.s) $(wildcard src/*/*/*.s) $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) $(wildcard src/*/*/*/*.cpp) $(wildcard src/*/*/*/*/*.cpp) $(wildcard src/*/*/*/*/*/*.cpp) $(wildcard src/*/*/*/*/*/*/*.cpp) $(wildcard src/*.c) $(wildcard src/*/*.c) $(wildcard src/*/*/*.c) $(wildcard src/*/*/*/*.c) $(wildcard src/*/*/*/*/*.c) $(wildcard src/*/*/*/*/*/*.c)
 ASM_FILES := $(shell find src -type f -name '*.asm')
 S_FILES := $(shell find src -type f -name '*.s')
 CPP_FILES := $(shell find src -type f -name '*.cpp')
@@ -15,11 +14,6 @@ C_FILES := $(shell find src -type f -name '*.c')
 
 compiledObjects := $(ASM_FILES) $(S_FILES) $(CPP_FILES) $(C_FILES)
 
-# replace objects1 extensions from cpp to o.
-#replacedCpp = $(subst .cpp,.o,$(compiledObjects))
-#replacedC = $(subst .c,.o,$(replacedCpp))
-#replacedAsm = $(subst .asm,.o,$(replacedC))
-#objects = $(subst .s,.o,$(replacedAsm))
 objects := $(patsubst %.asm,%.o,$(filter %.asm,$(compiledObjects))) \
            $(patsubst %.s,%.o,$(filter %.s,$(compiledObjects))) \
            $(patsubst %.cpp,%.o,$(filter %.cpp,$(compiledObjects))) \
