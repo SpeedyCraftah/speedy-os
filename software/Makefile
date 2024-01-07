@@ -19,4 +19,4 @@ all: $(SRC_DIRS)
 
 .PHONY: $(SRC_DIRS)
 $(SRC_DIRS): libs
-	$(MAKE) -C $@ build install clean --always-make
+	$(MAKE) -C $@ build install --always-make

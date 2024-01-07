@@ -1,20 +1,21 @@
 GPP_PARAMS = -O2 -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -fno-use-cxa-atexit -g -Wno-unused-variable -Wno-write-strings -Wno-unused-parameter
 LINKER_PARAMS = -static-libgcc -ffreestanding -O2 -nostdlib -lgcc -g -Wl,--gc-sections
 
-PROGRAM_BIN := $(shell basename "$(CURDIR)").bin
+DIST_FOLDER := ../../dist/$(shell basename "$(CURDIR)")
+PROGRAM_BIN := $(DIST_FOLDER)/$(shell basename "$(CURDIR)").bin
 GRUB_MOD_PATH := ../../../iso/boot/software/
 LINKER_FILE := ../../linker.ld
 CPP_FILES := $(shell find . -type f -name '*.cpp')
 INCLUDE_BIN := $(shell find ../../include -type f -name '*.o')
 compiledObjects := $(CPP_FILES)
-objects := $(patsubst %.cpp,%.o,$(filter %.cpp,$(compiledObjects)))
+objects := $(patsubst %.cpp,$(DIST_FOLDER)/%.o,$(filter %.cpp,$(compiledObjects)))
 
-%.o: %.cpp
+$(DIST_FOLDER)/%.o: %.cpp
+	mkdir -p $(dir $@)
 	i686-elf-g++ $(GPP_PARAMS) -o $@ -c $< 
 
 link: $(LINKER_FILE) $(objects)
 	i686-elf-g++ -T $< -o $(PROGRAM_BIN) $(objects) $(INCLUDE_BIN) $(LINKER_PARAMS)
-	
 
 build: link
 
@@ -23,6 +24,4 @@ install: $(PROGRAM_BIN)
 
 .NOTPARALLEL: clean
 clean:
-	
-#rm $(shell find . -type f -name '*.o') $(shell find . -type f -name '*.bin')
-#rm $(objects)
+	rm -rf $(DIST_FOLDER)
