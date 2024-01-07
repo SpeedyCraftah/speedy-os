@@ -12,6 +12,7 @@
 #include "events.h"
 #include "../misc/memory.h"
 #include "../heap/physical.h"
+#include "../paging/virtual.h"
 #include "../paging/paging.h"
 
 // remove after
@@ -354,7 +355,7 @@ namespace scheduler {
             // Map the shared page to be positioned right after the 100M 1-1 mapped pages.
             // Add one additional page before to act as a guard page.
             // TODO - check if page is set to ring 0 + check for undefined behaviour on deallocate.
-            PageEntry* shared_virtual_page = physical_allocator::fetch_page_index(process, paging::address_to_pi((void*)(104857600 + 4096)), true);
+            PageEntry* shared_virtual_page = virtual_allocator::fetch_page_index(process, paging::address_to_pi((void*)(104857600 + 4096)), true);
             shared_virtual_page->Present = true;
             shared_virtual_page->Address = paging::address_to_pi(shared_page);
             shared_virtual_page->ReadWrite = true;
@@ -363,11 +364,17 @@ namespace scheduler {
 
             // Allocate 2 pages for the stack.
             void* physical_stack_offset = physical_allocator::alloc_physical_page(2, true);
-            uint32_t virtual_stack_offset = physical_allocator::alloc_virtual_pages(process, 2, 0, true);
+            uint32_t virtual_stack_offset = virtual_allocator::find_free_virtual_pages(process, 2);
 
             // Map to a virtual address.
             // TODO - map to some pre-set area.
-            physical_allocator::map_virtual_pages(process, paging::address_to_pi(physical_stack_offset), virtual_stack_offset, 2);
+            for (int i = 0; i < 2; i++) {
+                PageEntry* page = virtual_allocator::fetch_page_index(process, virtual_stack_offset + i);
+                page->Present = true;
+                page->ReadWrite = true;
+                page->Address = paging::address_to_pi(physical_stack_offset) + i;
+                page->UserSupervisor = true;
+            }
 
             // Set the stack addresses on thread.
             thread->physical_stack = physical_stack_offset;
@@ -433,11 +440,17 @@ namespace scheduler {
         
         // Allocate 2 pages for the stack.
         void* physical_stack_offset = physical_allocator::alloc_physical_page(2, true);
-        uint32_t virtual_stack_offset = physical_allocator::alloc_virtual_pages(process, 2, 0, true);
+        uint32_t virtual_stack_offset = virtual_allocator::find_free_virtual_pages(process, 2);
 
         // Map to a virtual address.
         // TODO - map to some pre-set area.
-        physical_allocator::map_virtual_pages(process, paging::address_to_pi(physical_stack_offset), virtual_stack_offset, 2);
+        for (int i = 0; i < 2; i++) {
+            PageEntry* page = virtual_allocator::fetch_page_index(process, virtual_stack_offset);
+            page->Present = true;
+            page->ReadWrite = true;
+            page->Address = paging::address_to_pi(physical_stack_offset) + i;
+            page->UserSupervisor = true;
+        }
 
         // Set the stack addresses on thread.
         thread->physical_stack = physical_stack_offset;
@@ -509,7 +522,7 @@ namespace scheduler {
         thread->kernel_thread_data->allocated = false;
 
         // Deallocate and remove.
-        physical_allocator::free_virtual_page(thread->process, paging::address_to_pi(thread->virtual_stack), 2);
+        virtual_allocator::reset_virtual_pages(thread->process, paging::address_to_pi(thread->virtual_stack), 2, true);
         delete thread;
 
         assert_eq("sch.procs.threads.delete.heap", kallocated(thread), false);
@@ -544,7 +557,7 @@ namespace scheduler {
             PageEntry* entries = (PageEntry*)paging::pi_to_address(directory.Address);
             for (uint32_t j = 0; j < 1024; j++) {
                 PageEntry& entry = entries[j];
-                if (!entry.Present || (entry.KernelFlags & KernelPageFlags::PROCESS_RESERVED) == 0) continue;
+                if (!entry.Present || (entry.KernelFlags & PageFlags::PROCESS_OWNED) == 0) continue;
 
                 // Free the physical page.
                 physical_allocator::free_physical_page(paging::pi_to_address(entry.Address));
