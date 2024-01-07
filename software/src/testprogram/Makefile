@@ -1,11 +1,6 @@
 GPP_PARAMS = -O2 -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -fno-use-cxa-atexit -g -Wno-unused-variable -Wno-write-strings -Wno-unused-parameter
 LINKER_PARAMS = -static-libgcc -ffreestanding -O2 -nostdlib -lgcc -g -Wl,--gc-sections
 
-CRTI_OBJ=crti.o
-CRTBEGIN_OBJ:=$(shell i686-elf-g++ $(GPP_PARAMS) -print-file-name=crtbegin.o)
-CRTEND_OBJ:=$(shell i686-elf-g++ $(GPP_PARAMS) -print-file-name=crtend.o)
-CRTN_OBJ=crtn.o
-
 PROGRAM_BIN := $(shell basename "$(CURDIR)").bin
 GRUB_MOD_PATH := ../../../iso/boot/software/
 LINKER_FILE := ../../linker.ld
@@ -18,7 +13,7 @@ objects := $(patsubst %.cpp,%.o,$(filter %.cpp,$(compiledObjects)))
 	i686-elf-g++ $(GPP_PARAMS) -o $@ -c $< 
 
 link: $(LINKER_FILE) $(objects)
-	i686-elf-g++ -T $< -o $(PROGRAM_BIN) $(CRTI_OBJ) $(CRTBEGIN_OBJ) $(objects) $(INCLUDE_BIN) $(CRTEND_OBJ) $(CRTN_OBJ) $(LINKER_PARAMS)
+	i686-elf-g++ -T $< -o $(PROGRAM_BIN) $(objects) $(INCLUDE_BIN) $(LINKER_PARAMS)
 	
 
 build: link
