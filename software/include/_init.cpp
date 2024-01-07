@@ -1,15 +1,11 @@
 #include "alloc.h"
 #include "sys.h"
 
-extern "C" void _init();
-
-extern "C" volatile int debug_vb;
 extern "C" int main();
 extern "C" void _main() {
+
     // Initialise the malloc heap.
     heap::init();
-    
-    _init();
 
     // Call the constructors.
     //_init();

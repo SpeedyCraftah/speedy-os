@@ -21,7 +21,6 @@ void operator delete(void* ptr) {
 void operator delete(void* ptr, size_t size) {
     free(ptr);
 }
-extern "C" volatile int debug_vb;
 namespace heap {
     void init() {
         // In case the defaults for this weren't initialised.

@@ -5,8 +5,6 @@
 #include "../misc/algorithm.h"
 #include "../sys.h"
 
-extern "C" volatile int debug_vb;
-
 namespace structures {
     template <class ValT>
     class map {
@@ -23,7 +21,6 @@ namespace structures {
 
                 storage_ptr = (entry*)malloc(sizeof(entry) * initialCapacity, true);
 
-                debug_vb = 32;
                 for (int i = 0; i < capacity; i++) {
                     storage_ptr[i] = entry();
                 }
