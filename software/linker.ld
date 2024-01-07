@@ -3,24 +3,10 @@ ENTRY(_main)
 SECTIONS
 {
 	. = 512M;
- 
+
 	.text BLOCK(4K) : ALIGN(4K)
 	{
 		*(.text)
-	}
- 
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		start_ctors = .;
-        *(SORT(.ctors*))  /* Note the "SORT" */
-        end_ctors = .;
-
-        start_dtors = .;
-        *(SORT(.dtors*))
-        end_dtors = .;
-
-		*(.rodata)
 	}
  
 	/* Read-write data (initialized) */
@@ -34,11 +20,5 @@ SECTIONS
 	{
 		*(COMMON)
 		*(.bss)
-	}
-
-	.ctors : {
-		start_ctors = .;
-		*(.ctors)
-		end_ctors = .;
 	}
 }
