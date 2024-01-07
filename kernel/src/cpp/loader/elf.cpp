@@ -87,6 +87,17 @@ namespace loader {
             }
         }
 
+        // Find constructor and destructor segments (if any).
+        uint8_t* section_header_start = reinterpret_cast<uint8_t*>(elf_start) + header->section_header_table_offset;
+        Elf32SectionHeader* section_header_strings = (Elf32SectionHeader*)(section_header_start + (header->section_header_entry_size * header->section_header_names_index));
+        video::printf("Section names:\n");
+        for (uint32_t i = 0; i < header->section_header_entry_count; i++) {
+            Elf32SectionHeader* section_header = (Elf32SectionHeader*)(section_header_start + (header->section_header_entry_size * i));
+            char* section_name = reinterpret_cast<char*>(elf_start) + section_header_strings->offset + section_header->name_index;
+
+            
+        }
+
         // Schedule the process for execution.
         //scheduler::thread_execution_queue->push(process->threads->peek_front());
 

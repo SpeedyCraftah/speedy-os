@@ -61,3 +61,16 @@ struct Elf32ProgramHeader {
     } __attribute__((packed)) flags;
     uint32_t data_required_alignment;
 } __attribute__((packed));
+
+struct Elf32SectionHeader {
+    uint32_t name_index;
+    uint32_t section_type;
+    uint32_t flags;
+    void* address;
+    uint32_t offset;
+    uint32_t section_size;
+    uint32_t link_index;
+    uint32_t info;
+    uint32_t address_align;
+    uint32_t entry_size;
+} __attribute__((packed));
