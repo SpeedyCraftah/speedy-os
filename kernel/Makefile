@@ -30,7 +30,7 @@ $(DIST_DIR)/%.o: $(SRC_DIR)/%.c
 
 $(DIST_DIR)/%.o: $(SRC_DIR)/%.asm
 	@mkdir -p $(dir $@)
-	nasm -f elf32 -o $@ $<
+	nasm -I ./src/asm/scheduling/ -f elf32 -o $@ $<
 
 $(DIST_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)

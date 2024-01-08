@@ -1,4 +1,4 @@
-%include "/mnt/c/Users/Speedy/Desktop/Code/speedyos/src/asm/scheduling/utils.asm"
+%include "utils.asm"
 
 extern HandlePageFault
 extern handle_system_call
