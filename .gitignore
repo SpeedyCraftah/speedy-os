@@ -29,6 +29,7 @@
 
 # Other
 dist/*
+!dist/_
 tmp/
 temp/
 tmp/
