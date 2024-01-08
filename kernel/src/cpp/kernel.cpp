@@ -51,22 +51,6 @@ extern "C" uint8_t* structure_address = 0;
 
 extern "C" void debug();
 
-extern "C" volatile int bpwatch;
-void testp() {
-    //bpwatch = 5;
-
-    asm volatile("mov $0, %ecx");
-    asm volatile("int $128");
-
-    bpwatch = 12;
-    
-    //video::printf("Works!");
-    int i = 0;
-    while (true) {
-        bpwatch = i++; 
-    };
-}
-
 extern "C" __attribute__((fastcall)) void enable_paging_asm(PageDirectory* address);
 extern "C" void callConstructors();
 
@@ -85,7 +69,7 @@ void kernelControlHandOver() {
     kheap::init();
 
     // Calls constructors which is necessary for classes to work and for logs to work.
-    callConstructors();
+    //callConstructors();
 
     uint32_t mod_count = *(uint32_t*)(structure_address + 20);
     uint32_t* mod_addr_first = reinterpret_cast<uint32_t*>(*(uint32_t*)(structure_address + 24));
@@ -124,7 +108,6 @@ void kernelControlHandOver() {
     video::current_address = graphics::video_address;
     video::address = graphics::video_address;
 
-    bpwatch = 2;
     video::printf_log("Kernel", "Defining GDT memory segments (4G)...");
 
     // Load the global descriptor table.
@@ -179,7 +162,6 @@ void kernelControlHandOver() {
     scheduler::initialise();
 
     video::printf_log("Kernel", "Enabling paging...");
-    bpwatch = 25;
     paging::enable(paging::kernel_page_directory);
     
     video::printf_log("Kernel", "Setting PIT timer frequency to 200Hz...");
@@ -212,10 +194,8 @@ void kernelControlHandOver() {
     ProcessFlags flags;
     flags.system_process = false;
 
-    bpwatch = 2;
     Process* p = loader::load_elf32_executable_as_process(*(char**)(mod_addr_first + 2), flags, reinterpret_cast<void*>(*mod_addr_first), reinterpret_cast<void*>(*(mod_addr_first + 1)));
 
-    bpwatch = 69;
     //Process* p = scheduler::create_process("test", testp);
     
     // Start shell.
@@ -227,10 +207,6 @@ void kernelControlHandOver() {
     // Unmask PIC.
     chips::pic::unmask_line(0);
 
-
-
-tak:
-    bpwatch = 2;
     // Wait for first tick of the PIT after which control will be handed to the scheduler.
     while (true) {
         asm volatile("hlt");
