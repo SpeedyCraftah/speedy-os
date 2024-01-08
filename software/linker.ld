@@ -8,6 +8,16 @@ SECTIONS
 	{
 		*(.text)
 	}
+
+	.ctors BLOCK(4K) : ALIGN(4K) {
+        _call_ctors = .;
+        KEEP(*(SORT(.ctors)))
+    }
+
+	.dtors BLOCK(4K) : ALIGN(4K) {
+        _call_dtors = .;
+        KEEP(*(SORT(.dtors)))
+    }
  
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
