@@ -336,7 +336,7 @@ namespace scheduler {
             thread->kernel_thread_data = (ThreadKernelArea*)shared_page;
             thread->kernel_thread_data->allocated = true;
             thread->registers = &thread->kernel_thread_data->registers;
-            thread->virtual_registers = (void*)(104857600 + 4096);
+            thread->virtual_registers = (void*)(104857600 + 4096 + 4);
 
             thread->registers->eip = reinterpret_cast<uint32_t>(entry);
 
@@ -454,7 +454,7 @@ namespace scheduler {
         
         thread->registers = &thread->kernel_thread_data->registers;
         // WARNING - this is a virtual address.
-        thread->virtual_registers = (void*)(104857600 + 4096 + (reinterpret_cast<uint32_t>(thread->registers) - reinterpret_cast<uint32_t>(process->paging.kernel_thread_page)));
+        thread->virtual_registers = (void*)(104857600 + 4096 + 4 + (reinterpret_cast<uint32_t>(thread->registers) - reinterpret_cast<uint32_t>(process->paging.kernel_thread_page)));
         thread->registers->eip = reinterpret_cast<uint32_t>(entry);
 
         assert_eq("sch.procs.threads.new.heap", kallocated(thread), true);
