@@ -103,7 +103,7 @@ void* malloc(uint32_t size, bool reset) {
         if (reset) memset(new_meta->data, 0, new_meta->size);
 
         // Return location.
-        return meta->data;
+        return new_meta->data;
     } else {
         // Create a new block if remaining size is large enough.
         if (remaining_page_size >= sizeof(BlockMeta) + 20) {
@@ -117,6 +117,8 @@ void* malloc(uint32_t size, bool reset) {
             // Set new tail block.
             //tail_block->next = new_meta;
             //tail_block = new_meta;
+
+            
         }
 
         // Calculate the minimum amount of pages required to fit.
