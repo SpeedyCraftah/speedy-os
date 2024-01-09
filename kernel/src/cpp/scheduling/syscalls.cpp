@@ -60,7 +60,6 @@ new param for data (1)
 
 */
 
-extern "C" volatile uint32_t syscall_esp_backup = 0;
 extern "C" volatile int bpwatch;
 
 enum SyscallPageAllocationFlag : uint32_t {

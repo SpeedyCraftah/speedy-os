@@ -5,20 +5,26 @@ extern scheduler_sleep
 extern virtual_temporary_registers
 extern handle_context_switch
 extern temporary_eip
-extern syscall_esp_backup
 
+extern debug_val
+
+section .bss
+debug_val: resd 1
+
+section .text
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
 INTERRUPT_128:
+  mov dword [debug_val], 5
   ; Dump registers (plus offset).
   save_general_registers_to_temp 12
+
+  ; Save interrupt frame.
+  save_interrupt_frame
 
   ; Save return EIP.
   mov eax, [esp]
   mov [ecx+32], eax
-
-  ; Backup the ESP.
-  mov [syscall_esp_backup], esp
 
   ; Load the kernel stack.
   load_kernel_stack
@@ -30,10 +36,8 @@ INTERRUPT_128:
   cmp eax, 0
   jz .normal_return
 
-  ; Halt until scheduler timer.
-
-  ; TODO - improve this performance wise, loading/saving 2 different stack pointers.
-  mov esp, [syscall_esp_backup]
+  ; Load the interrupt frame since we switched to kernel stack.
+  push_interrupt_frame
 
   ; Push scheduler switch address and return.
   mov [esp], dword .far_return

@@ -22,8 +22,12 @@
 #include "../chips/pit.h"
 #include "../misc/assert.h"
 #include "../io/video.h"
+#include "syscalls.h"
 
 extern "C" volatile int bpwatch;
+
+// Temporary structure until ESP switch on interrupt is implemented.
+extern "C" InterruptFrame temporary_interrupt_frame = InterruptFrame();
 
 // Temporary registers switched to pointer for performance.
 extern "C" Registers placeholder_registers = Registers();

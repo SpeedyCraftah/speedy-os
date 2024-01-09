@@ -71,3 +71,33 @@ extern kernel_stack
     mov esp, kernel_stack
     mov ebp, 0
 %endmacro
+
+extern temporary_interrupt_frame
+
+%macro save_interrupt_frame
+    ; EIP
+    mov eax, dword [esp]
+    mov dword [temporary_interrupt_frame], eax
+
+    ; CS+padding
+    mov eax, dword [esp+4]
+    mov dword [temporary_interrupt_frame+4], eax
+
+    ; EFLAGS
+    mov eax, dword [esp+8]
+    mov dword [temporary_interrupt_frame+8], eax
+%endmacro
+
+%macro push_interrupt_frame
+    ; EFLAGS
+    mov eax, dword [temporary_interrupt_frame+8]
+    push eax
+
+    ; CS+padding
+    mov eax, dword [temporary_interrupt_frame+4]
+    push eax
+
+    ; EFLAGS
+    mov eax, dword [temporary_interrupt_frame]
+    push eax
+%endmacro
