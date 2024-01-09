@@ -12,10 +12,23 @@ INTERRUPT_14:
     ; Dump registers (plus offset).
     save_general_registers_to_temp 16
 
+    ; Hold error code in register.
+    pop ecx
+
+    ; Save interrupt frame.
+    save_interrupt_frame
+
     ; Save return EIP.
-    mov eax, [esp+4]
+    mov eax, [esp]
     mov [ecx+32], eax
 
+    ; Load the kernel stack.
+    load_kernel_stack
+
+    ; Push error code to stack again.
+    push ecx
+
+    ; Push virtual address to stack.
     mov eax, cr2
     push eax
     
@@ -34,9 +47,6 @@ INTERRUPT_14:
     .far_return:
         ; Disable interrupts.
         ; cli
-
-        ; Load the kernel stack.
-        load_kernel_stack
 
         ; Jump to C++ code.
         jmp handle_context_switch
