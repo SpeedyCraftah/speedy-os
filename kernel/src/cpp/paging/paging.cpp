@@ -32,7 +32,11 @@ struct PageFaultAddress {
 } __attribute__((packed));
 
 uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
-    kernel::panic("Page fault");
+    // panic glitches out - fix
+    //kernel::panic("Page fault");
+
+    video::printf("Page fault!", VGA_COLOUR::LIGHT_RED);
+    asm volatile("cli; hlt");
 
     if (!error.User) [[unlikely]] {
         kernel::panic("A page fault has occurred at ring 0.");
