@@ -20,3 +20,7 @@ clean:
 	find . -name "*.o" -type f -delete
 	find . -name "*.bin" -type f -delete
 	find . -name "*.iso" -type f -delete
+
+.PHONY: debug
+debug: run
+	qemu-system-i386 -m 512 -drive format=raw,media=cdrom,file=dist/speedyos.iso -s -S
