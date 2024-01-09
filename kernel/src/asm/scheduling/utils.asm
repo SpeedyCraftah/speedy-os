@@ -74,7 +74,7 @@ extern kernel_stack
 
 extern temporary_interrupt_frame
 
-%macro save_interrupt_frame
+%macro save_interrupt_frame 0
     ; EIP
     mov eax, dword [esp]
     mov dword [temporary_interrupt_frame], eax
@@ -88,7 +88,7 @@ extern temporary_interrupt_frame
     mov dword [temporary_interrupt_frame+8], eax
 %endmacro
 
-%macro push_interrupt_frame
+%macro push_interrupt_frame 0
     ; EFLAGS
     mov eax, dword [temporary_interrupt_frame+8]
     push eax
