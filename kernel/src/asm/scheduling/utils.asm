@@ -22,8 +22,7 @@ extern virtual_temporary_registers
 
     ; Preserve the stack.
     mov ebx, esp
-    add ebx, 4
-    add ebx, %1
+    add ebx, 4+%1
     mov [ecx+16], ebx
 
     mov [ecx+20], ebp
