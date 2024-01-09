@@ -1,6 +1,14 @@
 #include "alloc.h"
 #include "sys.h"
 
+// Stack protector definitions.
+uint32_t __stack_chk_guard = 0x38325789;
+extern "C" void __stack_chk_fail(void) {
+    speedyos::speedyshell::printf("[FATAL] Stack protector detected change to canary");
+    speedyos::end_process();
+    __builtin_unreachable();
+}
+
 extern "C" void (*_call_ctors)();
 extern "C" void (*_call_dtors)();
 
