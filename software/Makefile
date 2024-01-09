@@ -1,4 +1,4 @@
-GPP_PARAMS = -O2 -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -fno-use-cxa-atexit -g -Wno-unused-variable -Wno-write-strings -Wno-unused-parameter
+GPP_PARAMS = -O0 -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -fno-use-cxa-atexit -ggdb -Wno-unused-variable -Wno-write-strings -Wno-unused-parameter -fstack-protector-all
 
 LIBS_CPP_FILES := $(shell find include -type f -name '*.cpp')
 objects := $(patsubst %.cpp,%.o,$(filter %.cpp,$(LIBS_CPP_FILES)))

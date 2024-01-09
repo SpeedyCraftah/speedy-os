@@ -1,5 +1,5 @@
-GPP_PARAMS = -O0 -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -fno-use-cxa-atexit -g -Wno-unused-variable -Wno-write-strings -Wno-unused-parameter
-LINKER_PARAMS = -static-libgcc -ffreestanding -O2 -nostdlib -lgcc -g -Wl,--gc-sections
+GPP_PARAMS = -O0 -ffreestanding -Wall -Wextra -fno-exceptions -fno-rtti -fno-use-cxa-atexit -ggdb -Wno-unused-variable -Wno-write-strings -Wno-unused-parameter -fstack-protector-all
+LINKER_PARAMS = -fstack-protector-all -static-libgcc -ffreestanding -O2 -nostdlib -lgcc -ggdb -Wl,--gc-sections
 
 DIST_FOLDER := ../../dist/$(shell basename "$(CURDIR)")
 PROGRAM_BIN := $(DIST_FOLDER)/$(shell basename "$(CURDIR)").bin
