@@ -29,7 +29,7 @@ extern virtual_temporary_registers
     mov [ecx+24], esi
     mov [ecx+28], edi
 
-    ; Dump EFLAGS.
+    ; Dump FLAGS.
     lahf
     mov byte [ecx+36], ah
 
@@ -45,7 +45,7 @@ extern virtual_temporary_registers
 %macro load_general_registers_from_temp 0
     mov ecx, [virtual_temporary_registers]
 
-    ; Load EFLAGS.
+    ; Load FLAGS.
     mov ah, byte [ecx+36]
     sahf
 
