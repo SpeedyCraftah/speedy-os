@@ -46,20 +46,6 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void* malloc_heap(uint32_t bytes) {
-        asm volatile("mov %ecx, %edx");
-        asm volatile("mov $4, %ecx");
-        asm volatile("int $128");
-        asm volatile("ret");
-    }
-
-    __attribute__((naked)) __attribute__((fastcall)) bool free_heap(void* address) {
-        asm volatile("mov %ecx, %edx");
-        asm volatile("mov $5, %ecx");
-        asm volatile("int $128");
-        asm volatile("ret");
-    }
-
     __attribute__((naked)) __attribute__((fastcall)) bool register_event_for_thread(
         uint32_t target_thread_id,
         uint32_t enabled_events,

@@ -98,12 +98,6 @@ namespace speedyos {
     // Notifies the kernel an event has been processed.
     __attribute__((naked)) __attribute__((fastcall)) void end_event();
 
-    // Requests the kernel for a location of specified size (not exactly) in the heap.
-    __attribute__((naked)) __attribute__((fastcall)) void* malloc_heap(uint32_t bytes);
-
-    // Requests the kernel to free the specified memory location and returns t/f depending on success.
-    __attribute__((naked)) __attribute__((fastcall)) bool free_heap(void* address);
-
     // Registers the process to another process with specific events and returns t/f depending on success.
     __attribute__((naked)) __attribute__((fastcall)) bool register_event_for_thread(uint32_t target_thread_id, uint32_t enabled_events, void(*handler)(uint32_t, uint32_t));
 

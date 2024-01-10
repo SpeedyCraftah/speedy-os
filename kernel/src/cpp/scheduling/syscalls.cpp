@@ -26,8 +26,6 @@ extern "C" Registers* temporary_registers;
 //      - 2 = Thread ID of thread.
 // ID 2 = End process request (with status code). 
 // ID 3 = Temporarily suspend a thread with specific conditions.
-// ID 4 = Malloc x bytes of memory.
-// ID 5 = Free segment of memory.
 // ID 6 = End of event call.
 // ID 7 = Register event for process.
 // ID 8 = Emit event for registered processes.
@@ -102,14 +100,6 @@ uint32_t handle_system_call_hl() {
         scheduler::manual_context_switch_return();
 
         return 1;
-    // Todo - make memory allocations thread-wide.
-    } else if (id == 4) {
-        uint8_t* memory_ptr = (uint8_t*)kmalloc(data, true);
-        temporary_registers->eax = reinterpret_cast<uint32_t>(memory_ptr);
-    } else if (id == 5) {
-        void* memory_ptr = reinterpret_cast<void*>(data);
-        uint32_t deal_result = kfree(memory_ptr);
-        temporary_registers->eax = deal_result;
     } else if (id == 6) {
         // If there is no event currently running, return.
         if (!scheduler::current_thread->state.processing_event) return 0;
