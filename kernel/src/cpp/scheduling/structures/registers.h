@@ -12,6 +12,6 @@ struct Registers {
     uint32_t esi = 0; // 24
     uint32_t edi = 0; // 28
     uint32_t eip = 0; // 32
-    uint8_t flags = 0; // 36
-    char fpu_state[108]; // 37
+    uint32_t eflags = 0; // 36
+    char fpu_state[108]; // 40
 };

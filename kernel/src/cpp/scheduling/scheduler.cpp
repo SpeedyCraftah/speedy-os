@@ -412,6 +412,10 @@ namespace scheduler {
             // Point to top of stack.
             thread->registers->esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
 
+            // Create a default EFLAGS.
+            // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
+            thread->registers->eflags = 0b00000000000000000011001000000010;
+
             // Add the thread to the map.
             thread_list->set(thread->id, thread);
         
@@ -491,6 +495,10 @@ namespace scheduler {
         // Place the capture on the stack.
         thread->registers->esp -= sizeof(uint32_t) * 2;
         //uint32_t* stack = reinterpret_cast<uint32_t*>(thread->registers.esp);
+
+        // Create a default EFLAGS.
+        // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
+        thread->registers->eflags = 0b00000000000000000011001000000010;
 
         // TODO - check this probably doesnt work.
         uint32_t* stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(physical_stack_offset) + 8192 - sizeof(uint32_t));
