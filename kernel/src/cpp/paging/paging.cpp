@@ -35,31 +35,48 @@ uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
     // panic glitches out - fix
     //kernel::panic("Page fault");
 
-    video::printf("Page fault!", VGA_COLOUR::LIGHT_RED);
-    asm volatile("cli; hlt");
-
-    if (!error.User) [[unlikely]] {
+    /*if (!error.User) [[unlikely]] {
         kernel::panic("A page fault has occurred at ring 0.");
         __builtin_unreachable();
+    }*/
+
+    PageDirectory* directories = scheduler::current_thread->process->paging.directories;
+    PageDirectory& directory = directories[address.DirectoryEntry];
+
+    if (!directory.Present) {
+        scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
+        video::printf("Process accessed a non existent directory!", VGA_COLOUR::LIGHT_RED);
+        return 1;
     }
 
-    // If page is present.
-    if (error.Present) {
-        // kill process
-    } else {
-        PageDirectory* directories = scheduler::current_thread->process->paging.directories;
-        PageDirectory& directory = directories[address.DirectoryEntry];
+    PageEntry* table = (PageEntry*)paging::pi_to_address(directory.Address);
+    PageEntry& entry = table[address.TableEntry];
 
-        if (!directory.Present) {
-            // kill process
+    // If page exists and needs to be allocated physical space.
+    if (!entry.Present) {
+        if ((entry.KernelFlags & PageFlags::DYNAMIC_PAGE_ALLOCATION) != 0) {
+            void* physical_page = physical_allocator::alloc_physical_page(1, true);
+            if (physical_page == nullptr) {
+                scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
+                video::printf("Could not allocate dynamic physical page for process!", VGA_COLOUR::LIGHT_RED);
+                return 1;
+            }
+
+            entry.Present = true;
+            entry.Address = paging::address_to_pi(physical_page);
+
+            return 0;
+        } else {
+            scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
+            video::printf("Process accessed a non existent page!", VGA_COLOUR::LIGHT_RED);
+            return 1;
         }
-
-        PageEntry* table = (PageEntry*)paging::pi_to_address(directory.Address);
-        PageEntry& entry = table[address.TableEntry];
-
-        // If page exists and needs to be allocated physical space.
-        
     }
+
+    // Other page fault reasons - read only, privilege level, etc.
+    scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
+    video::printf("Process page access triggered a page fault!", VGA_COLOUR::LIGHT_RED);
+    return 1;
 }
 
 // TODO: SORT OUT CACHE INVALIDATION FOR PAGING
