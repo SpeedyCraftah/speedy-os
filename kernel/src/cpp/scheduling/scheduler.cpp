@@ -414,7 +414,7 @@ namespace scheduler {
 
             // Create a default EFLAGS.
             // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
-            thread->registers->eflags = 0b00000000000000000011001000000010;
+            thread->registers->eflags = 0b00000000001000000011001000000010;
 
             // Add the thread to the map.
             thread_list->set(thread->id, thread);
