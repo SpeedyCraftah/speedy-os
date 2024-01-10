@@ -38,7 +38,8 @@ INTERRUPT_14:
     cmp eax, 0
     jz .normal_return
 
-    ; Halt until scheduler timer.
+    ; Restore interrupt frame.
+    push_interrupt_frame
 
     ; Push scheduler switch address and return.
     mov [esp], dword .far_return
