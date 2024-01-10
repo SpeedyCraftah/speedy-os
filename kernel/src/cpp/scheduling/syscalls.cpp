@@ -79,8 +79,6 @@ uint32_t handle_system_call_hl() {
         else if (data == 2) temporary_registers->eax = scheduler::current_thread->id;
     } else if (id == 2) {
         scheduler::kill_process(scheduler::current_thread->process, data);
-        scheduler::current_thread = nullptr;
-        scheduler::temporary_registers = &scheduler::placeholder_registers;
         return 1;
     } else if (id == 3) {
         // May add conditional suspensions.
