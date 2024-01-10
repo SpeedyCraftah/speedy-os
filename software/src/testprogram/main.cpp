@@ -18,7 +18,8 @@ int main() {
     speedyos::speedyshell::printf("everything is great\n", (speedyos::VGAColour)0x00ff00);
     speedyos::speedyshell::printf("or is it???\n", (speedyos::VGAColour)0xff0000);
 
-    speedyos::alloc_virtual_pages((void*)2147483648, 1, speedyos::PageAllocationFlag::ALLOCATE_IMMEDIATELY);
+    speedyos::alloc_virtual_pages((void*)2147483648, 1, speedyos::PageAllocationFlag::ALLOCATE_ON_ACCESS);
+    *(int*)2147483648 = 2;
 
     speedyos::speedyshell::printf("\nit is :)\n", (speedyos::VGAColour)0x00ff00);
 
