@@ -43,6 +43,7 @@
 #include "heap/physical.h"
 
 #include "loader/elf.h"
+#include "tables/tss.h"
 
 
 bool isTerminalInterface = false;
@@ -115,6 +116,11 @@ void kernelControlHandOver() {
     gdtDescriptor.Offset = (uint32_t)&DefaultGDT;
 
     LoadGDT(&gdtDescriptor);
+
+    video::printf_log("Kernel", "Defining and loading TSS...");
+
+    // Load and define the TSS.
+    tss_setup_default();
 
     video::printf_log("Kernel", "Defining IDT interrupt entries...");
 

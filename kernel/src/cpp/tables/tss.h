@@ -11,4 +11,4 @@ struct TSS {
 
 extern TSS DefaultTSS;
 
-void tss_install_default();
+void tss_setup_default();
