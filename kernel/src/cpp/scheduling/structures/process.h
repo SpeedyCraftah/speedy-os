@@ -6,6 +6,11 @@
 #include "../../paging/paging.h"
 #include "registers.h"
 
+enum ProcessTermCode : uint32_t {
+    PAGE_ACCESS_VIOLATION = 100,
+    GENERAL_PROTECTION_FAULT
+};
+
 struct ProcessFlags {
     uint8_t system_process : 1;
     uint8_t virtual_process : 1;
