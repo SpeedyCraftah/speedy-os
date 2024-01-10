@@ -29,12 +29,13 @@ extern virtual_temporary_registers
     mov [ecx+24], esi
     mov [ecx+28], edi
 
-    ; Dump FLAGS.
-    lahf
-    mov byte [ecx+36], ah
+    ; Dump EFLAGS.
+    pushfd
+    pop eax
+    mov [eax+36], ecx
 
     ; Dump FPU.
-    fsave [ecx+37]
+    fsave [ecx+40]
 
     ; Save ecx.
     pop eax
@@ -45,9 +46,10 @@ extern virtual_temporary_registers
 %macro load_general_registers_from_temp 0
     mov ecx, [virtual_temporary_registers]
 
-    ; Load FLAGS.
-    mov ah, byte [ecx+36]
-    sahf
+    ; Load EFLAGS.
+    mov eax, [ecx+36]
+    push eax
+    popfd
 
     mov eax, [ecx]
     mov edx, [ecx+8]
@@ -58,7 +60,7 @@ extern virtual_temporary_registers
     mov edi, [ecx+28]
 
     ; Restore FPU.
-    frstor [ecx+37]
+    frstor [ecx+40]
 
     ; Restore ecx.
     mov ecx, [ecx+4]
