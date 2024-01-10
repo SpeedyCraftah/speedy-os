@@ -2,10 +2,11 @@
 #include "gdt.h"
 
 extern "C" uint32_t kernel_stack;
+extern "C" void LoadTSS();
 
 TSS DefaultTSS = {0, kernel_stack, 0x10};
 
-void tss_install_default() {
+void tss_setup_default() {
     uint32_t tss_address = reinterpret_cast<uint32_t>(&DefaultTSS);
     uint32_t tss_size = sizeof(DefaultTSS);
 
@@ -18,5 +19,5 @@ void tss_install_default() {
     entry->Limit0 = tss_size & 0xFFFF;
     entry->Limit1 = (tss_size >> 16) & 0xF;
 
-    entry->AccessByte = 1;
+    LoadTSS();
 }
