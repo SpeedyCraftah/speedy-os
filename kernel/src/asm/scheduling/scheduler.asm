@@ -31,7 +31,12 @@ scheduler_execute:
   load_general_registers_from_temp
 
   ; Enable interrupts.
-  sti
+  ; sti
+
+  mov eax, esp
+  push (4 * 8) | 3
+  push eax
+  
 
   ; Jump to programs EIP.
   jmp [temporary_eip]
