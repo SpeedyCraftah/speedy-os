@@ -558,6 +558,12 @@ namespace scheduler {
     }
 
     void kill_process(Process* process, uint32_t code) {
+        // Scheduler clean-up if process was running.
+        if (scheduler::current_thread && scheduler::current_thread->process == process) {
+            scheduler::current_thread = nullptr;
+            scheduler::temporary_registers = &scheduler::placeholder_registers;
+        }
+
         assert_eq("sch.procs.list.exists.1", process_list->exists(process->id), true);
 
         // Remove the process from map.
