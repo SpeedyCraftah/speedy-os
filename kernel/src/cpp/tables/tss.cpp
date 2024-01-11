@@ -1,12 +1,13 @@
 #include "tss.h"
 #include "gdt.h"
 
-extern "C" uint32_t kernel_stack;
+extern "C" void* kernel_stack;
 extern "C" void LoadTSS();
 
-TSS DefaultTSS = {0, kernel_stack, 0x10};
+TSS DefaultTSS = {0, 0, 0x10};
 
 void tss_setup_default() {
+    asm volatile ("" : : "r"(&kernel_stack));
     uint32_t tss_address = reinterpret_cast<uint32_t>(&DefaultTSS);
     uint32_t tss_size = sizeof(DefaultTSS);
 
@@ -18,6 +19,8 @@ void tss_setup_default() {
     
     entry->Limit0 = tss_size & 0xFFFF;
     entry->Limit1 = (tss_size >> 16) & 0xF;
+
+    DefaultTSS.esp0 = reinterpret_cast<uint32_t>(kernel_stack);
 
     LoadTSS();
 }
