@@ -133,12 +133,12 @@ extern temporary_interrupt_frame
 
 %macro modify_return_to_ring0 0
     ; Change EFLAGS to jump to ring 0 with no interrupts.
-    mov [esp+8], 00000000001000000000000000000010b
+    mov [esp+8], dword 00000000001000000000000000000010b
 
     ; Change segment registers to kernel.
     ; try doing without
-    mov [esp+4], (1 * 8) | 0
-    mov [esp+16], (2 * 8) | 0
+    mov [esp+4], dword (1 * 8) | 0
+    mov [esp+16], dword (2 * 8) | 0
 
     mov eax, [kernel_stack]
     mov [esp+12], eax
