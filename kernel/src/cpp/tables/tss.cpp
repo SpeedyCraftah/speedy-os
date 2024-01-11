@@ -7,7 +7,6 @@ extern "C" void LoadTSS();
 TSS DefaultTSS = {0, 0, 0x10};
 
 void tss_setup_default() {
-    asm volatile ("" : : "r"(&kernel_stack));
     uint32_t tss_address = reinterpret_cast<uint32_t>(&DefaultTSS);
     uint32_t tss_size = sizeof(DefaultTSS);
 
