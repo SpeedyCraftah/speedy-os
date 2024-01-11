@@ -40,9 +40,9 @@
 
 .global _start
 _start:
-    mov %ebx, (structure_address)
-    mov $kernel_stack, (kernel_stack)
-    mov $kernel_stack, %esp
+    movl %ebx, (structure_address)
+    movl $kernel_stack, (kernel_stack)
+    movl $kernel_stack, %esp
     
     push %eax
     push %ebx
