@@ -9,24 +9,21 @@ extern temporary_eip
 
 global INTERRUPT_14
 INTERRUPT_14:
-    ; Dump registers (plus offset).
-    save_general_registers_to_temp 16
-
-    ; Hold error code in register.
-    pop ecx
+    ; Dump registers.
+    save_general_registers_to_temp 4
 
     ; Save interrupt frame.
-    save_interrupt_frame
+    ;save_interrupt_frame
 
     ; Save return EIP.
     mov eax, [esp]
     mov [ecx+32], eax
 
     ; Load the kernel stack.
-    load_kernel_stack
+    ;load_kernel_stack
 
     ; Push error code to stack again.
-    push ecx
+    ;push ecx
 
     ; Push virtual address to stack.
     mov eax, cr2
@@ -39,9 +36,11 @@ INTERRUPT_14:
     jz .normal_return
 
     ; Restore interrupt frame.
-    push_interrupt_frame
+    ;push_interrupt_frame
 
     ; Push scheduler switch address and return.
+    
+
     mov [esp], dword .far_return
     iret
 

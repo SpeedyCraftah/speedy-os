@@ -20,9 +20,7 @@ extern virtual_temporary_registers
     mov [ecx+8], edx
     mov [ecx+12], ebx
 
-    ; Preserve the stack.
-    mov ebx, esp
-    add ebx, 4+%1
+    mov ebx, [esp+8+4+%1]
     mov [ecx+16], ebx
 
     mov [ecx+20], ebp
@@ -54,7 +52,7 @@ extern virtual_temporary_registers
     mov eax, [ecx]
     mov edx, [ecx+8]
     mov ebx, [ecx+12]
-    mov esp, [ecx+16]
+    ;mov esp, [ecx+16]
     mov ebp, [ecx+20]
     mov esi, [ecx+24]
     mov edi, [ecx+28]
@@ -69,7 +67,7 @@ extern virtual_temporary_registers
 extern kernel_stack
 
 %macro load_kernel_stack 0
-    mov esp, kernel_stack
+    mov esp, [kernel_stack]
     mov ebp, 0
 %endmacro
 
@@ -101,4 +99,47 @@ extern temporary_interrupt_frame
     ; EFLAGS
     mov eax, dword [temporary_interrupt_frame]
     push eax
+%endmacro
+
+%macro return_to_thread_ring3 0
+    ; preserve eax
+    ; todo - check for stack leak
+    ;push eax
+
+    mov ax, (4 * 8) | 3
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ;mov eax, esp
+    push (4 * 8) | 3 ;ds
+    ;push eax ;esp
+    
+    ; push stack
+    mov ecx, [virtual_temporary_registers]
+    mov eax, [ecx+16]
+    push eax ;esp
+    
+    pushfd ;eflags
+    push (3 * 8) | 3 ;cs
+    
+    mov eax, [temporary_eip]
+    push eax ;eip
+
+    ; restore eax
+    mov eax, [esp+20]
+%endmacro
+
+%macro modify_return_to_ring0 0
+    ; Change EFLAGS to jump to ring 0 with no interrupts.
+    mov [esp+8], 00000000001000000000000000000010b
+
+    ; Change segment registers to kernel.
+    ; try doing without
+    mov [esp+4], (1 * 8) | 0
+    mov [esp+16], (2 * 8) | 0
+
+    mov eax, [kernel_stack]
+    mov [esp+12], eax
 %endmacro

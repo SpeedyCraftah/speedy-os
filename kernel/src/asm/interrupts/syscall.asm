@@ -15,19 +15,18 @@ section .text
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
 INTERRUPT_128:
-  mov dword [debug_val], 5
-  ; Dump registers (plus offset).
-  save_general_registers_to_temp 12
+  ; Dump registers.
+  save_general_registers_to_temp 0
 
   ; Save interrupt frame.
-  save_interrupt_frame
+  ;save_interrupt_frame
 
   ; Save return EIP.
   mov eax, [esp]
   mov [ecx+32], eax
 
   ; Load the kernel stack.
-  load_kernel_stack
+  ;load_kernel_stack
 
   ; ECX = System call number.
   ; EDX = Data.
@@ -37,9 +36,10 @@ INTERRUPT_128:
   jz .normal_return
 
   ; Load the interrupt frame since we switched to kernel stack.
-  push_interrupt_frame
+  ;push_interrupt_frame
 
   ; Push scheduler switch address and return.
+  modify_return_to_ring0
   mov [esp], dword .far_return
   iret
 
@@ -57,15 +57,18 @@ INTERRUPT_128:
   .normal_return:
     ; Replace EIP in case it changed.
     
-    mov eax, [virtual_temporary_registers]
-    mov eax, [eax+32]
+    mov ecx, [virtual_temporary_registers]
+    mov eax, [ecx+32]
     mov [esp], eax
+
+    ; Replace ESP in case it changed.
+    mov esp, [ecx+16]
 
     ; Load registers and return.
     load_general_registers_from_temp
 
     ; Subtract ESP to counter offset.
-    sub esp, 12
+    ;sub esp, 12
 
     ; Return from the interrupt.
     iret
