@@ -7,6 +7,7 @@
 #include "../structures/string.h"
 
 #include "../drivers/keyboard/keyboard.h"
+#include "interrupts.h"
 
 // Master PICs.
 extern "C" void INTERRUPT_33();
@@ -29,23 +30,23 @@ extern "C" void INTERRUPT_47();
 extern "C" void INTERRUPT_48();
 
 void interrupts::irq::load_all() {
-    IDTEntries[32] = idt_define_gate(INTERRUPT_33, 0x8E);
-    IDTEntries[33] = idt_define_gate(INTERRUPT_34, 0x8E);
-    IDTEntries[34] = idt_define_gate(INTERRUPT_35, 0x8E);
-    IDTEntries[35] = idt_define_gate(INTERRUPT_36, 0x8E);
-    IDTEntries[36] = idt_define_gate(INTERRUPT_37, 0x8E);
-    IDTEntries[37] = idt_define_gate(INTERRUPT_38, 0x8E);
-    IDTEntries[38] = idt_define_gate(INTERRUPT_39, 0x8E);
-    IDTEntries[39] = idt_define_gate(INTERRUPT_40, 0x8E);
+    IDTEntries[32] = idt_define_gate(INTERRUPT_33, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[33] = idt_define_gate(INTERRUPT_34, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[34] = idt_define_gate(INTERRUPT_35, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[35] = idt_define_gate(INTERRUPT_36, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[36] = idt_define_gate(INTERRUPT_37, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[37] = idt_define_gate(INTERRUPT_38, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[38] = idt_define_gate(INTERRUPT_39, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[39] = idt_define_gate(INTERRUPT_40, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
 
-    IDTEntries[40] = idt_define_gate(INTERRUPT_41, 0x8E);
-    IDTEntries[41] = idt_define_gate(INTERRUPT_42, 0x8E);
-    IDTEntries[42] = idt_define_gate(INTERRUPT_43, 0x8E);
-    IDTEntries[43] = idt_define_gate(INTERRUPT_44, 0x8E);
-    IDTEntries[44] = idt_define_gate(INTERRUPT_45, 0x8E);
-    IDTEntries[45] = idt_define_gate(INTERRUPT_46, 0x8E);
-    IDTEntries[46] = idt_define_gate(INTERRUPT_47, 0x8E);
-    IDTEntries[47] = idt_define_gate(INTERRUPT_48, 0x8E);
+    IDTEntries[40] = idt_define_gate(INTERRUPT_41, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[41] = idt_define_gate(INTERRUPT_42, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[42] = idt_define_gate(INTERRUPT_43, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[43] = idt_define_gate(INTERRUPT_44, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[44] = idt_define_gate(INTERRUPT_45, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[45] = idt_define_gate(INTERRUPT_46, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[46] = idt_define_gate(INTERRUPT_47, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[47] = idt_define_gate(INTERRUPT_48, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
 }
 
 // High level interrupt handler for IRQs

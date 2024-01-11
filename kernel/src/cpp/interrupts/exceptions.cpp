@@ -4,6 +4,7 @@
 #include "../tables/idt.h"
 #include "../io/video.h"
 #include "../misc/conversions.h"
+#include "interrupts.h"
 
 // Required to access memory locations of labels.
 extern "C" void INTERRUPT_0();
@@ -30,25 +31,25 @@ extern "C" void INTERRUPT_30();
 void interrupts::exceptions::load_all() {
     // Don't try to tell me this is tedious.
 
-    IDTEntries[0] = idt_define_gate(INTERRUPT_0, 0x8E);
-    IDTEntries[1] = idt_define_gate(INTERRUPT_1, 0x8E);
-    IDTEntries[3] = idt_define_gate(INTERRUPT_3, 0x8E);
-    IDTEntries[4] = idt_define_gate(INTERRUPT_4, 0x8E);
-    IDTEntries[5] = idt_define_gate(INTERRUPT_5, 0x8E);
-    IDTEntries[6] = idt_define_gate(INTERRUPT_6, 0x8E);
-    IDTEntries[7] = idt_define_gate(INTERRUPT_7, 0x8E);
-    IDTEntries[8] = idt_define_gate(INTERRUPT_8, 0x8E);
-    IDTEntries[10] = idt_define_gate(INTERRUPT_10, 0x8E);
-    IDTEntries[11] = idt_define_gate(INTERRUPT_11, 0x8E);
-    IDTEntries[12] = idt_define_gate(INTERRUPT_12, 0x8E);
-    IDTEntries[13] = idt_define_gate(INTERRUPT_13, 0x8E);
-    IDTEntries[14] = idt_define_gate(INTERRUPT_14, 0x8E);
-    IDTEntries[16] = idt_define_gate(INTERRUPT_16, 0x8E);
-    IDTEntries[17] = idt_define_gate(INTERRUPT_17, 0x8E);
-    IDTEntries[18] = idt_define_gate(INTERRUPT_18, 0x8E);
-    IDTEntries[19] = idt_define_gate(INTERRUPT_19, 0x8E);
-    IDTEntries[20] = idt_define_gate(INTERRUPT_20, 0x8E);
-    IDTEntries[30] = idt_define_gate(INTERRUPT_30, 0x8E);
+    IDTEntries[0] = idt_define_gate(INTERRUPT_0, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[1] = idt_define_gate(INTERRUPT_1, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[3] = idt_define_gate(INTERRUPT_3, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[4] = idt_define_gate(INTERRUPT_4, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[5] = idt_define_gate(INTERRUPT_5, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[6] = idt_define_gate(INTERRUPT_6, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[7] = idt_define_gate(INTERRUPT_7, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[8] = idt_define_gate(INTERRUPT_8, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[10] = idt_define_gate(INTERRUPT_10, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[11] = idt_define_gate(INTERRUPT_11, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[12] = idt_define_gate(INTERRUPT_12, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[13] = idt_define_gate(INTERRUPT_13, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[14] = idt_define_gate(INTERRUPT_14, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[16] = idt_define_gate(INTERRUPT_16, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[17] = idt_define_gate(INTERRUPT_17, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[18] = idt_define_gate(INTERRUPT_18, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[19] = idt_define_gate(INTERRUPT_19, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[20] = idt_define_gate(INTERRUPT_20, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
+    IDTEntries[30] = idt_define_gate(INTERRUPT_30, INT_Present | INT_GateType::INTERRUPT | INT_IOPL::RING_0);
 }
 
 // High level interrupt handler for CPU exceptions.
