@@ -12,6 +12,41 @@ section .bss
 debug_val: resd 1
 
 section .text
+
+
+global INTERRUPT_128
+INTERRUPT_128:
+  ; Save all registers (+stack).
+  push eax
+  mov eax, [virtual_temporary_registers]
+
+  mov [ecx+8], edx
+  mov [ecx+12], ebx
+  mov [ecx+16], esp
+  mov [ecx+20], ebp
+  mov [ecx+24], esi
+  mov [ecx+28], edi
+  frstor [ecx+40]
+
+  ; eip
+  mov ecx, [esp+0]
+  mov [eax+32], ecx
+
+  ;eflags
+  mov ecx, [esp+8]
+  mov [eax+36], ecx
+
+  pop eax
+  mov [ecx+0], eax
+
+
+  ; ECX = System call number.
+  ; EDX = Data.
+  call handle_system_call
+
+  
+
+
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
 INTERRUPT_128:

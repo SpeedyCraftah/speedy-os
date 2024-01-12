@@ -106,14 +106,14 @@ extern temporary_interrupt_frame
     ; todo - check for stack leak
     ;push eax
 
-    mov ax, (4 * 8) | 3
+    mov ax, (2 * 8) | 0
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
     ;mov eax, esp
-    push (4 * 8) | 3 ;ds
+    push (2 * 8) | 3 ;ds
     ;push eax ;esp
     
     ; push stack
@@ -122,7 +122,7 @@ extern temporary_interrupt_frame
     push eax ;esp
     
     pushfd ;eflags
-    push (3 * 8) | 3 ;cs
+    push (1 * 8) | 0 ;cs
     
     mov eax, [temporary_eip]
     push eax ;eip
@@ -140,6 +140,6 @@ extern temporary_interrupt_frame
     mov [esp+4], dword (1 * 8) | 0
     mov [esp+16], dword (2 * 8) | 0
 
-    mov eax, [kernel_stack]
-    mov [esp+12], eax
+    mov eax, dword [kernel_stack]
+    mov [esp+12], dword eax
 %endmacro
