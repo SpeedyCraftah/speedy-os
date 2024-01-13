@@ -52,8 +52,8 @@ INTERRUPT_14:
 
     .scheduler_return:
         ; Set cs+dx to kernel segments.
-        mov [esp+4], dword (1 * 8) | 0
-        mov [esp+16], dword (2 * 8) | 0
+        ;mov [esp+4], dword (1 * 8) | 0
+        ;mov [esp+16], dword (2 * 8) | 0
 
         ; Set kernel stack.
         mov eax, [kernel_stack]
