@@ -56,15 +56,18 @@ INTERRUPT_128:
 
   .scheduler_return:
     ; Set cs+dx to kernel segments.
-    mov [esp+4], (1 * 8) | 0
-    mov [esp+16], (2 * 8) | 0
+    mov [esp+4], dword (1 * 8) | 0
+    mov [esp+16], dword (2 * 8) | 0
 
     ; Set kernel stack.
     mov eax, [kernel_stack]
     mov [esp+12], eax
 
     ; Disable interrupts and set to IOPL=0 in eflags.
-    mov [esp+8], 00000000001000000000000000000010b
+    mov [esp+8], dword 00000000001000000000000000000010b
+
+    ; Load scheduler address.
+    mov [esp+0], handle_context_switch
 
     iret
   
@@ -73,7 +76,7 @@ INTERRUPT_128:
     mov eax, [virtual_temporary_registers]
 
     ;esp
-    mov ecx, [eax+36]
+    mov ecx, [eax+16]
     mov [esp+12], ecx
 
     ;eip
