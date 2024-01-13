@@ -9,6 +9,21 @@ extern temporary_eip
 
 global INTERRUPT_14
 INTERRUPT_14:
+    
+
+
+
+
+
+
+
+
+
+
+
+
+global INTERRUPT_14
+INTERRUPT_14:
     ; Dump registers.
     save_general_registers_to_temp 4
 
