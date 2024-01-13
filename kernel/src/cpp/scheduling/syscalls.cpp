@@ -70,7 +70,6 @@ uint32_t handle_system_call_hl() {
     uint32_t data = temporary_registers->edx;
 
     if (id == 0) {
-        bpwatch = 1255;
         // my birthday :)
         temporary_registers->eax = 3009;
     } else if (id == 1) {
