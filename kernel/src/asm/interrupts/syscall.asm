@@ -17,6 +17,8 @@ section .text
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
 INTERRUPT_128:
+  cli
+
   ; Save all registers (+stack).
   push eax
   mov eax, [virtual_temporary_registers]
@@ -64,7 +66,7 @@ INTERRUPT_128:
     mov [esp+12], eax
 
     ; Disable interrupts and set to IOPL=0 in eflags.
-    mov [esp+8], dword 00000000001000000000000000000010b
+    mov [esp+8], KERNEL_EFLAGS
 
     ; Load scheduler address.
     mov [esp+0], dword handle_context_switch
