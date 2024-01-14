@@ -1,21 +1,25 @@
-; Does the dirty work to call a single C++ function for multiple interrupts.
+%include "utils.asm"
 
 ; Reference outside handler.
 extern HandleGeneralCPUException
+extern handle_context_switch
 
 ; Macro for easy script copying.
 %macro ISRBody 1
-    ; Save registers.
-    pushad
-    pushfd
-
-    ; Since the handler has fastcall attribute, params are passed via registers.
+    ; General exceptions will always end process for now.
+    ; Preserve registers when not.
     mov ecx, %1
     call HandleGeneralCPUException
 
-    ; Restore registers.
-    popfd
-    popad
+    ; Set kernel stack.
+    mov eax, [kernel_stack]
+    mov [esp+12], eax
+
+    ; Disable interrupts and set to IOPL=0 in eflags.
+    mov [esp+8], KERNEL_EFLAGS
+
+    ; Load scheduler address.
+    mov [esp+0], dword handle_context_switch
 
     iret
 %endmacro
