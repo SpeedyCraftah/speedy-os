@@ -9,8 +9,6 @@ structures::map<char*> cool_map2;
 
 structures::flexible_array<int> cool_flex;
 
-extern "C" int abc = 2;
-
 int main() {
     speedyos::speedyshell::printf(conversions::u_int_to_char(cool_flex.get_capacity() + cool_map.get_capacity() + cool_map2.get_capacity()));
 
@@ -26,10 +24,8 @@ int main() {
     /*while (true) {
     }*/
 
-    abc = 20;
-
     char buf[10];
-    memset(buf, 10, 100);
+    memset(buf, 10, 20);
 
     return 0;
 }

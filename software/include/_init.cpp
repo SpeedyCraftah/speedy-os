@@ -12,6 +12,12 @@ extern "C" void __stack_chk_fail(void) {
 extern "C" void (*_call_ctors)();
 extern "C" void (*_call_dtors)();
 
+__attribute__((naked)) __attribute__((fastcall)) void func() {
+    asm volatile("mov $0, %ecx");
+    asm volatile("int $128");
+    asm volatile("ret");
+}
+
 extern "C" int main();
 extern "C" void _main() {
     // Initialise the malloc heap.
