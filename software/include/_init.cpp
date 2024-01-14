@@ -5,18 +5,12 @@
 uint32_t __stack_chk_guard = 0x38325789;
 extern "C" void __stack_chk_fail(void) {
     speedyos::speedyshell::printf("[FATAL] Stack protector detected change to canary");
-    speedyos::end_process();
+    speedyos::end_process(1);
     __builtin_unreachable();
 }
 
 extern "C" void (*_call_ctors)();
 extern "C" void (*_call_dtors)();
-
-__attribute__((naked)) __attribute__((fastcall)) void func() {
-    asm volatile("mov $0, %ecx");
-    asm volatile("int $128");
-    asm volatile("ret");
-}
 
 extern "C" int main();
 extern "C" void _main() {

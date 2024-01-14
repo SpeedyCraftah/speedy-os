@@ -18,7 +18,7 @@ int main() {
 
     speedyos::alloc_virtual_pages((void*)2147483648, 1, speedyos::PageAllocationFlag::ALLOCATE_ON_ACCESS);
     *(int*)2147483648 = 2;
-
+    
     speedyos::speedyshell::printf("\nit is :)\n", (speedyos::VGAColour)0x00ff00);
 
     /*while (true) {
