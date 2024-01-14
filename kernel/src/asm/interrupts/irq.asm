@@ -6,7 +6,10 @@ extern HandleIRQInterrupt
 section .text
 
 ; Macro for easy script copying.
-%macro IRQBodyMaster 1
+%macro IRQBody 2
+    ; Disable interrupts.
+    cli
+
     ; Save registers.
     pushad
     pushfd
@@ -19,26 +22,9 @@ section .text
     mov al, 0x20
     out 0x20, al
 
-    ; Restore registers.
-    popfd
-    popad
-
-    iret
-%endmacro
-
-%macro IRQBodySlave 1
-    ; Save registers.
-    pushad
-    pushfd
-
-    ; Since the handler has fastcall attribute, params are passed via registers.
-    mov ecx, %1
-    call HandleIRQInterrupt
-
-    ; Send EOI to master and slave.
-    mov al, 0x20
-    out 0x20, al
-    out 0xA0, al
+    %if %2 == 1
+        out 0xA0, al
+    %endif
 
     ; Restore registers.
     popfd
@@ -46,7 +32,6 @@ section .text
 
     iret
 %endmacro
-
 
 ; IRQs 0-7 (master) 8-15 (slave).
 ; (IRQs have to be divisble by 8 for some reason).
@@ -78,47 +63,47 @@ global INTERRUPT_48
 ; INTERRUPT_33:
 
 INTERRUPT_34:
-    IRQBodyMaster 34
+    IRQBody 34, 1
 
 INTERRUPT_35:
-    IRQBodyMaster 35
+    IRQBody 35, 1
 
 INTERRUPT_36:
-    IRQBodyMaster 36
+    IRQBody 36, 1
 
 INTERRUPT_37:
-    IRQBodyMaster 37
+    IRQBody 37, 1
 
 INTERRUPT_38:
-    IRQBodyMaster 38
+    IRQBody 38, 1
 
 INTERRUPT_39:
-    IRQBodyMaster 39
+    IRQBody 39, 1
 
 INTERRUPT_40:
-    IRQBodyMaster 40
+    IRQBody 40, 1
 
 
 INTERRUPT_41:
-    IRQBodySlave 41
+    IRQBody 41, 0
 
 INTERRUPT_42:
-    IRQBodySlave 42
+    IRQBody 42, 0
 
 INTERRUPT_43:
-    IRQBodySlave 43
+    IRQBody 43, 0
 
 INTERRUPT_44:
-    IRQBodySlave 44
+    IRQBody 44, 0
 
 INTERRUPT_45:
-    IRQBodySlave 45
+    IRQBody 45, 0
 
 INTERRUPT_46:
-    IRQBodySlave 46
+    IRQBody 46, 0
 
 INTERRUPT_47:
-    IRQBodySlave 47
+    IRQBody 47, 0
 
 INTERRUPT_48:
-    IRQBodySlave 48
+    IRQBody 48, 0
