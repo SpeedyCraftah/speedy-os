@@ -28,7 +28,7 @@ namespace speedyshell {
 
     // Move everything up by 14 pixels to make space if required.
     void safe_y_space() {
-        if (video::y_offset >= video::VGA_HEIGHT - 28) {
+        /*if (video::y_offset >= video::VGA_HEIGHT - 28) {
             uint32_t y_start = video::VGA_WIDTH;
 
             for (uint32_t x = video::VGA_WIDTH * 16; x < video::VGA_WIDTH * video::VGA_HEIGHT; x++) {
@@ -39,9 +39,9 @@ namespace speedyshell {
             }
 
             // Start on new line.
-            video::y_offset = video::VGA_HEIGHT - 15;
-            video::x_offset = 0;
-        } else video::printnl();
+            //video::y_offset = video::VGA_HEIGHT - 15;
+            //video::x_offset = 0;
+        } else video::printnl();*/
     }
 
     // Reusable functions.
@@ -56,11 +56,11 @@ namespace speedyshell {
             } else if (c == '\0') {
                 break;
             } else {
-                if (
+                /*if (
                     video::y_offset > video::VGA_HEIGHT ||
                     font_interpreter::char_width(internal_fonts::bios_port_improved, c) + video::x_offset 
                     > video::VGA_WIDTH
-                ) safe_y_space();
+                ) safe_y_space();*/
 
                 video::printf(c, colour);
             }
@@ -91,7 +91,7 @@ namespace speedyshell {
             // If running in pixel mode, downgrade.
             if (pixel_mode) {
                 // Restore screen.
-                video::restorescr();
+                //video::restorescr();
 
                 // Update state.
                 pixel_mode = false;
@@ -122,17 +122,17 @@ namespace speedyshell {
 
         // Check if character will overflow display.
         // To be improved.
-        if (
+        /*if (
             font_interpreter::char_width(internal_fonts::bios_port_improved, character) + video::x_offset 
             > video::VGA_WIDTH
-        ) return speedyos::end_event();
+        ) return speedyos::end_event();*/
 
         // Add key to buffer.
         text_buffer[text_buffer_position] = character;
         text_buffer_position++;
 
         // Draw on screen.
-        video::printf_reverse(' ');
+        //video::printf_reverse(' ');
         video::printf(character);
         
         //if (text_buffer_position + 1 < max_allowed_buffer) 
@@ -158,11 +158,11 @@ namespace speedyshell {
 
             // If graphics mode, restore terminal.
             if (pixel_mode) {
-                video::restorescr();
+                //video::restorescr();
                 pixel_mode = false;
             }
 
-            if (allow_typing) video::printf_reverse(' ');
+            //if (allow_typing) video::printf_reverse(' ');
 
             safe_y_space();
 
@@ -194,7 +194,7 @@ namespace speedyshell {
             return speedyos::end_event();    
         } else if (data == speedyos::ModifierKeys::ENTER_PRESSED) {
             // Remove cursor.
-            if (allow_typing) video::printf_reverse(' ');
+            //if (allow_typing) video::printf_reverse(' ');
 
             if (input_mode) {
                 Thread* thread = scheduler::thread_list->fetch(input_thread_id);
@@ -233,8 +233,8 @@ namespace speedyshell {
             text_buffer_position--;
 
             // Remove two sections from screen.
-            video::printf_reverse(' ');
-            video::printf_reverse(text_buffer[text_buffer_position]);
+            //video::printf_reverse(' ');
+            //video::printf_reverse(text_buffer[text_buffer_position]);
 
             // Reset character in buffer.
             text_buffer[text_buffer_position] = 0;

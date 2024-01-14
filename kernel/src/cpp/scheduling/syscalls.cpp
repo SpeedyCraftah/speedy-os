@@ -365,7 +365,7 @@ uint32_t handle_system_call_hl() {
         // If the program is a shell executed program.
         if (speedyshell::running_process_id == scheduler::current_thread->process->id) {
             // Save current shell contents.
-            video::savescr();
+            //video::savescr();
 
             // Clear the screen.
             video::clearscr();
