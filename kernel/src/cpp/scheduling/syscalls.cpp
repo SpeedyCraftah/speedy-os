@@ -456,12 +456,12 @@ uint32_t handle_system_call_hl() {
 // On system call (called from external program).
 extern "C" uint32_t __attribute__((fastcall)) handle_system_call() {
     // Switch to kernel directory.
-    if (!scheduler::current_thread->process->flags.system_process) paging::switch_directory(paging::kernel_page_directory);
+    paging::switch_directory(paging::kernel_page_directory);
 
     uint32_t result = handle_system_call_hl();
     if (result == 0) {
         // Switch back to user paging.
-        if (!scheduler::current_thread->process->flags.system_process) paging::switch_directory(scheduler::current_thread->process->paging.directories);
+        paging::switch_directory(scheduler::current_thread->process->paging.directories);
     }
 
     return result;

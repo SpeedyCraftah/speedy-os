@@ -100,7 +100,7 @@ namespace scheduler {
         thread_execution_iterator = thread_execution_queue->create_iterator();
 
         ProcessFlags flags;
-        flags.system_process = true;
+        flags.kernel_process = true;
         flags.virtual_process = true;
 
         scheduler_event_process = create_process("Scheduler Events", 0, flags);
@@ -144,7 +144,7 @@ namespace scheduler {
         // If a thread was previously running.
         if (current_thread != nullptr) {
             // Switch to kernel paging.
-            if (!current_thread->process->flags.system_process) paging::switch_directory(paging::kernel_page_directory);
+            paging::switch_directory(paging::kernel_page_directory);
 
             uint32_t cpu_time_used =
                 timer_preempt ? time_slice_ms : (time_slice_ms - (uint32_t)chips::pit::fetch_channel_0_remaining_countdown());
@@ -276,9 +276,7 @@ namespace scheduler {
             temporary_eip = reinterpret_cast<void*>(thread->registers->eip);
 
             // Switch to process paging.
-            if (!thread->process->flags.system_process) {
-                paging::switch_directory(thread->process->paging.directories);
-            }
+            paging::switch_directory(thread->process->paging.directories);
 
             // Switch to assembly side of scheduler to begin execution.
             return scheduler_execute();
@@ -377,7 +375,8 @@ namespace scheduler {
                     entry.Address = (i * 1024) + j;
                     entry.Present = true;
                     entry.ReadWrite = true;
-                    entry.Global = true;
+                    entry.Global = false;
+                    entry.UserSupervisor = process->flags.kernel_process;
                 }
             }
 
@@ -414,7 +413,7 @@ namespace scheduler {
 
             // Create a default EFLAGS.
             // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
-            thread->registers->eflags = 0b00000000001000000011001000000010;
+            thread->registers->eflags = process->flags.iopl_0 ? 0b00000000001000000000001000000010 : 0b00000000001000000011001000000010;
 
             // Add the thread to the map.
             thread_list->set(thread->id, thread);

@@ -83,12 +83,12 @@ uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
 // to get virtual address: ((address.DirectoryEntry * 1024) + address.TableEntry) * 4096)
 extern "C" uint32_t HandlePageFault(PageFaultAddress address, PageFaultError error) {
     // Switch to kernel page directory.
-    if (!scheduler::current_thread->process->flags.system_process) paging::switch_directory(paging::kernel_page_directory);
+    paging::switch_directory(paging::kernel_page_directory);
     
     uint32_t result = HandlePageFault_hl(address, error);
     if (result == 0) {
         // Switch back to process page directory.
-        if (!scheduler::current_thread->process->flags.system_process) paging::switch_directory(scheduler::current_thread->process->paging.directories);
+        paging::switch_directory(scheduler::current_thread->process->paging.directories);
     }
 
     return result;
