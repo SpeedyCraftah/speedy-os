@@ -67,7 +67,7 @@ INTERRUPT_128:
     mov [esp+8], dword 00000000001000000000000000000010b
 
     ; Load scheduler address.
-    mov [esp+0], handle_context_switch
+    mov [esp+0], dword handle_context_switch
 
     iret
   

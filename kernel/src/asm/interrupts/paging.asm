@@ -60,10 +60,10 @@ INTERRUPT_14:
         mov [esp+12], eax
 
         ; Disable interrupts and set to IOPL=0 in eflags.
-        mov [esp+8], dword 00000000001000000000000000000010b
+        mov [esp+8], KERNEL_EFLAGS
 
         ; Load scheduler address.
-        mov [esp+0], handle_context_switch
+        mov [esp+0], dword handle_context_switch
 
         iret
     
