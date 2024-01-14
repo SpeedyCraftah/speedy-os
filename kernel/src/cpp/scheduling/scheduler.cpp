@@ -73,7 +73,7 @@ namespace scheduler {
     structures::linked_array<ThreadEvent>::iterator thread_event_iterator;
     structures::linked_array<Thread*>::iterator thread_execution_iterator;
 
-    Process* scheduler_event_process;
+    Process* scheduler_event_process = nullptr;
 
     void initialise() {
         // Set base FPU state.
@@ -112,7 +112,7 @@ namespace scheduler {
         // Create kernel process for usage by virtual functions.
         kernel_process = new Process;
         kernel_process->paging.directories = paging::kernel_page_directory;
-        bpwatch = 10;
+
         PageDirectory placeholder_dir = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
         // Set all page directories to 0 by default.
@@ -427,7 +427,7 @@ namespace scheduler {
         }
 
         // Emit process create event.
-        scheduler::events::emit_event(scheduler_event_process, 1, process->id);
+        if (scheduler_event_process != nullptr) scheduler::events::emit_event(scheduler_event_process, 1, process->id);
 
         // Return the process.
         return process;
