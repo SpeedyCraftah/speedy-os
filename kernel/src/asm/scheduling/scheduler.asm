@@ -4,12 +4,16 @@
 
 extern virtual_temporary_registers
 extern temporary_eip
+extern kernel_stack
 extern timer_preempt
 
 global scheduler_sleep
 scheduler_sleep:
   ; Send EOI.
   send_eoi
+
+  ; Restore kernel stack to original.
+  mov esp, [kernel_stack]
 
   ; Enable interrupts.
   sti
