@@ -2,6 +2,8 @@
 
 extern virtual_temporary_registers
 
+%define KERNEL_EFLAGS dword 00000000001000000000000000000010b
+
 ; Send EOI signal to PIC, signaling end of IRQ.
 %macro send_eoi 0
     mov al, 0x20
@@ -68,7 +70,7 @@ extern kernel_stack
 
 %macro load_kernel_stack 0
     mov esp, [kernel_stack]
-    mov ebp, 0
+    xor ebp, ebp
 %endmacro
 
 extern temporary_interrupt_frame
@@ -106,14 +108,14 @@ extern temporary_interrupt_frame
     ; todo - check for stack leak
     ;push eax
 
-    mov ax, (2 * 8) | 0
+    mov ax, (4 * 8) | 3
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
     ;mov eax, esp
-    push (2 * 8) | 3 ;ds
+    push (4 * 8) | 3 ;ds
     ;push eax ;esp
     
     ; push stack
@@ -121,8 +123,10 @@ extern temporary_interrupt_frame
     mov eax, [ecx+16]
     push eax ;esp
     
-    pushfd ;eflags
-    push (1 * 8) | 0 ;cs
+    ;eflags
+    mov eax, [ecx+36]
+    push eax
+    push (3 * 8) | 3 ;cs
     
     mov eax, [temporary_eip]
     push eax ;eip
@@ -133,7 +137,7 @@ extern temporary_interrupt_frame
 
 %macro modify_return_to_ring0 0
     ; Change EFLAGS to jump to ring 0 with no interrupts.
-    mov [esp+8], dword 00000000001000000000000000000010b
+    mov [esp+8], KERNEL_ESP
 
     ; Change segment registers to kernel.
     ; try doing without
