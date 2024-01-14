@@ -143,12 +143,15 @@ namespace graphics {
   // Draws a non-straight line using the Bresenham algorithm.
   void draw_line_bresenham(uint32_t start_x, uint32_t start_y, uint32_t end_x, uint32_t end_y);
   
+  // Draws a rectangle without borders and only fills.
+  void draw_rectangle_no_border(uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length);
+
   // Draws a rectangle. Outline width will be taken into account in the future.
   // X - Top left corner coordinate. Y - Top left corner Y coordinate. Length - Length in pixels from corner points.
   void draw_rectangle(uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill = false);
   
   // Draws a rectangle. Same as above except colour will be taken from the location at the buffer.
-  void draw_rectangle_from(uint32_t* buffer, uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill = false);
+  void draw_rectangle_from(uint32_t* buffer, uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length);
 
   // Draws a line, straight or diagonal.
   // Width will be taken into account in the future.

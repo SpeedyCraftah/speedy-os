@@ -142,28 +142,19 @@ namespace graphics {
     }
   }
 
-  void draw_rectangle_from(uint32_t* buffer, uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length, bool fill) {
-    uint32_t horizontal_start_1 = (y * graphics::resolution_width) + x;
-    uint32_t horizontal_start_2 = ((y + height_length) * graphics::resolution_width) + x + 1;
-    
-    // Draw horizontal lines from location in buffer.
-    for (uint32_t i = 0; i < width_length; i++) {
-      draw_pixel(x + i, y, buffer[horizontal_start_1 + i]);
-      draw_pixel(x + i + 1, y + height_length, buffer[horizontal_start_2 + i]);
-    }
-    
-    // Draw vertical lines.
-    for (uint32_t i = 0; i < height_length; i++) {
-      draw_pixel(x, y + i + 1, buffer[((y + i + 1) * 800) + x]);
-      draw_pixel(x + width_length, y + i, buffer[((y + i) * 800) + (x + width_length)]);
-    }
-    
+  void draw_rectangle_from(uint32_t* buffer, uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length) {
     // Fill rectangle.
-    if (fill) {
-      for (uint32_t i = 0; i < height_length - 1; i++) {
-        for (uint32_t j = 0; j < width_length - 1; j++) {
-          draw_pixel(x + j + 1, y + i + 1, buffer[((y + i + 1) * 800) + (x + j + 1)]);
-        }
+    for (uint32_t i = 0; i < height_length; i++) {
+      for (uint32_t j = 0; j < width_length; j++) {
+        draw_pixel(x + j, y + i, buffer[(j * i) + j]);
+      }
+    }
+  }
+
+  void draw_rectangle_no_border(uint32_t x, uint32_t y, uint32_t width_length, uint32_t height_length) {
+    for (uint32_t i = 0; i < height_length; i++) {
+      for (uint32_t j = 0; j < width_length; j++) {
+        draw_pixel(x + j, y + i, fill_colour);
       }
     }
   }
@@ -172,20 +163,20 @@ namespace graphics {
     // Draw horizontal lines.
     for (uint32_t i = 0; i < width_length; i++) {
       draw_pixel(x + i, y, outline_colour);
-      draw_pixel(x + i + 1, y + height_length, outline_colour);
+      draw_pixel(x + i, y + height_length - 1, outline_colour);
     }
     
     // Draw vertical lines.
     for (uint32_t i = 0; i < height_length; i++) {
-      draw_pixel(x, y + i + 1, outline_colour);
-      draw_pixel(x + width_length, y + i, outline_colour);
+      draw_pixel(x, y + i, outline_colour);
+      draw_pixel(x + width_length - 1, y + i, outline_colour);
     }
     
     // Fill rectangle.
     if (fill) {
-      for (uint32_t i = 0; i < height_length - 1; i++) {
-        for (uint32_t j = 0; j < width_length - 1; j++) {
-          draw_pixel(x + j + 1, y + i + 1, fill_colour);
+      for (uint32_t i = 1; i < height_length - 1; i++) {
+        for (uint32_t j = 1; j < width_length - 1; j++) {
+          draw_pixel(x + j, y + i, fill_colour);
         }
       }
     }
