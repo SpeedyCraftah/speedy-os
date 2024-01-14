@@ -105,9 +105,6 @@ void kernelControlHandOver() {
     video::printf_log("Kernel", "Initialised kernel allocator..");
     video::printf_log("Kernel", "Initialised kernel constructors..");
 
-    video::current_address = graphics::video_address;
-    video::address = graphics::video_address;
-
     video::printf_log("Kernel", "Defining GDT memory segments (4G)...");
 
     // Load the global descriptor table.
