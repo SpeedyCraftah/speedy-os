@@ -195,7 +195,7 @@ void kernelControlHandOver() {
     video::printf_log("Kernel", "Starting TSC calculator process...");
 
     ProcessFlags flags;
-    flags.system_process = false;
+    flags.kernel_process = false;
 
     Process* p = loader::load_elf32_executable_as_process(*(char**)(mod_addr_first + 2), flags, reinterpret_cast<void*>(*mod_addr_first), reinterpret_cast<void*>(*(mod_addr_first + 1)));
 

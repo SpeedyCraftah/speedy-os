@@ -21,7 +21,7 @@ namespace drivers {
         setup_char_table();
 
         ProcessFlags flags;
-        flags.system_process = true;
+        flags.kernel_process = true;
         flags.virtual_process = true;
 
         // Create virtual process for events to take place.

@@ -29,7 +29,7 @@ namespace drivers {
     void mouse::load() {
         // Create virtual process for events to take place.
         ProcessFlags flags;
-        flags.system_process = true;
+        flags.kernel_process = true;
         flags.virtual_process = true;
 
         process = scheduler::create_process(
