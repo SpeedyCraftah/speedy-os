@@ -5,6 +5,7 @@
 #include "../../structures/linked_array.h"
 #include "../../paging/paging.h"
 #include "registers.h"
+#include "datasink.h"
 
 enum ProcessTermCode : uint32_t {
     PAGE_ACCESS_VIOLATION = 100,
@@ -26,6 +27,7 @@ struct ThreadKernelArea {
 struct Thread;
 struct ThreadEventListener;
 
+// TODO - make certain features such as hooked_events or sinks optional so not to allocate for no reason.
 struct Process {
     uint32_t id;
 
@@ -41,8 +43,9 @@ struct Process {
         uint32_t pixel_mapping_address;
     } paging;
 
-    structures::linked_array<Thread*>* threads;
-    structures::linked_array<ThreadEventListener>* hooked_threads;
+    structures::linked_array<Thread*>* threads = nullptr;
+    structures::linked_array<ThreadEventListener>* hooked_threads = nullptr;
+    structures::linked_array<SteadyDataSink*>* steady_sinks = nullptr;
 
     char* name;
     float total_cpu_time;

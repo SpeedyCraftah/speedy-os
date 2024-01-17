@@ -14,6 +14,7 @@
 #include "../heap/physical.h"
 #include "../paging/virtual.h"
 #include "../paging/paging.h"
+#include "structures/datasink.h"
 
 // remove after
 //#include "../software/system/speedyshell/main.h"
@@ -312,6 +313,7 @@ namespace scheduler {
         process->flags = flags;
         process->threads = new structures::linked_array<Thread*>(8);
         process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
+        process->steady_sinks = new structures::linked_array<SteadyDataSink*>(4);
 
         assert_eq("sch.procs.name.heap", kallocated(process->name), true);
         assert_eq("sch.procs.heap", kallocated(process->name), true);
