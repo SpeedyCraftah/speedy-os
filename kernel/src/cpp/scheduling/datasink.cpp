@@ -20,6 +20,7 @@ namespace scheduler {
             assert_eq("sch.structs.sdatasink.fragments", sink->fragments.get_capacity(), (uint32_t)10);
 
             process->steady_sinks->push(sink);
+            active_sinks.set(sink->handle_id, sink);
             return sink;
         }
     }
