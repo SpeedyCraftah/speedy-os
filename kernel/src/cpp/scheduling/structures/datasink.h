@@ -8,7 +8,8 @@
 struct SteadyDataSink {
     struct DataFragment {
         uint8_t* data;
-        uint32_t size;
+        uint8_t* data_ptr;
+        uint32_t size_remaining;
         bool unique; // Whether the fragment was allocated and copied for this specific sink or not.
     };
 
@@ -18,35 +19,61 @@ struct SteadyDataSink {
 
     uint32_t handle_id;
     structures::linked_array<DataFragment> fragments;
-    uint32_t actual_size = 0;
 
     bool append_data(uint8_t* buffer, uint32_t buffer_size, AppendType append_type = AppendType::COPY_BUFFER) {
+        if (buffer_size == 0) return false;
+
         DataFragment fragment;
-        fragment.size = buffer_size;
+        fragment.size_remaining = buffer_size;
 
         if (append_type == AppendType::COPY_BUFFER) {
             fragment.data = (uint8_t*)kmalloc(buffer_size);
             fragment.unique = true;
             memcpy(fragment.data, buffer, buffer_size);
-            this->actual_size += buffer_size;
         }
 
         else if (append_type == AppendType::TRANSFER_BUFFER_OWNERSHIP) {
             fragment.data = buffer;
             fragment.unique = true;
-            this->actual_size += buffer_size;
         }
 
         else if (append_type == AppendType::EXISTING_BUFFER) {
             fragment.data = buffer;
             fragment.unique = false;
-            this->actual_size += buffer_size;
         }
+
+        fragment.data_ptr = fragment.data;
 
         this->fragments.push(fragment);
 
         return true;
     }
 
-    
+    uint32_t consume_data(uint8_t* destination, uint32_t consume_size) {
+        uint32_t read_bytes = 0;
+        while (consume_size != 0 && this->fragments.get_size() != 0) {
+            DataFragment& fragment = this->fragments.peek_front();
+            
+            // Entire fragment to be removed.
+            if (consume_size >= fragment.size_remaining) {
+                memcpy(destination, fragment.data_ptr, fragment.size_remaining);
+                if (fragment.unique) kfree(fragment.data);
+                consume_size -= fragment.size_remaining;
+                destination += fragment.size_remaining;
+                read_bytes += fragment.size_remaining;
+                this->fragments.shift();
+            }
+
+            // Partial fragment read.
+            else {
+                memcpy(destination, fragment.data_ptr, consume_size);
+                fragment.size_remaining -= consume_size;
+                fragment.data_ptr += consume_size;
+                read_bytes += consume_size;
+                break;
+            }
+        }
+
+        return read_bytes;
+    }
 };
