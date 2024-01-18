@@ -1,5 +1,6 @@
 #include "scheduler.h"
 
+#include "datasink.h"
 #include "events.h"
 #include "stdint.h"
 
@@ -588,6 +589,15 @@ namespace scheduler {
             Thread* thread = process_threads_iterator.next();
             
             kill_thread(thread, 1, false);
+        }
+
+        // Iterate through the data sinks and delete.
+        auto steady_sinks_iterator = process->steady_sinks->create_iterator();
+
+        while (steady_sinks_iterator.hasNext()) {
+            SteadyDataSink* sink = steady_sinks_iterator.next();
+            scheduler::datasink::active_sinks.remove(sink->handle_id);
+            delete sink;
         }
 
         // Emit process end event.
