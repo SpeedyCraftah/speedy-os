@@ -627,6 +627,7 @@ namespace scheduler {
         // Free process objects.
         delete process->threads;
         delete process->hooked_threads;
+        delete process->steady_sinks;
         physical_allocator::free_physical_page(process->paging.kernel_thread_page);
         kfree(process->name);
 
