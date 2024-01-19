@@ -15,6 +15,7 @@ struct SteadyDataSink {
         uint8_t* data;
         uint8_t* data_ptr;
         uint32_t size_remaining;
+        uint32_t actual_size;
         bool unique; // Whether the fragment was allocated and copied for this specific sink or not.
     };
 
@@ -31,6 +32,7 @@ struct SteadyDataSink {
 
         DataFragment fragment;
         fragment.size_remaining = buffer_size;
+        fragment.actual_size = buffer_size;
 
         if (append_type == AppendType::COPY_BUFFER) {
             fragment.data = (uint8_t*)kmalloc(buffer_size);
@@ -55,7 +57,7 @@ struct SteadyDataSink {
         return true;
     }
 
-    uint32_t consume_data(uint8_t* destination, uint32_t consume_size) {
+    uint32_t consume_data_stream(uint8_t* destination, uint32_t consume_size) {
         uint32_t read_bytes = 0;
         while (consume_size != 0 && this->fragments.get_size() != 0) {
             DataFragment& fragment = this->fragments.peek_front();
@@ -81,5 +83,15 @@ struct SteadyDataSink {
         }
 
         return read_bytes;
+    }
+
+    bool consume_block(uint8_t* destination) {
+        if (!this->fragments.get_size()) return false;
+        
+        DataFragment fragment = this->fragments.shift();
+        memcpy(fragment.data, destination, fragment.actual_size);
+        if (fragment.unique) kfree(fragment.data);
+
+        return true;
     }
 };
