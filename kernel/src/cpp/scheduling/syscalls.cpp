@@ -1,9 +1,11 @@
 #include "syscalls.h"
 
+#include "datasink.h"
 #include "events.h"
 #include "scheduler.h"
 
 #include "../software/system/speedyshell/main.h"
+#include "structures/datasink.h"
 #include "structures/events.h"
 #include "structures/process.h"
 #include "structures/thread.h"
@@ -40,6 +42,7 @@ extern "C" Registers* temporary_registers;
 // ID 20 = Voluntarily preempt the execution.
 // ID 21 = Allocate x virtual pages with flags.
 // ID 22 = Free a virtual page with flags.
+// ID 23 = Write to data sink.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
@@ -448,6 +451,43 @@ uint32_t handle_system_call_hl() {
         uint32_t addr = paging::address_to_pi(reinterpret_cast<void*>(data));
 
         // TODO - needs to be implemented
+    } else if (id == 23) {
+        uint32_t data2 = temporary_registers->eax;
+        uint32_t data3 = temporary_registers->ebx;
+
+        if (!scheduler::datasink::active_sinks.exists(data)) {
+            temporary_registers->eax = 0;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::datasink::active_sinks.fetch(data);
+        
+        if (
+            !datasink->permissions.exists(scheduler::current_thread->process->id) ||
+            !datasink->permissions.fetch(scheduler::current_thread->process->id).write
+        ) {
+            temporary_registers->eax = 0;
+            return false;
+        }
+
+        if (data3 == 0 || data3 > 2048 || datasink->fragments.get_size() > 200) {
+            temporary_registers->eax = 0;
+            return false;
+        }
+
+        // Allocate temporary buffer.
+        uint8_t* buffer = (uint8_t*)kmalloc(data3);
+
+        // Read virtual memory into program.
+        bool vm_read_status = virtual_allocator::read_virtual_memory(scheduler::current_thread->process, reinterpret_cast<void*>(data2), data3, buffer, false);
+        bool fragment_write_status = datasink->append_data(buffer, data3, SteadyDataSink::AppendType::TRANSFER_BUFFER_OWNERSHIP);
+        if (!vm_read_status || !fragment_write_status) {
+            kfree(buffer);
+            temporary_registers->eax = 0;
+            return false;
+        }
+
+        temporary_registers->eax = 1;
     }
 
     return 0;
