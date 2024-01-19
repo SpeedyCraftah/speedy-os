@@ -51,6 +51,57 @@ namespace virtual_allocator {
         return true;
     }
 
+    bool write_virtual_memory(Process* process, void* virtual_address_start, uint32_t size, uint8_t* buffer, bool allow_kernel_pages) {
+        uint32_t page_index = paging::address_to_pi(virtual_address_start);
+        uint32_t remaining_bytes_in_page = 4096 - (reinterpret_cast<uint32_t>(virtual_address_start) % 4096);
+        uint32_t remaining_bytes = size;
+        uint32_t bytes_to_write = size > remaining_bytes_in_page ? remaining_bytes_in_page : size;
+
+        PageEntry* page;
+        uint8_t* physical;
+
+        // Verify if all pages are allowed to be written to.
+        for (int i = 0; i < (size / 4096) + ((reinterpret_cast<uint32_t>(virtual_address_start) % 4096) != 0) + (((reinterpret_cast<uint32_t>(virtual_address_start) + size) % 4096) != 0); i++) {
+            page = fetch_page_index(process, page_index + i, false);
+            if (page == nullptr || (!allow_kernel_pages && ((page->KernelFlags & PageFlags::PROCESS_OWNED) == 0)) || !page->ReadWrite) {
+                return false;
+            }
+        }
+
+        // Write to the actual pages.
+
+        page = fetch_page_index(process, page_index, false);
+        physical = (uint8_t*)paging::pi_to_address(page->Address) + (reinterpret_cast<uint32_t>(virtual_address_start) % 4096);
+
+        // Write to first page.
+        memcpy(physical, buffer, bytes_to_write);
+        buffer += bytes_to_write;
+        remaining_bytes -= bytes_to_write;
+        page_index++;
+
+        // Write pages in the middle.
+        while (remaining_bytes >= 4096) {
+            page = fetch_page_index(process, page_index, false);
+            physical = (uint8_t*)paging::pi_to_address(page->Address);
+
+            // Read the whole page.
+            memcpy(physical, buffer, 4096);
+            buffer += 4096;
+            remaining_bytes -= 4096;
+            page_index++;
+        }
+
+        // Write the last remaining bytes if needed.
+        if (remaining_bytes != 0) {
+            page = fetch_page_index(process, page_index, false);
+            physical = (uint8_t*)paging::pi_to_address(page->Address) + (reinterpret_cast<uint32_t>(virtual_address_start) % 4096);
+
+            memcpy(physical, buffer, remaining_bytes);
+        }
+
+        return true;
+    }
+
     PageEntry* fetch_page_index(Process* process, uint32_t index, bool allocate_directory) {
         PageDirectory& directory = process->paging.directories[index / 1024];
         
