@@ -480,8 +480,14 @@ uint32_t handle_system_call_hl() {
 
         // Read virtual memory into program.
         bool vm_read_status = virtual_allocator::read_virtual_memory(scheduler::current_thread->process, reinterpret_cast<void*>(data2), data3, buffer, false);
+        if (!vm_read_status) {
+            kfree(buffer);
+            temporary_registers->eax = 0;
+            return false;
+        }
+
         bool fragment_write_status = datasink->append_data(buffer, data3, SteadyDataSink::AppendType::TRANSFER_BUFFER_OWNERSHIP);
-        if (!vm_read_status || !fragment_write_status) {
+        if (!fragment_write_status) {
             kfree(buffer);
             temporary_registers->eax = 0;
             return false;
