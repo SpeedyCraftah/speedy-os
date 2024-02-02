@@ -5,24 +5,18 @@
 
 // Graphics manipulation software, inspired partially by HTML canvas.
 
-struct rgb_colour {
-  rgb_colour(uint8_t red, uint8_t green, uint8_t blue) {
-    r = red;
-    g = green;
-    b = blue;
-  }
+class rgb_colour {
+  public:
+    constexpr rgb_colour(uint8_t red, uint8_t green, uint8_t blue) {
+      this->data = (red << 24) | (green << 16) | (blue << 8);
+    }
 
-  rgb_colour(uint32_t hex) {
-    b = hex & 255;
-    g = (hex >> 8) & 255;
-    r = (hex >> 16) & 255;
-  }
+    inline operator uint32_t() const {
+      return this->data;
+    }
 
-  rgb_colour() {}
-
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+  private:
+    uint32_t data = 0;
 };
 
 // Left for compatibility reasons.
