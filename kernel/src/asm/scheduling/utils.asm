@@ -2,6 +2,7 @@
 
 extern virtual_temporary_registers
 
+; https://stackoverflow.com/questions/68946642/x86-hardware-software-tss-usage
 %define KERNEL_EFLAGS dword 00000000001000000000000000000010b
 
 ; Send EOI signal to PIC, signaling end of IRQ.
