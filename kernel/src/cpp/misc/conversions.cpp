@@ -44,6 +44,22 @@ char* conversions::u_int_to_char(uint64_t i) {
     return &text[loc];
 }
 
+char* conversions::u_int32_to_hex(uint32_t num, char* out) {
+    static char hex[] = "0123456789ABCDEF";
+
+    out[0] = '0';
+    out[1] = 'x';
+
+    #pragma unroll
+    for (int i = 0; i < (sizeof(uint32_t) * 2); i++) {
+        uint8_t nibble = (num >> (28 - (i * 4))) & 0xF;
+        out[i + 2] = hex[nibble];
+    }
+
+    out[HEX32_STR_SIZE - 1] = '\0';
+    return out;
+}
+
 inline int conversions::u_char_to_int(char text) {
     // If char outside of ascii number ranges, return -1.
     if (text > 57 || text < 48) return -1;
