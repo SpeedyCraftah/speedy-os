@@ -314,7 +314,7 @@ namespace scheduler {
         process->flags = flags;
         process->threads = new structures::linked_array<Thread*>(8);
         process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
-        process->steady_sinks = new structures::linked_array<SteadyDataSink*>(4);
+        process->steady_sinks = new structures::map<SteadyDataSink*>(4);
 
         assert_eq("sch.procs.name.heap", kallocated(process->name), true);
         assert_eq("sch.procs.heap", kallocated(process->name), true);
