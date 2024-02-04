@@ -202,6 +202,37 @@ namespace structures {
                 return set(hash_key(key), value, auto_optimise);
             }
 
+            struct iterator {
+                uint32_t current_entry = 0;
+                map* object;
+                
+                void reset() {
+                    current_entry = 0;
+                }
+                
+                // Shows if there is another entry in the iterator.
+                inline bool hasNext() {
+                    while (current_entry != object->capacity) {
+                        entry& e = object->storage_ptr[current_entry];
+                        if (!e.empty) return true;
+                        else current_entry++;
+                    }
+
+                    return false;
+                }
+                
+                inline ValT& next() {
+                    return object->storage_ptr[current_entry++].value;
+                }
+            };
+            
+            iterator create_iterator() {
+                iterator i;
+                i.object = this;
+                
+                return i;
+            }
+
         private:
             entry* storage_ptr;
             uint32_t capacity;
