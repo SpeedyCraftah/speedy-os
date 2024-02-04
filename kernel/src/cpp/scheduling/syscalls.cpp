@@ -43,6 +43,7 @@ extern "C" Registers* temporary_registers;
 // ID 21 = Allocate x virtual pages with flags.
 // ID 22 = Free a virtual page with flags.
 // ID 23 = Write to data sink.
+// ID 24 = Read from data sink.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
@@ -494,6 +495,38 @@ uint32_t handle_system_call_hl() {
         }
 
         temporary_registers->eax = 1;
+    } else if (id == 24) {
+        uint32_t data2 = temporary_registers->eax;
+        uint32_t data3 = temporary_registers->ebx;
+
+        // Check if the sink exists and if the process owns it.
+        if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        // Boundary checks for size.
+        if (data3 == 0 || data3 > 2048) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::current_thread->process->steady_sinks->fetch(data);
+
+        // Allocate buffer to hold the read and consume the stream into it.
+        uint8_t* buffer = (uint8_t*)kmalloc(data3);
+        uint32_t read_size = datasink->consume_data_stream(buffer, data3);
+        if (read_size == 0) {
+            kfree(buffer);
+            temporary_registers->eax = 0;
+            return false;
+        }
+
+        // Attempt to write the buffer to the programs destination buffer.
+        bool write_status = virtual_allocator::write_virtual_memory(scheduler::current_thread->process, reinterpret_cast<void*>(data2), read_size, buffer);
+
+        kfree(buffer);
+        temporary_registers->eax = !write_status ? -1 : read_size;
     }
 
     return 0;
