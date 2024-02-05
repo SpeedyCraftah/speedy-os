@@ -85,11 +85,10 @@ struct SteadyDataSink {
         return read_bytes;
     }
 
-    bool consume_block(uint8_t* destination) {
+    bool consume_block() {
         if (!this->fragments.get_size()) return false;
         
         DataFragment fragment = this->fragments.shift();
-        memcpy(fragment.data, destination, fragment.actual_size);
         if (fragment.unique) kfree(fragment.data);
 
         return true;
