@@ -90,11 +90,16 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id_by_string(char* process_name) {
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t _fetch_process_id_by_string(char* process_name, uint32_t process_name_length) {
+        asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $10, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
+    }
+
+    uint32_t fetch_process_id_by_string(char* process_name) {
+        return _fetch_process_id_by_string(process_name, str::length(process_name));
     }
 
     __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random() {

@@ -108,7 +108,7 @@ namespace speedyos {
     __attribute__((naked)) __attribute__((fastcall)) void update_execution_policy(ThreadExecutionPolicy policy, uint32_t thread_id = 0);
 
     // Requests the kernel to return the process ID of a program. 0 if does not exist.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id_by_string(char* process_name);
+    uint32_t fetch_process_id_by_string(char* process_name);
 
     // Returns a hardware & time entropied random 32-bit number.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random();
