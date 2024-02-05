@@ -2,7 +2,7 @@
 
 #include "stdint.h"
 
-#include "../../structures/linked_array.h"
+#include "../../../../../shared/linked_array.h"
 #include "../../paging/paging.h"
 #include "registers.h"
 #include "datasink.h"

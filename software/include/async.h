@@ -1,7 +1,7 @@
 #pragma once
 
 #include "alloc.h"
-#include "misc/conversions.h"
+#include "../../shared/conversions.h"
 #include "sys.h"
 
 // Async implementation for programs in SpeedyOS

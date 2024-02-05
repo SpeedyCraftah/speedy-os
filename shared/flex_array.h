@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../heap/kernelalloc.h"
-#include "../panic/panic.h"
+#include "_shared.h"
 
 namespace structures {
 
@@ -13,10 +12,10 @@ namespace structures {
         public:
             flexible_array(unsigned int initialSize = 10, bool dealloc_entries = false) {
                 if (initialSize > 2147483646) {
-                    kernel::panic("A flexible array has been created with a size which exhausts a signed integer.");
+                    _shared_panic("A flexible array has been created with a size which exhausts a signed integer.");
                 }
     
-                storage_ptr = (entry*)kmalloc(sizeof(entry) * initialSize);
+                storage_ptr = (entry*)_shared_malloc(sizeof(entry) * initialSize);
                 capacity = initialSize;
                 this->dealloc_entries = dealloc_entries;
 
@@ -38,33 +37,28 @@ namespace structures {
                         // The syntax is unusual since it bypasses
                         // C++ compile-time safety checks which
                         // are over-sensitive due to templating.
-                        kfree(*((void**)(&e->value)));
+                        _shared_free(*((void**)(&e->value)));
                     }
                 }
 
-                kfree(storage_ptr);
-            }
-
-            // I was forced to make this method due to countless early destruction calls (thanks C++).
-            bool allocated() {
-                return kallocated(storage_ptr);
+                _shared_free(storage_ptr);
             }
 
             void resize(unsigned int newCapacity, bool unsafe_resize = false) {
                 if (newCapacity > 2147483646) {
-                    kernel::panic("A flexible array has attempted to be resized with a size which exhausts a signed integer.");
+                    _shared_panic("A flexible array has attempted to be resized with a size which exhausts a signed integer.");
                 }
 
                 if (fragmented && !unsafe_resize && newCapacity < capacity) {
-                    kernel::panic("A flexible array has attempted to resize to a smaller size which triggered a protection fault as it is fragmented.");
+                    _shared_panic("A flexible array has attempted to resize to a smaller size which triggered a protection fault as it is fragmented.");
                 }
 
                 if (!fragmented && !unsafe_resize && newCapacity < occupied) {
-                    kernel::panic("A flexible array has attempted to resize to a smaller size which would exhaust the storage container.");
+                    _shared_panic("A flexible array has attempted to resize to a smaller size which would exhaust the storage container.");
                 }
 
                 // Create a new storage area.
-                entry* new_storage_ptr = (entry*)kmalloc(newCapacity * sizeof(entry), false);
+                entry* new_storage_ptr = (entry*)_shared_malloc(newCapacity * sizeof(entry), false);
 
                 // Move data from old area to new area.
                 for (int i = 0; i < capacity; i++) {
@@ -72,7 +66,7 @@ namespace structures {
                 }
 
                 // Free old area.
-                kfree(storage_ptr);
+                _shared_free(storage_ptr);
 
                 capacity = newCapacity;
                 storage_ptr = new_storage_ptr;
@@ -155,7 +149,7 @@ namespace structures {
 
             void push(const T value) {
                 if (fragmented) {
-                    kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
+                    _shared_panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
                 }
 
                 // Auto resize.
@@ -173,7 +167,7 @@ namespace structures {
             // Pops the last element and returns it.
             T pop(uint32_t amount = 1) {
                 if (fragmented) {
-                    kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
+                    _shared_panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
                 }
 
                 entry element;
@@ -195,7 +189,7 @@ namespace structures {
             // Inefficient as it has to defragment the whole array afterwards to maintain linear structure.
             T shift(uint32_t amount = 1) {
                 if (fragmented) {
-                    kernel::panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
+                    _shared_panic("A defragmented-only operation has been attempted on a flexible array despite being fragmented.");
                 }
 
                 entry element;
@@ -226,9 +220,9 @@ namespace structures {
 
             // Override [] operator.
             T& operator[](unsigned int index) {
-                if (capacity < index + 1) kernel::panic("An operation has been attempted on a flexible array which exhausts the capacity ranges.");
+                if (capacity < index + 1) _shared_panic("An operation has been attempted on a flexible array which exhausts the capacity ranges.");
                 if (is_empty_at(index)) {
-                    kernel::panic("An operation has been attempted on a flexible array empty bucket.");
+                    _shared_panic("An operation has been attempted on a flexible array empty bucket.");
                 }
 
                 return storage_ptr[index].value;

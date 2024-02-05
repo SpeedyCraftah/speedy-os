@@ -1,10 +1,10 @@
 #pragma once
 
 #include "stdint.h"
-#include "../../structures/linked_array.h"
-#include "../../structures/map.h"
+#include "../../../../../shared/linked_array.h"
+#include "../../../../../shared/map.h"
 #include "../../misc/assert.h"
-#include "../../misc/memory.h"
+#include "../../../../../shared/memory.h"
 
 struct DataSinkPermissions {
     bool write : 1; // Can write data to the sink.

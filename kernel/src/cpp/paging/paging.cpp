@@ -1,6 +1,6 @@
 #include "paging.h"
 #include "../io/video.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 #include "../panic/panic.h"
 #include "../scheduling/scheduler.h"
 #include "../heap/physical.h"

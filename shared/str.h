@@ -1,5 +1,4 @@
 #pragma once
-#include "../io/video.h"
 
 namespace str {
     // Returns the length of the provided char array (not including terminator).

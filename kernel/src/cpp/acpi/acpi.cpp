@@ -1,7 +1,7 @@
 #include "acpi.h"
 #include "lai/core.h"
 #include "../io/video.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 #include "../abstractions/io_port.h"
 
 struct RSDPDescriptor {

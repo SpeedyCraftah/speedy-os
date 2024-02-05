@@ -1,6 +1,6 @@
 #include "commands.h"
 #include "main.h"
-#include "../../../misc/conversions.h"
+#include "../../../../../../shared/conversions.h"
 #include "../../../abstractions/cpu.h"
 #include "../../include/sys.h"
 #include "../../../abstractions/io_port.h"
@@ -27,9 +27,6 @@ namespace speedyshell {
 
         string input = string(speedyshell::text_buffer);
         auto args = input.split_by(' ');
-
-        assert_eq("allocated.string", input.allocated(), true);
-        assert_eq("allocated.args", args.allocated(), true);
 
         /*if (string("info").hash_equal_to(args[0])) {
             running_process_id =

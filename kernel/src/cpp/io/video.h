@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "graphics.h"
-#include "../structures/string.h"
+#include "../../../../shared/string.h"
 
 // Basic video and printing functions for kernel.
 namespace video {

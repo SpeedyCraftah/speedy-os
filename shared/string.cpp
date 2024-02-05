@@ -1,15 +1,13 @@
-#include "./string.h"
-#include "../heap/kernelalloc.h"
-#include "../misc/smart_ptr.h"
-#include "../io/video.h"
-#include "../misc/str.h"
-#include "../panic/panic.h"
-#include "../misc/algorithm.h"
-#include "../misc/conversions.h"
+#include "_shared.h"
+#include "string.h"
+#include "smart_ptr.h"
+#include "str.h"
+#include "algorithm.h"
+#include "conversions.h"
 
 structures::string::string(char character) {
     _length = 2;
-    storage_ptr = (char*)kmalloc(2);
+    storage_ptr = (char*)_shared_malloc(2);
 
     storage_ptr[0] = character;
     storage_ptr[1] = '\0';
@@ -42,11 +40,7 @@ structures::string::string(char* str) {
 }
 
 structures::string::~string() {
-    kfree(storage_ptr);
-}
-
-bool structures::string::allocated() {
-    return kallocated(storage_ptr);
+    _shared_free(storage_ptr);
 }
 
 unsigned int structures::string::length() {
@@ -59,7 +53,7 @@ unsigned int structures::string::get_weak_hash() {
 
 structures::string& structures::string::concat(char src) {
     // Safety mechanism for null ptrs (will be fixed).
-    if (storage_ptr == nullptr) kernel::panic("Attempted to concat a nullptr string.");
+    if (storage_ptr == nullptr) _shared_panic("Attempted to concat a nullptr string.");
 
     // Get length of strings (excl terminator).
     uint32_t srcLength = 1;
@@ -80,7 +74,7 @@ structures::string& structures::string::concat(char src) {
     new_storage_ptr[srcLength + currentLength] = '\0';
 
     // Deallocate old storage pointer.
-    if (storage_ptr != nullptr) kfree(storage_ptr);
+    if (storage_ptr != nullptr) _shared_free(storage_ptr);
 
     // Assign new storage pointer.
     storage_ptr = new_storage_ptr;
@@ -96,7 +90,7 @@ structures::string& structures::string::concat(char src) {
 
 structures::string& structures::string::concat(char* src) {
     // Safety mechanism for null ptrs (will be fixed).
-    if (storage_ptr == nullptr) kernel::panic("Attempted to concat a nullptr string.");
+    if (storage_ptr == nullptr) _shared_panic("Attempted to concat a nullptr string.");
 
     // Get length of strings (excl terminator).
     uint32_t srcLength = 0;
@@ -125,7 +119,7 @@ structures::string& structures::string::concat(char* src) {
     new_storage_ptr[srcLength + currentLength] = '\0';
 
     // Deallocate old storage pointer.
-    if (storage_ptr != nullptr) kfree(storage_ptr);
+    if (storage_ptr != nullptr) _shared_free(storage_ptr);
 
     // Assign new storage pointer.
     storage_ptr = new_storage_ptr;
@@ -141,14 +135,14 @@ structures::string& structures::string::concat(char* src) {
 
 // Overload [] operator.
 char& structures::string::operator[](int index) {
-    if (storage_ptr == nullptr) kernel::panic("Overload operation attempted on an uninitialised string.");
+    if (storage_ptr == nullptr) _shared_panic("Overload operation attempted on an uninitialised string.");
     return storage_ptr[index];
 }
 
 // Casting enabled for compatibility with chars.
 // Overload cast operator.
 structures::string::operator char*() {
-    if (storage_ptr == nullptr) kernel::panic("Overload operation attempted on an uninitialised string.");
+    if (storage_ptr == nullptr) _shared_panic("Overload operation attempted on an uninitialised string.");
     return char_reference();
 }
 
@@ -241,15 +235,15 @@ structures::string structures::string::operator+(char* src) {
 }
 
 char* structures::string::char_reference() {
-    if (storage_ptr == nullptr) kernel::panic("Reference attempted on an uninitialised string.");
+    if (storage_ptr == nullptr) _shared_panic("Reference attempted on an uninitialised string.");
     return storage_ptr;
 }
 
 // Returns a smart pointer.
 smart_ptr<char> structures::string::char_copy() {
-    if (storage_ptr == nullptr) kernel::panic("Copy attempted on an uninitialised string.");
+    if (storage_ptr == nullptr) _shared_panic("Copy attempted on an uninitialised string.");
 
-    auto str = smart_ptr<char>((char*)kmalloc(_length));
+    auto str = smart_ptr<char>((char*)_shared_malloc(_length));
 
     int i = 0;
 

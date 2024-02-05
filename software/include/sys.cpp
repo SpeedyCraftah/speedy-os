@@ -1,5 +1,5 @@
 #include "sys.h"
-#include "misc/str.h"
+#include "../../shared/str.h"
 
 namespace speedyos {
     // Queries the kernel for the process ID.

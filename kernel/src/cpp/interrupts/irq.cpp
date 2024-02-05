@@ -4,7 +4,7 @@
 #include "../tables/idt.h"
 #include "../io/video.h"
 #include "../abstractions/io_port.h"
-#include "../structures/string.h"
+#include "../../../../shared/string.h"
 
 #include "../drivers/keyboard/keyboard.h"
 #include "interrupts.h"

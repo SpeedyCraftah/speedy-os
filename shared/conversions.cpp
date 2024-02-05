@@ -1,9 +1,9 @@
+#include "_shared.h"
 #include "conversions.h"
-
 #include "smart_ptr.h"
 #include "stdint.h"
-#include "../structures/string.h"
-#include "../misc/str.h"
+#include "string.h"
+#include "str.h"
 
 char* conversions::s_int_to_char(int i) {
     static char text[12];
@@ -140,7 +140,7 @@ inline float conversions::extract_fraction(float num) {
 
 smart_ptr<char> conversions::s_float_to_char(float num, uint32_t precision, bool roundLastImprecise) {
     // Setup string.
-    char* string = (char*)kmalloc(20);
+    char* string = (char*)_shared_malloc(20);
     uint32_t string_i = 0;
 
     char* whole_number = s_int_to_char((uint32_t)num);

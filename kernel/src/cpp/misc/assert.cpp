@@ -1,7 +1,7 @@
 #include "assert.h"
 #include "../panic/panic.h"
-#include "../structures/string.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/string.h"
+#include "../../../../shared/conversions.h"
 
 using namespace structures;
 

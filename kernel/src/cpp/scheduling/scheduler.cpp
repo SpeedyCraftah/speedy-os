@@ -4,14 +4,14 @@
 #include "events.h"
 #include "stdint.h"
 
-#include "../structures/flex_array.h"
-#include "../structures/map.h"
+#include "../../../../shared/flex_array.h"
+#include "../../../../shared/map.h"
 
 #include "structures/events.h"
 #include "structures/process.h"
 #include "structures/thread.h"
 #include "events.h"
-#include "../misc/memory.h"
+#include "../../../../shared/memory.h"
 #include "../heap/physical.h"
 #include "../paging/virtual.h"
 #include "../paging/paging.h"
@@ -19,7 +19,7 @@
 
 // remove after
 //#include "../software/system/speedyshell/main.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 //#include "../software/include/sys.h"
 #include "../chips/pit.h"
 #include "../misc/assert.h"

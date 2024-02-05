@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../heap/kernelalloc.h"
-#include "../misc/str.h"
-#include "../panic/panic.h"
-#include "../misc/algorithm.h"
+#include "_shared.h"
+
+#include "str.h"
+#include "algorithm.h"
 
 namespace structures {
     template <class ValT>
@@ -19,7 +19,7 @@ namespace structures {
             map(uint32_t initialCapacity = 10) {
                 capacity = initialCapacity;
 
-                storage_ptr = (entry*)kmalloc(sizeof(entry) * initialCapacity, true);
+                storage_ptr = (entry*)_shared_malloc(sizeof(entry) * initialCapacity, true);
 
                 for (int i = 0; i < capacity; i++) {
                     storage_ptr[i] = entry();
@@ -27,12 +27,7 @@ namespace structures {
             }
 
             ~map() {
-                kfree(storage_ptr);
-            }
-
-            // I was forced to make this method due to countless early destruction calls (thanks C++).
-            bool allocated() {
-                return kallocated(storage_ptr);
+                _shared_free(storage_ptr);
             }
 
             uint32_t get_capacity() {
@@ -50,7 +45,7 @@ namespace structures {
                 uint32_t oldCapacity = capacity;
 
                 entry* old_storage_ptr = storage_ptr;
-                entry* new_storage_ptr = (entry*)kmalloc(sizeof(entry) * newCapacity, false);
+                entry* new_storage_ptr = (entry*)_shared_malloc(sizeof(entry) * newCapacity, false);
 
                 // Replace current storage with new storage for easy rehashing.
                 storage_ptr = new_storage_ptr;
@@ -73,13 +68,13 @@ namespace structures {
                 }
 
                 // Finally free the old table from memory.
-                kfree(old_storage_ptr);
+                _shared_free(old_storage_ptr);
             }
 
             ValT& fetch(uint32_t key) {
                 bucketLookupResult result = locate_bucket(key);
                 if (!result.found) {
-                    kernel::panic("A non-existant entry was queried. Entries must be checked for existance before fetching.");
+                    _shared_panic("A non-existant entry was queried. Entries must be checked for existance before fetching.");
                 }
 
                 return storage_ptr[result.index].value;
@@ -136,7 +131,7 @@ namespace structures {
             // Sets a key. If optimisation is skipped and the map overflows, a kernel panic will occur.
             void set(uint32_t key, ValT value, bool auto_optimise = true) {
                 if (locate_bucket(key).found)
-                    kernel::panic("A key has attempted to be set which would result in a duplicate entry as overwriting is disabled for safety.");
+                    _shared_panic("A key has attempted to be set which would result in a duplicate entry as overwriting is disabled for safety.");
 
                 // Resize the table for more storage and quicker access speeds.
                 if (auto_optimise && (float)occupiedBuckets / capacity >= 0.92) {
@@ -144,7 +139,7 @@ namespace structures {
                 }
 
                 if (occupiedBuckets >= capacity)
-                    kernel::panic("A map value has attempted to be appended; however the maps capacity has been exhausted and a resize has not commenced.");
+                    _shared_panic("A map value has attempted to be appended; however the maps capacity has been exhausted and a resize has not commenced.");
 
                 uint32_t hash = hash_key(key);
                 uint32_t index = hash % capacity;

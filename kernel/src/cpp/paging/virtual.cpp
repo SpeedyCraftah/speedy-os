@@ -1,7 +1,7 @@
 #include "virtual.h"
 #include "paging.h"
 #include "../heap/physical.h"
-#include "../misc/memory.h"
+#include "../../../../shared/memory.h"
 
 extern "C" volatile int bpwatch;
 

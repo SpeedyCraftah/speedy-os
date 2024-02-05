@@ -1,6 +1,6 @@
+#include "_shared.h"
+
 #include "str.h"
-#include "../heap/kernelalloc.h"
-#include "../io/video.h"
 #include "conversions.h"
 
 int str::length(char* chars) {
@@ -24,7 +24,7 @@ char* str::join_some(char delim, char* a, char* b, char* c) {
     int alloc_size = 1 + a_size + b_size + use_delim;
     if (c_size != 0) alloc_size += c_size + use_delim;
 
-    char* text = (char*)kmalloc(alloc_size);
+    char* text = (char*)_shared_malloc(alloc_size);
     int text_i = 0;
 
     for (int i = 0; i < a_size; i++) {
@@ -54,7 +54,7 @@ char* str::join_some(char delim, char* a, char* b, char* c) {
         }
     }
 
-    kfree(text);
+    _shared_free(text);
 
     return text;
 }

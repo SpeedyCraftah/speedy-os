@@ -7,10 +7,10 @@
 #include "chips/pit.h"
 
 #include "io/video.h"
-#include "misc/conversions.h"
+#include "../../../shared/conversions.h"
 #include "scheduling/structures/process.h"
 //#include "software/include/sys.h"
-#include "structures/string.h"
+#include "../../../shared/string.h"
 
 #include "tables/gdt.h"
 #include "tables/idt.h"
@@ -31,8 +31,8 @@
 #include "io/graphics.h"
 #include "software/system/speedyshell/main.h"
 //#include "software/system/cpu_usage/main.h"
-#include "misc/math.h"
-#include "misc/memory.h"
+#include "../../../shared/math.h"
+#include "../../../shared/memory.h"
 #include "stdarg.h"
 #include "acpi/acpi.h"
 //#include "software/system/tsccalc/main.h"

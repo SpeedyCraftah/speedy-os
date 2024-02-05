@@ -1,11 +1,9 @@
 #pragma once
 
-#include "../heap/kernelalloc.h"
-#include "../panic/panic.h"
-#include "stdint.h"
+#include "_shared.h"
 
-#include "../io/video.h"
-#include "../misc/conversions.h"
+#include "stdint.h"
+#include "conversions.h"
 
 namespace structures {
 
@@ -18,7 +16,7 @@ namespace structures {
     class linked_array {
         public:
             linked_array(uint32_t initialSize = 10) {
-                storage_ptr = (entry*)kmalloc(sizeof(entry) * initialSize);
+                storage_ptr = (entry*)_shared_malloc(sizeof(entry) * initialSize);
                 capacity = initialSize;
 
                 // Add head and tail entries.
@@ -36,12 +34,7 @@ namespace structures {
 
             ~linked_array() {
                 // Free storage pointer.
-                kfree(storage_ptr);
-            }
-
-            // I was forced to make this method due to countless early destruction calls (thanks C++).
-            bool allocated() {
-                return kallocated(storage_ptr);
+                _shared_free(storage_ptr);
             }
 
             struct entry {
@@ -203,7 +196,7 @@ namespace structures {
             T& get_at(uint32_t index) {
                 // Safety check.
                 if (index >= occupied) {
-                    kernel::panic("A linked array index was out of bounds.");
+                    _shared_panic("A linked array index was out of bounds.");
                 }
 
                 // Find the element.
@@ -219,7 +212,7 @@ namespace structures {
             void remove_at(uint32_t index) {
                 // Safety check.
                 if (index >= occupied) {
-                    kernel::panic("A linked array index was out of bounds.");
+                    _shared_panic("A linked array index was out of bounds.");
                 }            
 
                 // Find the element.
@@ -244,7 +237,7 @@ namespace structures {
             // May be improved.
             void resize(uint32_t newCapacity) {
                 if (newCapacity < occupied) {
-                    kernel::panic("A linked array was resized to a smaller capacity.");
+                    _shared_panic("A linked array was resized to a smaller capacity.");
                 }
 
                 // Create a new storage area.
@@ -283,7 +276,7 @@ namespace structures {
                 next_index_2 = nullptr;
 
                 // Free old area.
-                kfree(storage_ptr);
+                _shared_free(storage_ptr);
 
                 capacity = newCapacity;
                 storage_ptr = new_storage_ptr;
@@ -328,7 +321,7 @@ namespace structures {
                     }
                 }
                 
-                kernel::panic("A linked array was full.");
+                _shared_panic("A linked array was full.");
                 __builtin_unreachable();
             }
 

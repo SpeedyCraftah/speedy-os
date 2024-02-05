@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "../tables/idt.h"
 #include "../io/video.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 #include "interrupts.h"
 
 // Required to access memory locations of labels.

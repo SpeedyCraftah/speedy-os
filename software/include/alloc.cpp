@@ -1,7 +1,7 @@
 #include "alloc.h"
 
 #include "sys.h"
-#include "misc/memory.h"
+#include "../../shared/memory.h"
 
 #define MAGIC 42859
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../misc/smart_ptr.h"
-#include "../structures/flex_array.h"
+#include "smart_ptr.h"
+#include "flex_array.h"
 
 namespace structures {
     class string {
@@ -9,7 +9,6 @@ namespace structures {
             string(char character);
             string(char* str = nullptr);
             ~string();
-            bool allocated();
 
             unsigned int length();
 

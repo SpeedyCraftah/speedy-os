@@ -11,13 +11,14 @@
 #include "structures/thread.h"
 #include "../chips/pit.h"
 #include "../heap/physical.h"
-#include "../misc/memory.h"
+#include "../../../../shared/memory.h"
 #include "../paging/virtual.h"
 
 #include "../kernel.h"
+#include "../io/video.h"
 
 //temp
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 
 extern "C" Registers* temporary_registers;
 

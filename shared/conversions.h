@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../structures/string.h"
+#include "string.h"
 #include "smart_ptr.h"
 #include "stdint.h"
 
