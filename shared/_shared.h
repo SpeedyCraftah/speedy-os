@@ -17,5 +17,5 @@
     #define _shared_malloc malloc
     #define _shared_free free
 #else
-    #error "Static shared library is not sure where it was imported from, define _SHARED_KERNEL or _SHARED_USER during compilation."
+    #error "Static shared library is not sure where it was imported from so the correct functions cannot be defined, define _SHARED_KERNEL or _SHARED_USER during compilation."
 #endif
