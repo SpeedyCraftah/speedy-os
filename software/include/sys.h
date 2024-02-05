@@ -143,6 +143,25 @@ namespace speedyos {
     // Attempting to free an address which is not page aligned will raise a fault.
     __attribute__((naked)) __attribute__((fastcall)) bool free_virtual_page(void* address, uint32_t flags = 0);
 
+    // Writes data to the end of a data sink.
+    // Returns a boolean indicating the success of the operation.
+    // The sink will not be modified if a status of FALSE is returned. 
+    __attribute__((naked)) __attribute__((fastcall)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size);
+
+    // Reads data FIFO from the datasink to the desired buffer of X size.
+    // This will disregard fragments and read fragments as if they were whole.
+    // Returns an int indicating -1 for error, 0 for no data available/read, otherwise indicating the length read which may be <= data_size.
+    __attribute__((naked)) __attribute__((fastcall)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size);
+
+    // Fetches the size of the latest fragment from the data sink.
+    // Returns an int indicating -1 for error, 0 for no data available, otherwise indicating the size of the latest fragment.
+    __attribute__((naked)) __attribute__((fastcall)) int fetch_fragment_size_steady_datasink(uint32_t sink_id);
+
+    // Reads the latest fragment from the data sink and writes it to the destination buffer.
+    // Returns an int indicating -1 for error/no data available, otherwise indicating the size of the next fragment (0 if none).
+    // This function assumes that you have fetched the size of the latest fragment using fetch_fragment_size_steady_datasink and the destination buffer is of appropriate size.
+    __attribute__((naked)) __attribute__((fastcall)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest);
+
     namespace speedyshell {
         // Requests input. If at start of program, command will be returned. Otherwise run-time input will be returned if requested.
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input();
