@@ -188,14 +188,35 @@ uint32_t handle_system_call_hl() {
             return 1;
         }
     } else if (id == 10) {
-        // If process name string does not exist, return.
-        if (!scheduler::process_name_list->exists((char*)data)) {
+        uint32_t data2 = temporary_registers->eax;
+        if (data2 == 0 || data2 > 2048) {
             temporary_registers->eax = 0;
-
             return 0;
         }
 
-        Process* process = scheduler::process_name_list->fetch((char*)data);
+        // Create buffer to hold the process name.
+        char* name_buffer = (char*)kmalloc(data2 + 1);
+        name_buffer[data2] = 0;
+
+        // Read the name into the buffer.
+        bool result = virtual_allocator::read_virtual_memory(scheduler::current_thread->process, reinterpret_cast<void*>(data), data2, (uint8_t*)name_buffer);
+        if (!result) {
+            kfree(name_buffer);
+            temporary_registers->eax = 0;
+            return 0;
+        }
+
+        // If process name string does not exist, return.
+        if (!scheduler::process_name_list->exists(name_buffer)) {
+            kfree(name_buffer);
+            temporary_registers->eax = 0;
+            return 0;
+        }
+
+        // Fetch the process.
+        Process* process = scheduler::process_name_list->fetch(name_buffer);
+        kfree(name_buffer);
+
         temporary_registers->eax = process->id;
     } else if (id == 11) {
         // If interface method is not SpeedyShell.
