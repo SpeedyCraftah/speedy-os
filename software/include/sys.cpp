@@ -25,10 +25,11 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void end_process(uint32_t code) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $2, %ecx");
         asm volatile("int $128");
+        asm volatile("ud2");
     }
 
     __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms) {
@@ -251,5 +252,13 @@ namespace speedyos {
             asm volatile("int $128");
             asm volatile("ret");
         }
+    }
+
+    void __attribute__((noreturn)) panic(char* error) {
+        speedyshell::printf("[FATAL] ");
+        speedyshell::printf(error);
+        speedyshell::printf("\n");
+        speedyos::end_process(1);
+        __builtin_unreachable();
     }
 }

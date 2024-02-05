@@ -90,7 +90,7 @@ namespace speedyos {
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time();
 
     // Notifies the kernel to stop the process.
-    __attribute__((naked)) __attribute__((fastcall)) void end_process(uint32_t code = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code = 0);
 
     // Notifies the kernel to suspend the process for a specified amount of time.
     __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms);
@@ -173,4 +173,7 @@ namespace speedyos {
         // Notifies the kernel & SpeedyShell to suspend the process until an input is submitted.
         __attribute__((naked)) __attribute__((fastcall)) void request_input();
     }
+
+    // High level functions.
+    void __attribute__((noreturn)) panic(char* error);
 }
