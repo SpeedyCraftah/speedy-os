@@ -13,7 +13,7 @@ extern "C" void (*_call_ctors)();
 extern "C" void (*_call_dtors)();
 
 extern "C" int main();
-extern "C" void _main() {
+extern "C" void __attribute__((no_stack_protector)) _main() {
     // Randomize the stack canary (current MS time for now).
     __stack_chk_guard = speedyos::fetch_elapsed_time();
 
