@@ -2,19 +2,23 @@ GPP_PARAMS = -D_SHARED_USER -O0 -ffreestanding -Wall -Wextra -fno-exceptions -fn
 
 SHARED_CPP_FILES := $(shell find ../shared -type f -name '*.cpp')
 LIBS_CPP_FILES := $(shell find include -type f -name '*.cpp')
-objects := $(patsubst %.cpp,%.o,$(filter %.cpp,$(LIBS_CPP_FILES))) $(patsubst %.cpp,%.o,$(filter %.cpp,$(SHARED_CPP_FILES)))
+objects := $(patsubst %.cpp,%.o,$(filter %.cpp,$(LIBS_CPP_FILES)))
+shared_objects := $(patsubst ../shared/%.cpp,./include/%.o,$(SHARED_CPP_FILES))
 
 SRC_DIRS := $(wildcard src/*/)
 
-
 clean:
 	find . -name "*.o" -type f -delete
+	find ./include -name "*.o" -type f -delete
 	find ../iso/boot/software/ -name "*.bin" -type f -delete
+
+./include/%.o: ../shared/%.cpp
+	i686-elf-g++ $(GPP_PARAMS) -o $@ -c $<
 
 %.o: %.cpp
 	i686-elf-g++ $(GPP_PARAMS) -o $@ -c $<
 
-libs: $(objects)
+libs: $(objects) $(shared_objects)
 
 all: $(SRC_DIRS)
 
