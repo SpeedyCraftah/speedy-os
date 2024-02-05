@@ -44,6 +44,8 @@ extern "C" Registers* temporary_registers;
 // ID 22 = Free a virtual page with flags.
 // ID 23 = Write to data sink.
 // ID 24 = Read from data sink.
+// ID 25 = Fetch latest fragment size from data sink.
+// ID 25 = Read latest fragment from data sink and remove it.
 
 // SpeedyShell Only
 // ID 11 = Query SpeedyShell for data.
@@ -515,7 +517,7 @@ uint32_t handle_system_call_hl() {
 
         // Allocate buffer to hold the read and consume the stream into it.
         uint8_t* buffer = (uint8_t*)kmalloc(data3);
-        uint32_t read_size = datasink->consume_data_stream(buffer, data3);
+        int read_size = datasink->consume_data_stream(buffer, data3);
         if (read_size == 0) {
             kfree(buffer);
             temporary_registers->eax = 0;
@@ -527,6 +529,45 @@ uint32_t handle_system_call_hl() {
 
         kfree(buffer);
         temporary_registers->eax = !write_status ? -1 : read_size;
+    } else if (id == 25) {
+        // Check if the sink exists and if the process owns it.
+        if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::current_thread->process->steady_sinks->fetch(data);
+        temporary_registers->eax = datasink->fragments.get_size() == 0 ? 0 : (int)datasink->fragments.peek_front().actual_size;
+    } else if (id == 26) {
+        uint32_t data2 = temporary_registers->eax;
+
+        // Check if the sink exists and if the process owns it.
+        if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::current_thread->process->steady_sinks->fetch(data);
+
+        // Check if fragment exists and get.
+        if (datasink->fragments.get_size() == 0) {
+            temporary_registers->eax = (int)-1;
+            return 0;
+        }
+
+        SteadyDataSink::DataFragment& fragment = datasink->fragments.peek_front(); 
+
+        // Attempt to write the buffer to the programs destination buffer.
+        bool write_status = virtual_allocator::write_virtual_memory(scheduler::current_thread->process, reinterpret_cast<void*>(data2), fragment.actual_size, fragment.data);
+        if (!write_status) {
+            temporary_registers->eax = -1;
+            return 0;
+        }
+
+        datasink->consume_block();
+        
+        // Return next fragment size if any.
+        temporary_registers->eax = datasink->fragments.get_size() != 0 ? (int)datasink->fragments.peek_front().actual_size : (int)0;
     }
 
     return 0;
