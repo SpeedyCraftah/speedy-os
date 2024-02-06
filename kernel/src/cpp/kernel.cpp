@@ -182,7 +182,7 @@ void kernelControlHandOver() {
     video::printf_log("Kernel", "Loading mouse driver...");
 
     // Load mouse driver.
-    drivers::mouse::load();
+    //drivers::mouse::load();
 
     // END OF LOADING DRIVERS.
 
@@ -208,6 +208,7 @@ void kernelControlHandOver() {
         flags
     );*/
     // Unmask PIC.
+
     chips::pic::unmask_line(0);
 
     // Wait for first tick of the PIT after which control will be handed to the scheduler.
