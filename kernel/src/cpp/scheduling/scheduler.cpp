@@ -207,14 +207,19 @@ namespace scheduler {
             event.thread->state.processing_event = true;
 
             // Create a stack frame.
-            uint32_t virtual_difference = reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8192 - sizeof(uint32_t) - event.thread->registers->esp;
-            uint32_t* physical_stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(event.thread->physical_stack) + 8192 - sizeof(uint32_t) - virtual_difference);
+
+            // Make space for the data parameters so we don't overwrite the program stack.
+            // Use normal execution programs ESP as base.
+            event.thread->registers->esp = event.thread->backup_registers.esp - sizeof(uint32_t) * (2 + 1);
+
+            uint32_t virtual_difference = (reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8191) - event.thread->registers->esp;
+            uint32_t* physical_stack = reinterpret_cast<uint32_t*>((reinterpret_cast<uint32_t>(event.thread->physical_stack) + 8191) - virtual_difference);
 
             // Push the event data.
-            *(physical_stack - 1) = event.event_id;
-            *(physical_stack) = event.event_data;
-
-            event.thread->registers->esp -= sizeof(uint32_t) * 2;
+            // Return address?
+            *(physical_stack + 0) = 0xd3adb33f;
+            *(physical_stack + 1) = event.event_id;
+            *(physical_stack + 2) = event.event_data;
 
             // Remove the event from the queue.
             thread_event_iterator.remove();
