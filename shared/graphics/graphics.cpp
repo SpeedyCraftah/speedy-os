@@ -16,6 +16,14 @@ namespace graphics {
   uint32_t outline_colour = (uint32_t)0xFFFFFF;
   uint32_t outline_width = 1;
 
+  #ifdef _SHARED_USER
+    void init(uint32_t* video_addr, uint32_t res, uint32_t colour_depth) {
+      video_address = video_addr;
+      resolution_width = (res >> 16) & 0xFFFF;
+      resolution_height = (res & 0xFFFF);
+    }
+  #endif
+
   void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale) {
     uint32_t i = 0;
     uint32_t offset_x = 0;

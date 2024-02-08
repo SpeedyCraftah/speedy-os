@@ -52,6 +52,10 @@ namespace graphics {
   
   extern uint32_t double_buffer[800 * 600];
 
+  #ifdef _SHARED_USER
+    void init(uint32_t* video_addr, uint32_t res, uint32_t colour_depth);
+  #endif
+
   // Plots a single pixel at the x and y coordinates.
   inline void __attribute__((always_inline)) draw_pixel(uint32_t x, uint32_t y, uint32_t colour) {
     uint32_t offset = resolution_width * y + x;
