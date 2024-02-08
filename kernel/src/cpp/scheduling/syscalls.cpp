@@ -67,8 +67,6 @@ new param for data (1)
 
 */
 
-extern "C" volatile int bpwatch;
-
 enum SyscallPageAllocationFlag : uint32_t {
     ALLOCATE_ON_ACCESS = 1, // Virtual address space is reserved but physical page will only be allocated on access (page fault).
     ALLOCATE_IMMEDIATELY = 2, // Physical page will be allocated immediately on request alongside the virtual page.
