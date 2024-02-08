@@ -13,6 +13,7 @@ clean:
 	find ../iso/boot/software/ -name "*.bin" -type f -delete
 
 ./include/%.o: ../shared/%.cpp
+	@mkdir -p $(@D)
 	i686-elf-g++ $(GPP_PARAMS) -o $@ -c $<
 
 %.o: %.cpp
