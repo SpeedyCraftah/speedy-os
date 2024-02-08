@@ -27,6 +27,8 @@ extern "C" Registers* temporary_registers;
 //      - 0 = Elapsed time since startup.
 //      - 1 = Process ID of process.
 //      - 2 = Thread ID of thread.
+//      - 3 = Graphics resolution (uint32_t = uint16_t width, uint16_t height).
+//      - 4 = Graphics colour depth in bits.
 // ID 2 = End process request (with status code). 
 // ID 3 = Temporarily suspend a thread with specific conditions.
 // ID 6 = End of event call.
@@ -83,6 +85,8 @@ uint32_t handle_system_call_hl() {
         if (data == 0) temporary_registers->eax = scheduler::elapsed_ms;
         else if (data == 1) temporary_registers->eax = scheduler::current_thread->process->id;
         else if (data == 2) temporary_registers->eax = scheduler::current_thread->id;
+        else if (data == 3) temporary_registers->eax = ((graphics::resolution_width & 0xFFFF) << 16) | (graphics::resolution_height & 0xFFFF);
+        else if (data == 4) temporary_registers->eax = 32; // hard coded for now.
     } else if (id == 2) {
         scheduler::kill_process(scheduler::current_thread->process, data);
         return 1;
@@ -419,7 +423,7 @@ uint32_t handle_system_call_hl() {
         scheduler::current_thread->process->paging.pixel_mapping_address = address_index;
 
         // Return mapped address.
-        temporary_registers->eax = reinterpret_cast<uint32_t>(paging::pi_to_address(map_address));
+        temporary_registers->eax = map_address;
     } else if (id == 20) {
         // Save data and return.
         scheduler::manual_context_switch_return();
