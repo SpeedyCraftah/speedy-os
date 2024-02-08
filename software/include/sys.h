@@ -89,6 +89,12 @@ namespace speedyos {
     // Queries the kernel for the elapsed time from startup.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time();
 
+    // Queries the kernel for the display resolution.
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_graphics_resolution();
+
+    // Queries the kernel for the colour depth of the display.
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_colour_depth();
+
     // Notifies the kernel to stop the process.
     __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code = 0);
 

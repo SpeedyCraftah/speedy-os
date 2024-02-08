@@ -2,7 +2,6 @@
 #include "../../shared/str.h"
 
 namespace speedyos {
-    // Queries the kernel for the process ID.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id() {
         asm volatile("mov $1, %ecx");
         asm volatile("mov $1, %edx");
@@ -17,10 +16,23 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    // Queries the kernel for the elapsed time from startup.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time() {
         asm volatile("mov $1, %ecx");
         asm volatile("xor %edx, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_graphics_resolution() {
+        asm volatile("mov $1, %ecx");
+        asm volatile("mov $3, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_colour_depth() {
+        asm volatile("mov $1, %ecx");
+        asm volatile("mov $4, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
