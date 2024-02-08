@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "graphics.h"
+#include "../../../../shared/graphics/graphics.h"
 #include "../../../../shared/string.h"
 
 // Basic video and printing functions for kernel.

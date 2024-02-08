@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdint.h"
-#include "../../../../shared/smart_ptr.h"
+#include "../smart_ptr.h"
 
 namespace font_interpreter {
     // Resizes the specified character using the nearest neighbour algorithm and returns the resulting pixels in a smart pointer.

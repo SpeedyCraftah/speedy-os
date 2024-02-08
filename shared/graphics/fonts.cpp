@@ -1,8 +1,9 @@
+#include "../_shared.h"
 #include "fonts.h"
 
 namespace font_interpreter {
     smart_ptr<uint16_t> resize_char_nn(uint16_t* font, uint8_t target_width, uint8_t target_height) {
-        uint16_t* temp = (uint16_t*)kmalloc(target_width * target_height * sizeof(uint16_t));
+        uint16_t* temp = (uint16_t*)_shared_malloc(target_width * target_height * sizeof(uint16_t));
     
         uint16_t width = font[0];
         uint16_t height = font[1];
@@ -10,7 +11,7 @@ namespace font_interpreter {
         // Skip over meta data.
         font = font + 2;
 
-        float x_ratio = width /( float)target_width;
+        float x_ratio = width / (float)target_width;
         float y_ratio = height / (float)target_height;
 
         float px, py; 

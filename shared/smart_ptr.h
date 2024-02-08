@@ -14,42 +14,42 @@ class smart_ptr {
         }
 
         // Overload casting operator.
-        operator T*() {
+        inline operator T*() {
             return storage_ptr;
         }
 
         // Overload [] operator.
-        T& operator[](int index) {
+        inline T& operator[](int index) {
             return storage_ptr[index];
         }
 
         // Overload ++ operator.
-        smart_ptr<T>& operator++() {
+        inline smart_ptr<T>& operator++() {
             storage_ptr++;
         }
 
         // Overload -- operator.
-        smart_ptr<T>& operator--() {
+        inline smart_ptr<T>& operator--() {
             storage_ptr--;
         }
 
         // Overload * operator.
-        T& operator*() {
+        inline T& operator*() {
             return *storage_ptr;
         }
 
         // Overload -> operator.
-        T* operator->() {
+        inline T* operator->() {
             return storage_ptr;
         }
 
         // Overload delete operator.
-        void operator delete(void* ptr) {
+        inline void operator delete(void* ptr) {
             _shared_free(ptr);
         }
 
         // Returns the raw pointer.
-        T* ptr() {
+        inline T* ptr() {
             return storage_ptr;
         }
 

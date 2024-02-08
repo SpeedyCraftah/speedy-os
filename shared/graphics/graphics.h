@@ -112,7 +112,7 @@ namespace graphics {
 
       auto resized_data = font_interpreter::resize_char_nn(
           data, width * scale, height * scale
-      ).ptr();
+      );
 
       // Take in a custom colour modifier.
       uint32_t colour = colour_modifier(character, i);

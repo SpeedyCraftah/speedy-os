@@ -28,7 +28,7 @@
 #include "software/system/speedyshell/main.h"
 
 #include "stdint.h"
-#include "io/graphics.h"
+#include "../../../shared/graphics/graphics.h"
 #include "software/system/speedyshell/main.h"
 //#include "software/system/cpu_usage/main.h"
 #include "../../../shared/math.h"
