@@ -16,5 +16,11 @@ int main() {
     uint32_t* graphics_ptr = speedyos::upgrade_graphics();
     graphics::init(graphics_ptr, speedyos::fetch_graphics_resolution(), speedyos::fetch_colour_depth());
 
+    graphics::fill_colour = rgb_colour(255, 0, 0);
+    graphics::outline_colour = rgb_colour(0xff, 0xff, 0xff);
+    graphics::draw_rectangle(0, 0, 50, 100, true);
+
+    while (true) {};
+
     return 0;
 }
