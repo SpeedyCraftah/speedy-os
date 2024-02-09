@@ -10,3 +10,4 @@ Massive thank you to [OsDev](https://wiki.osdev.org/Main_Page) for the resources
 
 ## TODOS
 - Verify if map key string is actually the correct string, not only using hash.
+- Harden the operating system against multiple attacks and undefined behaviour.
