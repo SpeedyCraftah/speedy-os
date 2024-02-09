@@ -114,8 +114,16 @@ namespace speedyos {
         return _fetch_process_id_by_string(process_name, str::length(process_name));
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random() {
+    __attribute__((naked)) __attribute__((fastcall)) bool hw_random_sufficient_entropy() {
         asm volatile("mov $14, %ecx");
+        asm volatile("mov $0, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t hw_random_value() {
+        asm volatile("mov $14, %ecx");
+        asm volatile("mov $1, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }

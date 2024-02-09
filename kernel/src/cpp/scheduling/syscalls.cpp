@@ -13,6 +13,7 @@
 #include "../heap/physical.h"
 #include "../../../../shared/memory.h"
 #include "../paging/virtual.h"
+#include "../misc/hw_random.h"
 
 #include "../kernel.h"
 #include "../io/video.h"
@@ -36,7 +37,9 @@ extern "C" Registers* temporary_registers;
 // ID 8 = Emit event for registered processes.
 // ID 9 = Change program status.
 // ID 10 = Find process ID of string.
-// ID 14 = Get hardware-supported random 32-bit number.
+// ID 14 = Hardware-supported random 32-bit number generator.
+//       - 0 = If there is sufficient entropy available.
+//       - 1 = Gets a hardware random number.
 // ID 15 = Create a new thread.
 // ID 16 = Kill a thread.
 // ID 17 = Park a thread.
@@ -304,9 +307,8 @@ uint32_t handle_system_call_hl() {
 
         return 1;
     } else if (id == 14) {
-        // Hardware random int.
-        // Will be brought back in the future.
-        temporary_registers->eax = 0;
+        if (data == 0) temporary_registers->eax = hw_random::value_available();
+        else if (data == 1) temporary_registers->eax = hw_random::get_value();
     } else if (id == 15) {
         uint32_t data2 = temporary_registers->eax;
         uint32_t data3 = temporary_registers->ebx;

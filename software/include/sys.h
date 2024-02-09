@@ -116,8 +116,11 @@ namespace speedyos {
     // Requests the kernel to return the process ID of a program. 0 if does not exist.
     uint32_t fetch_process_id_by_string(char* process_name);
 
+    // Returns a boolean indicating whether there is enough entropy for the hardware random number to be relatively random.
+    __attribute__((naked)) __attribute__((fastcall)) bool hw_random_sufficient_entropy();
+
     // Returns a hardware & time entropied random 32-bit number.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random();
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t hw_random_value();
 
     // Requests the kernel to createa a new process thread with a capture value.
     // Ensure the pointer value is not released or copied before the thread ends otherwise undefined behaviour will occur.
