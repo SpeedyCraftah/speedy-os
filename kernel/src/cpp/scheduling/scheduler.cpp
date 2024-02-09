@@ -1,23 +1,25 @@
 #include "scheduler.h"
 
+#include "datasink.h"
 #include "events.h"
 #include "stdint.h"
 
-#include "../structures/flex_array.h"
-#include "../structures/map.h"
+#include "../../../../shared/flex_array.h"
+#include "../../../../shared/map.h"
 
 #include "structures/events.h"
 #include "structures/process.h"
 #include "structures/thread.h"
 #include "events.h"
-#include "../misc/memory.h"
+#include "../../../../shared/memory.h"
 #include "../heap/physical.h"
 #include "../paging/virtual.h"
 #include "../paging/paging.h"
+#include "structures/datasink.h"
 
 // remove after
 //#include "../software/system/speedyshell/main.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 //#include "../software/include/sys.h"
 #include "../chips/pit.h"
 #include "../misc/assert.h"
@@ -73,7 +75,7 @@ namespace scheduler {
     structures::linked_array<ThreadEvent>::iterator thread_event_iterator;
     structures::linked_array<Thread*>::iterator thread_execution_iterator;
 
-    Process* scheduler_event_process;
+    Process* scheduler_event_process = nullptr;
 
     void initialise() {
         // Set base FPU state.
@@ -100,7 +102,7 @@ namespace scheduler {
         thread_execution_iterator = thread_execution_queue->create_iterator();
 
         ProcessFlags flags;
-        flags.system_process = true;
+        flags.kernel_process = true;
         flags.virtual_process = true;
 
         scheduler_event_process = create_process("Scheduler Events", 0, flags);
@@ -112,7 +114,7 @@ namespace scheduler {
         // Create kernel process for usage by virtual functions.
         kernel_process = new Process;
         kernel_process->paging.directories = paging::kernel_page_directory;
-        bpwatch = 10;
+
         PageDirectory placeholder_dir = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
         // Set all page directories to 0 by default.
@@ -144,7 +146,7 @@ namespace scheduler {
         // If a thread was previously running.
         if (current_thread != nullptr) {
             // Switch to kernel paging.
-            if (!current_thread->process->flags.system_process) paging::switch_directory(paging::kernel_page_directory);
+            paging::switch_directory(paging::kernel_page_directory);
 
             uint32_t cpu_time_used =
                 timer_preempt ? time_slice_ms : (time_slice_ms - (uint32_t)chips::pit::fetch_channel_0_remaining_countdown());
@@ -205,14 +207,19 @@ namespace scheduler {
             event.thread->state.processing_event = true;
 
             // Create a stack frame.
-            uint32_t virtual_difference = reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8192 - sizeof(uint32_t) - event.thread->registers->esp;
-            uint32_t* physical_stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(event.thread->physical_stack) + 8192 - sizeof(uint32_t) - virtual_difference);
+
+            // Make space for the data parameters so we don't overwrite the program stack.
+            // Use normal execution programs ESP as base.
+            event.thread->registers->esp = event.thread->backup_registers.esp - sizeof(uint32_t) * (2 + 1);
+
+            uint32_t virtual_difference = (reinterpret_cast<uint32_t>(event.thread->virtual_stack) + 8191) - event.thread->registers->esp;
+            uint32_t* physical_stack = reinterpret_cast<uint32_t*>((reinterpret_cast<uint32_t>(event.thread->physical_stack) + 8191) - virtual_difference);
 
             // Push the event data.
-            *(physical_stack - 1) = event.event_id;
-            *(physical_stack) = event.event_data;
-
-            event.thread->registers->esp -= sizeof(uint32_t) * 2;
+            // Return address?
+            *(physical_stack + 0) = 0xd3adb33f;
+            *(physical_stack + 1) = event.event_id;
+            *(physical_stack + 2) = event.event_data;
 
             // Remove the event from the queue.
             thread_event_iterator.remove();
@@ -276,9 +283,7 @@ namespace scheduler {
             temporary_eip = reinterpret_cast<void*>(thread->registers->eip);
 
             // Switch to process paging.
-            if (!thread->process->flags.system_process) {
-                paging::switch_directory(thread->process->paging.directories);
-            }
+            paging::switch_directory(thread->process->paging.directories);
 
             // Switch to assembly side of scheduler to begin execution.
             return scheduler_execute();
@@ -314,6 +319,7 @@ namespace scheduler {
         process->flags = flags;
         process->threads = new structures::linked_array<Thread*>(8);
         process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
+        process->steady_sinks = new structures::map<SteadyDataSink*>(4);
 
         assert_eq("sch.procs.name.heap", kallocated(process->name), true);
         assert_eq("sch.procs.heap", kallocated(process->name), true);
@@ -377,7 +383,8 @@ namespace scheduler {
                     entry.Address = (i * 1024) + j;
                     entry.Present = true;
                     entry.ReadWrite = true;
-                    entry.Global = true;
+                    entry.Global = false;
+                    entry.UserSupervisor = process->flags.kernel_process;
                 }
             }
 
@@ -412,6 +419,10 @@ namespace scheduler {
             // Point to top of stack.
             thread->registers->esp = reinterpret_cast<uint32_t>(thread->virtual_stack) + 8192 - sizeof(uint32_t);
 
+            // Create a default EFLAGS.
+            // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
+            thread->registers->eflags = process->flags.iopl_0 ? 0b00000000001000000000001000000010 : 0b00000000001000000011001000000010;
+
             // Add the thread to the map.
             thread_list->set(thread->id, thread);
         
@@ -423,7 +434,7 @@ namespace scheduler {
         }
 
         // Emit process create event.
-        scheduler::events::emit_event(scheduler_event_process, 1, process->id);
+        if (scheduler_event_process != nullptr) scheduler::events::emit_event(scheduler_event_process, 1, process->id);
 
         // Return the process.
         return process;
@@ -491,6 +502,10 @@ namespace scheduler {
         // Place the capture on the stack.
         thread->registers->esp -= sizeof(uint32_t) * 2;
         //uint32_t* stack = reinterpret_cast<uint32_t*>(thread->registers.esp);
+
+        // Create a default EFLAGS.
+        // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
+        thread->registers->eflags = 0b00000000000000000011001000000010;
 
         // TODO - check this probably doesnt work.
         uint32_t* stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(physical_stack_offset) + 8192 - sizeof(uint32_t));
@@ -581,6 +596,15 @@ namespace scheduler {
             kill_thread(thread, 1, false);
         }
 
+        // Iterate through the data sinks and delete.
+        auto steady_sinks_iterator = process->steady_sinks->create_iterator();
+
+        while (steady_sinks_iterator.hasNext()) {
+            SteadyDataSink* sink = steady_sinks_iterator.next();
+            scheduler::datasink::active_sinks.remove(sink->handle_id);
+            delete sink;
+        }
+
         // Emit process end event.
         scheduler::events::emit_event(scheduler_event_process, 2, process->id);
 
@@ -608,6 +632,7 @@ namespace scheduler {
         // Free process objects.
         delete process->threads;
         delete process->hooked_threads;
+        delete process->steady_sinks;
         physical_allocator::free_physical_page(process->paging.kernel_thread_page);
         kfree(process->name);
 

@@ -40,8 +40,9 @@
 
 .global _start
 _start:
-    mov %ebx, (structure_address)
-    mov $kernel_stack, %esp
+    movl %ebx, (structure_address)
+    movl $kernel_stack, (kernel_stack)
+    movl $kernel_stack, %esp
     
     push %eax
     push %ebx
@@ -50,9 +51,9 @@ _start:
 
 // Stack grows down.
 .section .bss
+.global kernel_stack
+.lcomm kernel_stack, 4
 
 // 4KB kernel stack.
 .space 4 * 1024
-
-.global kernel_stack
-kernel_stack:
+_kernel_stack:

@@ -23,6 +23,7 @@ struct GDT {
     GDTEntry KernelData;
     GDTEntry UserCode;
     GDTEntry UserData;
+    GDTEntry TSS;
 } __attribute__((packed))
 __attribute((aligned(0x1000)));
 

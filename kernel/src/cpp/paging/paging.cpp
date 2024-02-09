@@ -1,6 +1,6 @@
 #include "paging.h"
 #include "../io/video.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 #include "../panic/panic.h"
 #include "../scheduling/scheduler.h"
 #include "../heap/physical.h"
@@ -31,6 +31,26 @@ struct PageFaultAddress {
     uint32_t DirectoryEntry : 10;
 } __attribute__((packed));
 
+void log_fault_details(PageFaultAddress address, PageFaultError error) {
+    char hex[HEX32_STR_SIZE];
+
+    constexpr rgb_colour colour = rgb_colour(0, 0xAF, 0xFF);
+
+    video::printf("\nAdditional fault details:\n", colour);
+    video::printf("  operation=", colour);
+    video::printf((char*)(error.Write ? "WRITE\n" : "READ\n"), colour);
+    video::printf("  instruction=", colour);
+    video::printf(conversions::u_int32_to_hex(scheduler::current_thread->registers->eip, hex), colour);
+    video::printf("\n  page address=", colour);
+    video::printf(conversions::u_int32_to_hex((address.DirectoryEntry * 1024) * 4096 + (address.TableEntry * 4096), hex), colour);
+    video::printf("\n  flags=", colour);
+    
+    if (error.InstructionFetch) video::printf("InstructionFetch ", colour);
+    if (error.Present) video::printf("Present ", colour);
+    if (error.User) video::printf("IOPL3 ", colour);
+    video::printnl();
+}
+
 uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
     // panic glitches out - fix
     //kernel::panic("Page fault");
@@ -46,6 +66,7 @@ uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
     if (!directory.Present) {
         scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
         video::printf("Process accessed a non existent directory!", VGA_COLOUR::LIGHT_RED);
+        log_fault_details(address, error);
         return 1;
     }
 
@@ -69,6 +90,7 @@ uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
         } else {
             scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
             video::printf("Process accessed a non existent page!", VGA_COLOUR::LIGHT_RED);
+            log_fault_details(address, error);
             return 1;
         }
     }
@@ -76,6 +98,7 @@ uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
     // Other page fault reasons - read only, privilege level, etc.
     scheduler::kill_process(scheduler::current_thread->process, ProcessTermCode::PAGE_ACCESS_VIOLATION);
     video::printf("Process page access triggered a page fault!", VGA_COLOUR::LIGHT_RED);
+    log_fault_details(address, error);
     return 1;
 }
 
@@ -83,12 +106,12 @@ uint32_t HandlePageFault_hl(PageFaultAddress address, PageFaultError error) {
 // to get virtual address: ((address.DirectoryEntry * 1024) + address.TableEntry) * 4096)
 extern "C" uint32_t HandlePageFault(PageFaultAddress address, PageFaultError error) {
     // Switch to kernel page directory.
-    if (!scheduler::current_thread->process->flags.system_process) paging::switch_directory(paging::kernel_page_directory);
+    paging::switch_directory(paging::kernel_page_directory);
     
     uint32_t result = HandlePageFault_hl(address, error);
     if (result == 0) {
         // Switch back to process page directory.
-        if (!scheduler::current_thread->process->flags.system_process) paging::switch_directory(scheduler::current_thread->process->paging.directories);
+        paging::switch_directory(scheduler::current_thread->process->paging.directories);
     }
 
     return result;

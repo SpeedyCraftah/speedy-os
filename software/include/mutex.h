@@ -1,6 +1,6 @@
 #pragma once
 
-#include "structures/linked_array.h"
+#include "../../shared/linked_array.h"
 
 class ThreadMutex {
     public:

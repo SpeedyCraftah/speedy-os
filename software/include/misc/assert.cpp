@@ -1,6 +1,7 @@
 #include "assert.h"
-#include "../structures/string.h"
-#include "../misc/conversions.h"
+#include "../sys.h"
+#include "../../../shared/string.h"
+#include "../../../shared/conversions.h"
 
 using namespace structures;
 

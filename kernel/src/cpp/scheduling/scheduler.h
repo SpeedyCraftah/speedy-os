@@ -2,8 +2,8 @@
 
 #include "stdint.h"
 
-#include "../structures/map.h"
-#include "../structures/linked_array.h"
+#include "../../../../shared/map.h"
+#include "../../../../shared/linked_array.h"
 
 #include "structures/thread.h"
 #include "structures/process.h"

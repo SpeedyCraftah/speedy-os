@@ -89,8 +89,14 @@ namespace speedyos {
     // Queries the kernel for the elapsed time from startup.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time();
 
+    // Queries the kernel for the display resolution.
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_graphics_resolution();
+
+    // Queries the kernel for the colour depth of the display.
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_colour_depth();
+
     // Notifies the kernel to stop the process.
-    __attribute__((naked)) __attribute__((fastcall)) void end_process(uint32_t code = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code = 0);
 
     // Notifies the kernel to suspend the process for a specified amount of time.
     __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms);
@@ -108,10 +114,13 @@ namespace speedyos {
     __attribute__((naked)) __attribute__((fastcall)) void update_execution_policy(ThreadExecutionPolicy policy, uint32_t thread_id = 0);
 
     // Requests the kernel to return the process ID of a program. 0 if does not exist.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id_by_string(char* process_name);
+    uint32_t fetch_process_id_by_string(char* process_name);
+
+    // Returns a boolean indicating whether there is enough entropy for the hardware random number to be relatively random.
+    __attribute__((naked)) __attribute__((fastcall)) bool hw_random_sufficient_entropy();
 
     // Returns a hardware & time entropied random 32-bit number.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random();
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t hw_random_value();
 
     // Requests the kernel to createa a new process thread with a capture value.
     // Ensure the pointer value is not released or copied before the thread ends otherwise undefined behaviour will occur.
@@ -143,6 +152,25 @@ namespace speedyos {
     // Attempting to free an address which is not page aligned will raise a fault.
     __attribute__((naked)) __attribute__((fastcall)) bool free_virtual_page(void* address, uint32_t flags = 0);
 
+    // Writes data to the end of a data sink.
+    // Returns a boolean indicating the success of the operation.
+    // The sink will not be modified if a status of FALSE is returned. 
+    __attribute__((naked)) __attribute__((fastcall)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size);
+
+    // Reads data FIFO from the datasink to the desired buffer of X size.
+    // This will disregard fragments and read fragments as if they were whole.
+    // Returns an int indicating -1 for error, 0 for no data available/read, otherwise indicating the length read which may be <= data_size.
+    __attribute__((naked)) __attribute__((fastcall)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size);
+
+    // Fetches the size of the latest fragment from the data sink.
+    // Returns an int indicating -1 for error, 0 for no data available, otherwise indicating the size of the latest fragment.
+    __attribute__((naked)) __attribute__((fastcall)) int fetch_fragment_size_steady_datasink(uint32_t sink_id);
+
+    // Reads the latest fragment from the data sink and writes it to the destination buffer.
+    // Returns an int indicating -1 for error/no data available, otherwise indicating the size of the next fragment (0 if none).
+    // This function assumes that you have fetched the size of the latest fragment using fetch_fragment_size_steady_datasink and the destination buffer is of appropriate size.
+    __attribute__((naked)) __attribute__((fastcall)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest);
+
     namespace speedyshell {
         // Requests input. If at start of program, command will be returned. Otherwise run-time input will be returned if requested.
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input();
@@ -154,4 +182,7 @@ namespace speedyos {
         // Notifies the kernel & SpeedyShell to suspend the process until an input is submitted.
         __attribute__((naked)) __attribute__((fastcall)) void request_input();
     }
+
+    // High level functions.
+    void __attribute__((noreturn)) panic(char* error);
 }

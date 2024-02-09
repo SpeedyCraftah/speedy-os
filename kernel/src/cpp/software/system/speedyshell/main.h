@@ -2,7 +2,7 @@
 
 #include "stdint.h"
 #include "../../include/sys.h"
-#include "../../../io/graphics.h"
+#include "../../../../../../shared/graphics/graphics.h"
 
 namespace speedyshell {
     extern uint32_t running_process_id;

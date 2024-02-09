@@ -3,10 +3,10 @@
 #include "../../../io/video.h"
 #include "../../include/sys.h"
 #include "../../../drivers/keyboard/keyboard.h"
-#include "../../../io/fonts.h"
-#include "../../../io/fonts/internal.h"
+#include "../../../../../../shared/graphics/fonts.h"
+#include "../../../../../../shared/graphics/fonts/internal.h"
 #include "../../../scheduling/scheduler.h"
-#include "../../../misc/conversions.h"
+#include "../../../../../../shared/conversions.h"
 #include "commands.h"
 #include "../../../misc/assert.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../structures/string.h"
+#include "../../../../../shared/string.h"
 #include <stdint.h>
 
 enum MODIFIER_KEYS {

@@ -1,8 +1,8 @@
 #include "video.h"
 
-#include "fonts.h"
-#include "fonts/internal.h"
-#include "graphics.h"
+#include "../../../../shared/graphics/fonts.h"
+#include "../../../../shared/graphics/fonts/internal.h"
+#include "../../../../shared/graphics/graphics.h"
 
 // For C.
 extern "C" void printnl() {

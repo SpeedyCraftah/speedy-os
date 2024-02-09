@@ -7,10 +7,10 @@
 #include "chips/pit.h"
 
 #include "io/video.h"
-#include "misc/conversions.h"
+#include "../../../shared/conversions.h"
 #include "scheduling/structures/process.h"
 //#include "software/include/sys.h"
-#include "structures/string.h"
+#include "../../../shared/string.h"
 
 #include "tables/gdt.h"
 #include "tables/idt.h"
@@ -28,11 +28,11 @@
 #include "software/system/speedyshell/main.h"
 
 #include "stdint.h"
-#include "io/graphics.h"
+#include "../../../shared/graphics/graphics.h"
 #include "software/system/speedyshell/main.h"
 //#include "software/system/cpu_usage/main.h"
-#include "misc/math.h"
-#include "misc/memory.h"
+#include "../../../shared/math.h"
+#include "../../../shared/memory.h"
 #include "stdarg.h"
 #include "acpi/acpi.h"
 //#include "software/system/tsccalc/main.h"
@@ -43,6 +43,7 @@
 #include "heap/physical.h"
 
 #include "loader/elf.h"
+#include "tables/tss.h"
 
 
 bool isTerminalInterface = false;
@@ -116,6 +117,11 @@ void kernelControlHandOver() {
 
     LoadGDT(&gdtDescriptor);
 
+    video::printf_log("Kernel", "Defining and loading TSS...");
+
+    // Load and define the TSS.
+    tss_setup_default();
+
     video::printf_log("Kernel", "Defining IDT interrupt entries...");
 
     // Loads the interrupt descriptor table.
@@ -176,7 +182,7 @@ void kernelControlHandOver() {
     video::printf_log("Kernel", "Loading mouse driver...");
 
     // Load mouse driver.
-    drivers::mouse::load();
+    //drivers::mouse::load();
 
     // END OF LOADING DRIVERS.
 
@@ -189,7 +195,7 @@ void kernelControlHandOver() {
     video::printf_log("Kernel", "Starting TSC calculator process...");
 
     ProcessFlags flags;
-    flags.system_process = false;
+    flags.kernel_process = false;
 
     Process* p = loader::load_elf32_executable_as_process(*(char**)(mod_addr_first + 2), flags, reinterpret_cast<void*>(*mod_addr_first), reinterpret_cast<void*>(*(mod_addr_first + 1)));
 
@@ -202,6 +208,7 @@ void kernelControlHandOver() {
         flags
     );*/
     // Unmask PIC.
+
     chips::pic::unmask_line(0);
 
     // Wait for first tick of the PIT after which control will be handed to the scheduler.

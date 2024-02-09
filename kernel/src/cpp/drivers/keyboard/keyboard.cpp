@@ -6,7 +6,7 @@
 #include "../../chips/pic.h"
 #include "../../scheduling/scheduler.h"
 #include "../../scheduling/events.h"
-#include "../../misc/random.h"
+#include "../../../../../shared/random.h"
 
 // Keyboard driver events.
 // ID 1 - On key press.
@@ -21,7 +21,7 @@ namespace drivers {
         setup_char_table();
 
         ProcessFlags flags;
-        flags.system_process = true;
+        flags.kernel_process = true;
         flags.virtual_process = true;
 
         // Create virtual process for events to take place.

@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-ffreestanding, -Wno-write-strings, -Wno-register, -m32, -fno-use-cxa-atexit, -nostdlib, -fno-builtin, -fno-rtti, -fno-exceptions, -fno-stack-protector]
+  Add: [-D _SHARED_KERNEL, -D _SHARED_USER, -ffreestanding, -Wno-write-strings, -Wno-register, -m32, -fno-use-cxa-atexit, -nostdlib, -fno-builtin, -fno-rtti, -fno-exceptions, -fno-stack-protector]

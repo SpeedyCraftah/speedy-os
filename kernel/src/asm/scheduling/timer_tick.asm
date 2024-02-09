@@ -3,30 +3,68 @@
 extern virtual_temporary_registers
 extern handle_timer_tick
 extern temporary_eip
+extern current_thread
 
 global INTERRUPT_33
 
 ; On PIT timer yield (context switch).
 INTERRUPT_33:
-    ; Future optimisation idea: Check if a thread was executing or not before saving.
+    push eax
+    mov eax, [current_thread]
+    test eax, eax
+    je .scheduler_sleep_finish
 
-    ; Save registers to structure with stack offset to counter stack difference.
-    save_general_registers_to_temp 12
+    .thread_exec_finish:
+        ; Save all registers (+stack).
+        mov eax, [virtual_temporary_registers]
 
-    ; Save returning program EIP to temporary register.
-    mov eax, [esp]
-    mov [ecx+32], eax
+        mov [eax+4], ecx
+        mov [eax+8], edx
+        mov [eax+12], ebx
+        mov [eax+20], ebp
+        mov [eax+24], esi
+        mov [eax+28], edi
+        fsave [eax+40]
 
-    ; Jump to higher level interrupt handler.
-    mov [esp], dword .far_return
-    iret
+        ;esp
+        mov ecx, [esp+4+12]
+        mov [eax+16], ecx
 
-    .far_return:
-        ; Disable interrupts.
-        cli
+        ;eip
+        mov ecx, [esp+4+0]
+        mov [eax+32], ecx
 
-        ; Load the kernel stack.
-        load_kernel_stack
+        ;eflags
+        mov ecx, [esp+4+8]
+        mov [eax+36], ecx
 
-        ; Jump to C++ code.
-        jmp handle_timer_tick
+        ;eax
+        pop ecx
+        mov [eax+0], ecx
+
+        ; Set cs+dx to kernel segments.
+        mov [esp+4], dword (1 * 8) | 0
+        mov [esp+16], dword (2 * 8) | 0
+
+        ; Set kernel stack.
+        mov eax, [kernel_stack]
+        mov [esp+12], eax
+
+        ; Disable interrupts and set to IOPL=0 in eflags.
+        mov [esp+8], KERNEL_EFLAGS
+
+        ; Load scheduler address.
+        mov [esp+0], dword handle_timer_tick
+
+        iret
+
+    .scheduler_sleep_finish:
+        add esp, 4
+
+        ; Load scheduler address.
+        mov [esp+0], dword handle_timer_tick
+
+        ; Disable interrupts and set to IOPL=0 in eflags.
+        mov [esp+8], KERNEL_EFLAGS
+
+        iret

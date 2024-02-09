@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "chrono": "cpp",
-        "cmath": "cpp"
-    }
+        "cmath": "cpp",
+        "memory": "cpp",
+        "random": "cpp",
+        "optional": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

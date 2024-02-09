@@ -12,61 +12,84 @@ section .bss
 debug_val: resd 1
 
 section .text
+
+
 ; Handles syscall interrupts from programs.
 global INTERRUPT_128
 INTERRUPT_128:
-  mov dword [debug_val], 5
-  ; Dump registers (plus offset).
-  save_general_registers_to_temp 12
+  ; Save all registers (+stack).
+  push eax
+  mov eax, [virtual_temporary_registers]
 
-  ; Save interrupt frame.
-  save_interrupt_frame
+  mov [eax+4], ecx
+  mov [eax+8], edx
+  mov [eax+12], ebx
+  mov [eax+20], ebp
+  mov [eax+24], esi
+  mov [eax+28], edi
+  fsave [eax+40]
 
-  ; Save return EIP.
-  mov eax, [esp]
-  mov [ecx+32], eax
+  ;esp
+  mov ecx, [esp+4+12]
+  mov [eax+16], ecx
 
-  ; Load the kernel stack.
-  load_kernel_stack
+  ;eip
+  mov ecx, [esp+4+0]
+  mov [eax+32], ecx
+
+  ;eflags
+  mov ecx, [esp+4+8]
+  mov [eax+36], ecx
+
+  ;eax
+  pop ecx
+  mov [eax+0], ecx
+
 
   ; ECX = System call number.
   ; EDX = Data.
+  ; EAX = 1 = No return, 0 = Return.
   call handle_system_call
+  
+  test eax, eax
+  je .thread_return
 
-  cmp eax, 0
-  jz .normal_return
+  .scheduler_return:
+    ; Set cs+dx to kernel segments.
+    mov [esp+4], dword (1 * 8) | 0
+    mov [esp+16], dword (2 * 8) | 0
 
-  ; Load the interrupt frame since we switched to kernel stack.
-  push_interrupt_frame
+    ; Set kernel stack.
+    mov eax, [kernel_stack]
+    mov [esp+12], eax
 
-  ; Push scheduler switch address and return.
-  mov [esp], dword .far_return
-  iret
+    ; Disable interrupts and set to IOPL=0 in eflags.
+    mov [esp+8], KERNEL_EFLAGS
 
-  .far_return:
-    ; Disable interrupts.
-    ; cli
+    ; Load scheduler address.
+    mov [esp+0], dword handle_context_switch
 
-    ; Load the kernel stack.
-    ; load_kernel_stack
-
-    ; Jump to C++ code.
-    jmp handle_context_switch
-
-  ; Normal return to program.
-  .normal_return:
-    ; Replace EIP in case it changed.
-    
-    mov eax, [virtual_temporary_registers]
-    mov eax, [eax+32]
-    mov [esp], eax
-
-    ; Load registers and return.
-    load_general_registers_from_temp
-
-    ; Subtract ESP to counter offset.
-    sub esp, 12
-
-    ; Return from the interrupt.
     iret
+  
+  .thread_return:
+    ; Load all registers (except eflags).
+    mov eax, [virtual_temporary_registers]
+
+    ;esp
+    mov ecx, [eax+16]
+    mov [esp+12], ecx
+
+    ;eip
+    mov ecx, [eax+32]
+    mov [esp+0], ecx
+
+    frstor [eax+40]
+    mov edi, [eax+28]
+    mov esi, [eax+24]
+    mov ebp, [eax+20]
+    mov ebx, [eax+12]
+    mov edx, [eax+8]
+    mov ecx, [eax+4]
+    mov eax, [eax+0]
     
+    iret

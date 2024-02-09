@@ -1,8 +1,7 @@
 #include "sys.h"
-#include "misc/str.h"
+#include "../../shared/str.h"
 
 namespace speedyos {
-    // Queries the kernel for the process ID.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id() {
         asm volatile("mov $1, %ecx");
         asm volatile("mov $1, %edx");
@@ -17,18 +16,32 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    // Queries the kernel for the elapsed time from startup.
     __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time() {
         asm volatile("mov $1, %ecx");
-        asm volatile("mov $0, %edx");
+        asm volatile("xor %edx, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void end_process(uint32_t code) {
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_graphics_resolution() {
+        asm volatile("mov $1, %ecx");
+        asm volatile("mov $3, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_colour_depth() {
+        asm volatile("mov $1, %ecx");
+        asm volatile("mov $4, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $2, %ecx");
         asm volatile("int $128");
+        asm volatile("ud2");
     }
 
     __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms) {
@@ -89,15 +102,28 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id_by_string(char* process_name) {
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t _fetch_process_id_by_string(char* process_name, uint32_t process_name_length) {
+        asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $10, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t hardware_random() {
+    uint32_t fetch_process_id_by_string(char* process_name) {
+        return _fetch_process_id_by_string(process_name, str::length(process_name));
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) bool hw_random_sufficient_entropy() {
         asm volatile("mov $14, %ecx");
+        asm volatile("mov $0, %edx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) uint32_t hw_random_value() {
+        asm volatile("mov $14, %ecx");
+        asm volatile("mov $1, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
@@ -168,10 +194,59 @@ namespace speedyos {
         asm volatile("ret");
     }
 
+    __attribute__((naked)) __attribute__((fastcall)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size) {
+        asm volatile("mov %edx, %eax");
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $23, %ecx");
+
+        // Preserve ebx register as required by ABI.
+        asm volatile("push %ebx");
+        asm volatile("mov 8(%esp), %ebx");
+
+        asm volatile("int $128");
+
+        // Restore ebp register.
+        asm volatile("pop %ebx");
+        
+        asm volatile("ret $4");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size) {
+        asm volatile("mov %edx, %eax");
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $24, %ecx");
+
+        // Preserve ebx register as required by ABI.
+        asm volatile("push %ebx");
+        asm volatile("mov 8(%esp), %ebx");
+
+        asm volatile("int $128");
+
+        // Restore ebp register.
+        asm volatile("pop %ebx");
+        
+        asm volatile("ret $4");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) int fetch_fragment_size_steady_datasink(uint32_t sink_id) {
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $25, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
+    __attribute__((naked)) __attribute__((fastcall)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest) {
+        asm volatile("mov %edx, %eax");
+        asm volatile("mov %ecx, %edx");
+        asm volatile("mov $26, %ecx");
+        asm volatile("int $128");
+        asm volatile("ret");
+    }
+
     namespace speedyshell {
         __attribute__((naked)) __attribute__((fastcall)) char* fetch_input() {
             asm volatile("mov $11, %ecx");
-            asm volatile("mov $0, %edx");
+            asm volatile("xor %edx, %edx");
             asm volatile("int $128");
             asm volatile("ret");
         }
@@ -202,5 +277,13 @@ namespace speedyos {
             asm volatile("int $128");
             asm volatile("ret");
         }
+    }
+
+    void __attribute__((noreturn)) panic(char* error) {
+        speedyshell::printf("[FATAL] ");
+        speedyshell::printf(error);
+        speedyshell::printf("\n");
+        speedyos::end_process(1);
+        __builtin_unreachable();
     }
 }

@@ -1,9 +1,9 @@
 #include "kernelalloc.h"
 
 #include "physical.h"
-#include "../misc/memory.h"
+#include "../../../../shared/memory.h"
 #include "../io/video.h"
-#include "../misc/conversions.h"
+#include "../../../../shared/conversions.h"
 
 extern "C" void debug();
 
