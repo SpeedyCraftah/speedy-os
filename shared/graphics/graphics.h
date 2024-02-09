@@ -8,7 +8,7 @@
 class rgb_colour {
   public:
     constexpr rgb_colour(uint8_t red, uint8_t green, uint8_t blue) {
-      this->data = (red << 24) | (green << 16) | (blue << 8);
+      this->data = (red << 16) | (green << 8) | (blue);
     }
 
     inline operator uint32_t() const {
