@@ -4,7 +4,6 @@
 #include "events.h"
 #include "scheduler.h"
 
-#include "../software/system/speedyshell/main.h"
 #include "structures/datasink.h"
 #include "structures/events.h"
 #include "structures/process.h"
@@ -53,8 +52,8 @@ extern "C" Registers* temporary_registers;
 // ID 25 = Fetch latest fragment size from data sink.
 // ID 25 = Read latest fragment from data sink and remove it.
 
-// SpeedyShell Only
-// ID 11 = Query SpeedyShell for data.
+// Shell Only
+// ID 11 = Query shell for data.
 //       - 0 = Get whole command string.
 // ID 12 = Print text to terminal with colour.
 // ID 13 = Get input from user.
@@ -224,22 +223,19 @@ uint32_t handle_system_call_hl() {
 
         temporary_registers->eax = process->id;
     } else if (id == 11) {
-        // If interface method is not SpeedyShell.
+        // If interface method is not shell.
         if (!isTerminalInterface) {
             temporary_registers->eax = 0;
             return 0;
         }
 
         // To-do: copy text instead of direct pointer.
-        char* input = speedyshell::text_buffer;
-        temporary_registers->eax = reinterpret_cast<uint32_t>(input);
     } else if (id == 12) {
-        // If interface method is not SpeedyShell or graphics mode is pixel.
+        // If interface method is not shell or graphics mode is pixel.
         /*if (!isTerminalInterface || speedyshell::pixel_mode) {
             temporary_registers->eax = 0;
             return 0;
         }*/
-        // TODO - temporary, reverse once speedyshell works
 
         uint32_t data2 = temporary_registers->eax;
         uint32_t data3 = temporary_registers->ebx;
@@ -272,14 +268,14 @@ uint32_t handle_system_call_hl() {
         // will be removed.
         //speedyshell::printf("\n");
     } else if (id == 13) {
-        // If interface method is not SpeedyShell or graphics mode is pixel.
-        if (!isTerminalInterface || speedyshell::pixel_mode) {
+        // If interface method is not shell or graphics mode is pixel.
+        /*if (!isTerminalInterface || speedyshell::pixel_mode) {
             temporary_registers->eax = 0;
             return 0;
-        }
+        }*/
 
         // If another thread is already getting input, return.
-        if (speedyshell::input_mode) {
+        /*if (speedyshell::input_mode) {
             temporary_registers->eax = 0;
             return 0;
         }
@@ -300,7 +296,7 @@ uint32_t handle_system_call_hl() {
         speedyshell::clear_buffer();
 
         // Print cursor.
-        video::printf(" ", VGA_COLOUR::LIGHT_GREY, VGA_COLOUR::LIGHT_GREY);
+        video::printf(" ", VGA_COLOUR::LIGHT_GREY, VGA_COLOUR::LIGHT_GREY);*/
 
         // Saving resources by not re-scheduling
         // as it will be scheduled manually.
@@ -394,7 +390,7 @@ uint32_t handle_system_call_hl() {
         }
 
         // If the program is a shell executed program.
-        if (speedyshell::running_process_id == scheduler::current_thread->process->id) {
+        /*if (speedyshell::running_process_id == scheduler::current_thread->process->id) {
             // Save current shell contents.
             //video::savescr();
 
@@ -403,7 +399,7 @@ uint32_t handle_system_call_hl() {
 
             // Update state.
             speedyshell::pixel_mode = true;
-        }
+        }*/
 
         // Allocate and map virtual space for GPU memory.
         uint32_t* video_address_page = reinterpret_cast<uint32_t*>((reinterpret_cast<uint32_t>(graphics::video_address) / 4096) * 4096);

@@ -18,7 +18,6 @@
 #include "structures/datasink.h"
 
 // remove after
-//#include "../software/system/speedyshell/main.h"
 #include "../../../../shared/conversions.h"
 //#include "../software/include/sys.h"
 #include "../chips/pit.h"

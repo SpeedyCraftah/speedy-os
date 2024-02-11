@@ -25,11 +25,8 @@
 #include "drivers/mouse/mouse.h"
 #include "scheduling/scheduler.h"
 
-#include "software/system/speedyshell/main.h"
-
 #include "stdint.h"
 #include "../../../shared/graphics/graphics.h"
-#include "software/system/speedyshell/main.h"
 //#include "software/system/cpu_usage/main.h"
 #include "../../../shared/math.h"
 #include "../../../shared/memory.h"
@@ -185,12 +182,6 @@ void kernelControlHandOver() {
     //drivers::mouse::load();
 
     // END OF LOADING DRIVERS.
-
-    video::printf_log("Kernel", "Selecting SpeedyShell as interfacing method...");
-
-    isTerminalInterface = true;
-
-    video::printf_log("Kernel", "Preparing SpeedyShell...");
 
     video::printf_log("Kernel", "Starting TSC calculator process...");
 
