@@ -135,6 +135,9 @@ namespace scheduler {
             PageEntry* entry = virtual_allocator::fetch_page_index(scheduler::kernel_process, j, true);
             entry->Global = true;
         }
+
+        // Initialise datasinks.
+        datasink::initialise();
     }
 
     // TODO - make paging inline asm functions
