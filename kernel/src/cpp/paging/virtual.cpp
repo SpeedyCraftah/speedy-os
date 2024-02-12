@@ -61,9 +61,11 @@ namespace virtual_allocator {
         uint8_t* physical;
 
         // Verify if all pages are allowed to be written to.
-        for (int i = 0; i < (size / 4096) + ((reinterpret_cast<uint32_t>(virtual_address_start) % 4096) != 0) + (((reinterpret_cast<uint32_t>(virtual_address_start) + size) % 4096) != 0); i++) {
+        uint32_t pages_to_read = (size / 4096) + 1 + (size > remaining_bytes_in_page);
+
+        for (int i = 0; i < pages_to_read; i++) {
             page = fetch_page_index(process, page_index + i, false);
-            if (page == nullptr || (!allow_kernel_pages && ((page->KernelFlags & PageFlags::PROCESS_OWNED) == 0)) || !page->ReadWrite) {
+            if (page == nullptr || (!allow_kernel_pages && !page->UserSupervisor) || !page->ReadWrite) {
                 return false;
             }
         }
