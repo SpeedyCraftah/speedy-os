@@ -6,6 +6,6 @@ id_generator::id_generator(IDValidatorFunction verify_func) {
 }
 
 uint32_t id_generator::next() {
-    while (!this->validate(++this->prev_id));
+    while (this->validate(++this->prev_id));
     return this->prev_id;
 }
