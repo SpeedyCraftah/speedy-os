@@ -2,6 +2,7 @@
 
 #include "../io/video.h"
 #include "../../../../shared/conversions.h"
+#include "../../../../shared/string.h"
 
 namespace modules {
     static uint8_t* structure_address;
@@ -14,13 +15,20 @@ namespace modules {
 
         for (int i = 0; i < mod_count; i++) {
             modules::MultibootModule* mod = reinterpret_cast<modules::MultibootModule*>(mod_addr_first + (i * 4));
+            auto args = structures::string(mod->string).split_by(' ');
+            char* mod_name = args[0];
 
-            video::printf("Module ");
-            video::printf(conversions::s_int_to_char(i + 1));
-            video::printf(" name: ");
-            video::printf(mod->string);
+            video::printf("Discovered module: ");
+            video::printf(mod_name);
             video::printnl();
-            video::printnl();
+
+            for (int j = 1; j < args.get_size(); j++) {
+                auto arg = args[j];
+
+
+
+                delete arg;               
+            }
         }
     }
 };
