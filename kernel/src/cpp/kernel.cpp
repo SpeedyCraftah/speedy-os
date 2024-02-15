@@ -160,15 +160,23 @@ void kernelControlHandOver() {
 
     // END OF LOADING DRIVERS.
 
-    video::printf_log("Kernel", "Starting TSC calculator process...");
+    //video::printf_log("Kernel", "Starting TSC calculator process...");
 
-    ProcessFlags flags;
-    flags.kernel_process = false;
+    video::printf_log("Kernel", "Searching for a suitable interface provider...");
 
-    //Process* p = loader::load_elf32_executable_as_process(*(char**)(mod_addr_first + 2), flags, reinterpret_cast<void*>(*mod_addr_first), reinterpret_cast<void*>(*(mod_addr_first + 1)));
+    modules::MultibootModule* provider = modules::find_interface_provider();
+    if (provider == nullptr) {
+        video::printf_log("Kernel", "No suitable interface provider has been found, continuing without one...");
+    } else {
+        video::printf_log("Kernel", "Found a suitable interface provider!");
+        video::printf_log("Provider Name", provider->name);
 
-    // create sink
-    //Process* p = scheduler::create_process("test", testp);
+        video::printf_log("Kernel", "Informing loader to load the interface provider executable...");
+
+        ProcessFlags flags;
+        flags.interface_provider = true;
+        Process* process = loader::load_elf32_executable_as_process(provider->name, flags, provider->data, provider->size);
+    }
     
     // Start shell.
     /*scheduler::create_process(
