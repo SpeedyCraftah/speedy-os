@@ -8,6 +8,8 @@
 
 #include "io/video.h"
 #include "../../../shared/conversions.h"
+#include "loader/modules.h"
+#include "scheduling/structures/datasink.h"
 #include "scheduling/structures/process.h"
 //#include "software/include/sys.h"
 #include "../../../shared/string.h"
@@ -41,6 +43,7 @@
 
 #include "loader/elf.h"
 #include "tables/tss.h"
+#include "scheduling/datasink.h"
 
 
 bool isTerminalInterface = false;
@@ -68,36 +71,6 @@ void kernelControlHandOver() {
 
     // Calls constructors which is necessary for classes to work and for logs to work.
     //callConstructors();
-
-    uint32_t mod_count = *(uint32_t*)(structure_address + 20);
-    uint32_t* mod_addr_first = reinterpret_cast<uint32_t*>(*(uint32_t*)(structure_address + 24));
-
-    video::printf(*(char**)(structure_address + 64));
-    video::printnl();
-    video::printf("Found ");
-    video::printf(conversions::u_int_to_char(mod_count));
-    video::printf(" modules\n");
-    
-    for (int i = 0; i < mod_count; i++) {
-        uint32_t* mod_addr = mod_addr_first + (i * 4);
-        video::printf("Module ");
-        video::printf(conversions::s_int_to_char(i + 1));
-        video::printf(" name: ");
-        video::printf(*(char**)(mod_addr + 2));
-        video::printnl();
-        video::printf("Module start: ");
-        video::printf(conversions::u_int_to_char(*mod_addr));
-        video::printnl();
-        video::printf("Module end: ");
-        video::printf(conversions::u_int_to_char(*(mod_addr + 1)));
-        video::printf("\nModule is ");
-        video::printf(conversions::u_int_to_char(*(mod_addr + 1) - *mod_addr));
-        video::printf(" bytes long\n");
-        video::printf("Contents: ");
-        video::printf(*(char**)(mod_addr));
-        video::printnl();
-        video::printnl();
-    }
 
     video::printf_log("Kernel", "Initialised physical page allocator..");
     video::printf_log("Kernel", "Initialised kernel allocator..");
@@ -156,6 +129,10 @@ void kernelControlHandOver() {
     // Load the table and enable interrupts.
     LoadIDT(&idtDescriptor);
 
+    video::printf_log("Kernel", "initialising and discovering boot modules...");
+    modules::init();
+    modules::discover(structure_address);
+
     video::printf_log("Kernel", "Initialising task scheduler...");
 
     // Initialise scheduler.
@@ -188,8 +165,9 @@ void kernelControlHandOver() {
     ProcessFlags flags;
     flags.kernel_process = false;
 
-    Process* p = loader::load_elf32_executable_as_process(*(char**)(mod_addr_first + 2), flags, reinterpret_cast<void*>(*mod_addr_first), reinterpret_cast<void*>(*(mod_addr_first + 1)));
+    //Process* p = loader::load_elf32_executable_as_process(*(char**)(mod_addr_first + 2), flags, reinterpret_cast<void*>(*mod_addr_first), reinterpret_cast<void*>(*(mod_addr_first + 1)));
 
+    // create sink
     //Process* p = scheduler::create_process("test", testp);
     
     // Start shell.
