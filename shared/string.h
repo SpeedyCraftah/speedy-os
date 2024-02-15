@@ -43,6 +43,7 @@ namespace structures {
 
             // Overload == operator.
             bool operator==(char* src);
+            bool operator==(const char* src);
 
             // Overload += operator.
             structures::string& operator+=(char* src);

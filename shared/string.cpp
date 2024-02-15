@@ -214,6 +214,10 @@ bool structures::string::operator==(char* src) {
     return hash_equal_to(src);
 }
 
+bool structures::string::operator==(const char* src) {
+    return hash_equal_to((char*)src);
+}
+
 // Overload += operator.
 structures::string& structures::string::operator+=(char* src) {
     concat(src);
