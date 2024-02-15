@@ -24,8 +24,10 @@ namespace modules {
         uint8_t* data;
     };
 
-    extern structures::map<MultibootModule>* modules;
+    extern structures::map<MultibootModule*>* modules;
 
     void init();
     void discover(uint8_t* structure_address);
+
+    MultibootModule* find_interface_provider();
 }
