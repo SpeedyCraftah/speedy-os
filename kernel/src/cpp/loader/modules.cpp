@@ -6,8 +6,11 @@
 
 namespace modules {
     static uint8_t* structure_address;
-    uint32_t modules_count;
-    MultibootModule* modules;
+    structures::map<MultibootModule>* modules;
+
+    void init() {
+        modules = new structures::map<MultibootModule>(5);
+    }
 
     void discover(uint8_t* structure_addr) {
         structure_address = structure_addr;
@@ -15,11 +18,8 @@ namespace modules {
         uint32_t mod_count = *(uint32_t*)(structure_address + 20);
         uint32_t* mod_addr_first = reinterpret_cast<uint32_t*>(*(uint32_t*)(structure_address + 24));
 
-        modules_count = mod_count;
-        modules = (MultibootModule*)kmalloc(sizeof(MultibootModule) * mod_count);
-
         for (int i = 0; i < mod_count; i++) {
-            MultibootModule& module = modules[i];
+            MultibootModule module;
             RawMultibootModule* mod = reinterpret_cast<RawMultibootModule*>(mod_addr_first + (i * 4));
             auto args = structures::string(mod->string).split_by(' ');
 
@@ -48,6 +48,8 @@ namespace modules {
             video::printf(", type ");
             video::printf(conversions::u_int_to_char(module.type));
             video::printnl();
+
+            modules->set(module.name, module);
         }
 
         video::printnl();

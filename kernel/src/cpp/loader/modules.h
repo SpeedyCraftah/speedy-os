@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdint.h"
+#include "../../../../shared/map.h"
 
 // Handles the Grub modules and converts it to a list of loadable programs.
 
@@ -23,8 +24,8 @@ namespace modules {
         uint8_t* data;
     };
 
-    extern uint32_t modules_count;
-    extern MultibootModule* modules;
+    extern structures::map<MultibootModule>* modules;
 
+    void init();
     void discover(uint8_t* structure_address);
 }
