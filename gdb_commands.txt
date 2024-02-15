@@ -1,5 +1,5 @@
 set disassembly-flavor intel
 add-symbol-file kernel/dist/kernel.bin
-add-symbol-file iso/boot/software/testprogram.bin
+add-symbol-file iso/boot/software/speedyshell.bin
 target remote 127.0.0.1:1234
 printf "Kernel & user space debugger ready to go!\n"
