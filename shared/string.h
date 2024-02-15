@@ -26,7 +26,7 @@ namespace structures {
             unsigned int get_weak_hash();
             
             bool starts_with(char* str);
-            structures::flexible_array<char*> split_by(char delim);
+            structures::flexible_array<char*> split_by(char delim, bool auto_release = true);
 
             // Assertion of equalness.
             bool hash_equal_to(char* str);

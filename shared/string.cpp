@@ -168,8 +168,8 @@ bool structures::string::starts_with(char* str) {
     return pass;
 }
 
-structures::flexible_array<char*> structures::string::split_by(char delim) {
-    auto array = flexible_array<char*>(7, true);
+structures::flexible_array<char*> structures::string::split_by(char delim, bool auto_release) {
+    auto array = flexible_array<char*>(7, auto_release);
     int prev_delim_i = -1;
 
     for (uint32_t i = 0; i < _length; i++) {
