@@ -319,12 +319,11 @@ namespace scheduler {
         process->id = next_process_id++;
         process->name = structures::string(name).char_copy().norm();
         process->flags = flags;
-        process->threads = new structures::linked_array<Thread*>(8);
         process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
         process->steady_sinks = new structures::map<SteadyDataSink*>(4);
 
         assert_eq("sch.procs.name.heap", kallocated(process->name), true);
-        assert_eq("sch.procs.heap", kallocated(process->name), true);
+        assert_eq("sch.procs.hookedthreads.heap", kallocated(process->hooked_threads), true);
 
         // Add the process to the map.
         process_list->set(process->id, process);
@@ -334,6 +333,11 @@ namespace scheduler {
         // Create main thread.
         // Virtual processes have no running thread.
         if (!flags.virtual_process) {
+            // Create non-virtual structures.
+            process->threads = new structures::linked_array<Thread*>(8);
+
+            assert_eq("sch.procs.threads.heap", kallocated(process->threads), true);
+
             Thread* thread = new Thread;
             thread->id = next_thread_id++;
             thread->process = process;
@@ -531,6 +535,9 @@ namespace scheduler {
     }
 
     void kill_thread(Thread* thread, uint32_t code, bool remove_from_process) {
+        // Remove from global thread map.
+        thread_list->remove(thread->id);
+
         // Iterate through thread process list and remove.
         auto thread_process_iterator = thread->process->threads->create_iterator();
 
@@ -632,7 +639,7 @@ namespace scheduler {
         physical_allocator::free_physical_page(process->paging.directories);
 
         // Free process objects.
-        delete process->threads;
+        if (process->threads != nullptr) delete process->threads;
         delete process->hooked_threads;
         delete process->steady_sinks;
         physical_allocator::free_physical_page(process->paging.kernel_thread_page);
