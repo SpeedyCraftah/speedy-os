@@ -402,24 +402,23 @@ uint32_t handle_system_call_hl() {
         }*/
 
         // Allocate and map virtual space for GPU memory.
-        uint32_t* video_address_page = reinterpret_cast<uint32_t*>((reinterpret_cast<uint32_t>(graphics::video_address) / 4096) * 4096);
-        uint32_t size = ((graphics::resolution_width * graphics::resolution_height) / 4096) + 1;
-        uint32_t address_index = virtual_allocator::find_free_virtual_pages(scheduler::current_thread->process, size);
-        for (uint32_t i = 0; i < size; i++) {
+        uint32_t vram_pti = paging::address_to_pi(graphics::video_address);
+        uint32_t pages_count = (graphics::resolution_width * graphics::resolution_height * 4) / 4096 + 1;
+        uint32_t address_index = virtual_allocator::find_free_virtual_pages(scheduler::current_thread->process, pages_count);
+        for (uint32_t i = 0; i < pages_count; i++) {
             PageEntry* page = virtual_allocator::fetch_page_index(scheduler::current_thread->process, address_index + i);
             page->Present = true;
-            page->Address = paging::address_to_pi(video_address_page) + i;
+            page->Address = vram_pti + i;
             page->UserSupervisor = true;
             page->ReadWrite = true;
         }
-        
-        // Add offset into the page since buffer is not page aligned usually.
-        uint32_t map_address = reinterpret_cast<uint32_t>(paging::pi_to_address(address_index)) + (reinterpret_cast<uint32_t>(graphics::video_address) % 4096);
 
+        // Add offset into the page since buffer is not page aligned usually.
+        uint32_t virtual_address = reinterpret_cast<uint32_t>(paging::pi_to_address(address_index)) + (reinterpret_cast<uint32_t>(graphics::video_address) % 4096);
         scheduler::current_thread->process->paging.pixel_mapping_address = address_index;
 
         // Return mapped address.
-        temporary_registers->eax = map_address;
+        temporary_registers->eax = virtual_address;
     } else if (id == 20) {
         // Save data and return.
         scheduler::manual_context_switch_return();
