@@ -81,106 +81,106 @@ namespace speedyos {
     };
 
     // Queries the kernel for the process ID.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_process_id();
 
     // Queries the kernerl for the thread ID.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_thread_id();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_thread_id();
 
     // Queries the kernel for the elapsed time from startup.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_elapsed_time();
 
     // Queries the kernel for the display resolution.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_graphics_resolution();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_graphics_resolution();
 
     // Queries the kernel for the colour depth of the display.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_colour_depth();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_colour_depth();
 
     // Notifies the kernel to stop the process.
-    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) __attribute__((no_stack_protector)) void end_process(uint32_t code = 0);
 
     // Notifies the kernel to suspend the process for a specified amount of time.
-    __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void suspend_thread(uint32_t ms);
 
     // Notifies the kernel an event has been processed.
-    __attribute__((naked)) __attribute__((fastcall)) void end_event();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void end_event();
 
     // Registers the process to another process with specific events and returns t/f depending on success.
-    __attribute__((naked)) __attribute__((fastcall)) bool register_event_for_thread(uint32_t target_thread_id, uint32_t enabled_events, void(*handler)(uint32_t, uint32_t));
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool register_event_for_thread(uint32_t target_thread_id, uint32_t enabled_events, void(*handler)(uint32_t, uint32_t));
 
     // If process an event emitter, will emit an ID and data to registered programs.
-    __attribute__((naked)) __attribute__((fastcall)) void emit_event(uint32_t event_id, uint32_t event_data);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void emit_event(uint32_t event_id, uint32_t event_data);
 
     // Requests the kernel to change the threads status.
-    __attribute__((naked)) __attribute__((fastcall)) void update_execution_policy(ThreadExecutionPolicy policy, uint32_t thread_id = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void update_execution_policy(ThreadExecutionPolicy policy, uint32_t thread_id = 0);
 
     // Requests the kernel to return the process ID of a program. 0 if does not exist.
     uint32_t fetch_process_id_by_string(char* process_name);
 
     // Returns a boolean indicating whether there is enough entropy for the hardware random number to be relatively random.
-    __attribute__((naked)) __attribute__((fastcall)) bool hw_random_sufficient_entropy();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool hw_random_sufficient_entropy();
 
     // Returns a hardware & time entropied random 32-bit number.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t hw_random_value();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t hw_random_value();
 
     // Requests the kernel to createa a new process thread with a capture value.
     // Ensure the pointer value is not released or copied before the thread ends otherwise undefined behaviour will occur.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)(void*), void* capture = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t create_thread(void (*start)(void*), void* capture = 0);
 
     // Requests the kernel to kill the specific thread.
-    __attribute__((naked)) __attribute__((fastcall)) void kill_thread(uint32_t thread_id = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void kill_thread(uint32_t thread_id = 0);
 
     // Requests the kernel to park the specified thread.
-    __attribute__((naked)) __attribute__((fastcall)) bool park_thread(uint32_t thread_id = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool park_thread(uint32_t thread_id = 0);
 
     // Requests the kernel to awake (unpark) the specified thread.
-    __attribute__((naked)) __attribute__((fastcall)) bool awake_thread(uint32_t thread_id);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool awake_thread(uint32_t thread_id);
 
     // Requests the kernel to upgrade the graphics to pixel mode.
     // This will place SpeedyShell in a read-only mode.
     // This will map the framebuffer to a virtual page and return the address of the page.
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t* upgrade_graphics();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t* upgrade_graphics();
 
     // Notifies the kernel that the thread has voluntarily given up execution.
-    __attribute__((naked)) __attribute__((fastcall)) void preempt_thread();
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void preempt_thread();
 
     // Requests the kernel to allocate a number of consecutive virtual pages with optional flags.
     // If the call cannot be completed a null pointer will be returned.
-    __attribute__((naked)) __attribute__((fastcall)) void* alloc_virtual_pages(void* requested_address, uint32_t count, uint32_t flags = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void* alloc_virtual_pages(void* requested_address, uint32_t count, uint32_t flags = 0);
 
     // Requests the kernel to free a specified page with optional flags.
     // Returns a boolean indicating the success of the operation.
     // Attempting to free an address which is not page aligned will raise a fault.
-    __attribute__((naked)) __attribute__((fastcall)) bool free_virtual_page(void* address, uint32_t flags = 0);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool free_virtual_page(void* address, uint32_t flags = 0);
 
     // Writes data to the end of a data sink.
     // Returns a boolean indicating the success of the operation.
     // The sink will not be modified if a status of FALSE is returned. 
-    __attribute__((naked)) __attribute__((fastcall)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size);
 
     // Reads data FIFO from the datasink to the desired buffer of X size.
     // This will disregard fragments and read fragments as if they were whole.
     // Returns an int indicating -1 for error, 0 for no data available/read, otherwise indicating the length read which may be <= data_size.
-    __attribute__((naked)) __attribute__((fastcall)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size);
 
     // Fetches the size of the latest fragment from the data sink.
     // Returns an int indicating -1 for error, 0 for no data available, otherwise indicating the size of the latest fragment.
-    __attribute__((naked)) __attribute__((fastcall)) int fetch_fragment_size_steady_datasink(uint32_t sink_id);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) int fetch_fragment_size_steady_datasink(uint32_t sink_id);
 
     // Reads the latest fragment from the data sink and writes it to the destination buffer.
     // Returns an int indicating -1 for error/no data available, otherwise indicating the size of the next fragment (0 if none).
     // This function assumes that you have fetched the size of the latest fragment using fetch_fragment_size_steady_datasink and the destination buffer is of appropriate size.
-    __attribute__((naked)) __attribute__((fastcall)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest);
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest);
 
     namespace speedyshell {
         // Requests input. If at start of program, command will be returned. Otherwise run-time input will be returned if requested.
-        __attribute__((naked)) __attribute__((fastcall)) char* fetch_input();
+        __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) char* fetch_input();
 
         // Sends a message in the SpeedyShell terminal.
         // Proxy function.
         __attribute__((fastcall)) void printf(char* text, VGAColour colour = VGAColour::WHITE);
     
         // Notifies the kernel & SpeedyShell to suspend the process until an input is submitted.
-        __attribute__((naked)) __attribute__((fastcall)) void request_input();
+        __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void request_input();
     }
 
     // High level functions.

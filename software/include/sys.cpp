@@ -2,56 +2,55 @@
 #include "../../shared/str.h"
 
 namespace speedyos {
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_process_id() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_process_id() {
         asm volatile("mov $1, %ecx");
         asm volatile("mov $1, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_thread_id() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_thread_id() {
         asm volatile("mov $1, %ecx");
         asm volatile("mov $2, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_elapsed_time() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_elapsed_time() {
         asm volatile("mov $1, %ecx");
         asm volatile("xor %edx, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_graphics_resolution() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_graphics_resolution() {
         asm volatile("mov $1, %ecx");
         asm volatile("mov $3, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t fetch_colour_depth() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t fetch_colour_depth() {
         asm volatile("mov $1, %ecx");
         asm volatile("mov $4, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) void end_process(uint32_t code) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((noreturn)) __attribute__((no_stack_protector)) void end_process(uint32_t code) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $2, %ecx");
         asm volatile("int $128");
-        asm volatile("ud2");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void suspend_thread(uint32_t ms) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void suspend_thread(uint32_t ms) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $3, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void end_event() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void end_event() {
         asm volatile("mov $6, %ecx");
         asm volatile("int $128");
 
@@ -59,7 +58,7 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool register_event_for_thread(
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool register_event_for_thread(
         uint32_t target_thread_id,
         uint32_t enabled_events,
         void(*handler)(uint32_t, uint32_t)
@@ -80,7 +79,7 @@ namespace speedyos {
         asm volatile("ret $4");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void emit_event(
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void emit_event(
         uint32_t event_id,
         uint32_t event_data
     ) {
@@ -91,7 +90,7 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void update_execution_policy(
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void update_execution_policy(
         ThreadExecutionPolicy policy,
         uint32_t thread_id
     ) {
@@ -102,7 +101,7 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t _fetch_process_id_by_string(char* process_name, uint32_t process_name_length) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t _fetch_process_id_by_string(char* process_name, uint32_t process_name_length) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $10, %ecx");
@@ -114,21 +113,21 @@ namespace speedyos {
         return _fetch_process_id_by_string(process_name, str::length(process_name));
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool hw_random_sufficient_entropy() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool hw_random_sufficient_entropy() {
         asm volatile("mov $14, %ecx");
         asm volatile("mov $0, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t hw_random_value() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t hw_random_value() {
         asm volatile("mov $14, %ecx");
         asm volatile("mov $1, %edx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t create_thread(void (*start)(void* capture), void* capture) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t create_thread(void (*start)(void* capture), void* capture) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $15, %ecx");
@@ -136,40 +135,40 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void kill_thread(uint32_t thread_id) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void kill_thread(uint32_t thread_id) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $16, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool park_thread(uint32_t thread_id) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool park_thread(uint32_t thread_id) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $17, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool awake_thread(uint32_t thread_id) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool awake_thread(uint32_t thread_id) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $18, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) uint32_t* upgrade_graphics() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) uint32_t* upgrade_graphics() {
         asm volatile("mov $19, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void preempt_thread() {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void preempt_thread() {
         asm volatile("mov $20, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) void* alloc_virtual_pages(void* requested_page, uint32_t count, uint32_t flags) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void* alloc_virtual_pages(void* requested_page, uint32_t count, uint32_t flags) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $21, %ecx");
@@ -186,7 +185,7 @@ namespace speedyos {
         asm volatile("ret $4");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool free_virtual_page(void* address, uint32_t flags) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool free_virtual_page(void* address, uint32_t flags) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $22, %ecx");
@@ -194,7 +193,7 @@ namespace speedyos {
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) bool write_steady_datasink(uint32_t sink_id, uint8_t* data, uint32_t data_size) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $23, %ecx");
@@ -211,7 +210,7 @@ namespace speedyos {
         asm volatile("ret $4");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) int read_steady_datasink(uint32_t sink_id, uint8_t* dest, uint32_t read_size) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $24, %ecx");
@@ -228,14 +227,14 @@ namespace speedyos {
         asm volatile("ret $4");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) int fetch_fragment_size_steady_datasink(uint32_t sink_id) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) int fetch_fragment_size_steady_datasink(uint32_t sink_id) {
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $25, %ecx");
         asm volatile("int $128");
         asm volatile("ret");
     }
 
-    __attribute__((naked)) __attribute__((fastcall)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest) {
+    __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) int read_fragment_steady_datasink(uint32_t sink_id, uint8_t* dest) {
         asm volatile("mov %edx, %eax");
         asm volatile("mov %ecx, %edx");
         asm volatile("mov $26, %ecx");
@@ -244,14 +243,14 @@ namespace speedyos {
     }
 
     namespace speedyshell {
-        __attribute__((naked)) __attribute__((fastcall)) char* fetch_input() {
+        __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) char* fetch_input() {
             asm volatile("mov $11, %ecx");
             asm volatile("xor %edx, %edx");
             asm volatile("int $128");
             asm volatile("ret");
         }
 
-        __attribute__((naked)) __attribute__((fastcall)) void _printf(char* text, VGAColour colour, uint32_t length) {
+        __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void _printf(char* text, VGAColour colour, uint32_t length) {
             asm volatile("mov %edx, %eax");
             asm volatile("mov %ecx, %edx");
             asm volatile("mov $12, %ecx");
@@ -272,7 +271,7 @@ namespace speedyos {
             _printf(text, colour, str::length(text));
         }
 
-        __attribute__((naked)) __attribute__((fastcall)) void request_input() {
+        __attribute__((naked)) __attribute__((fastcall)) __attribute__((no_stack_protector)) void request_input() {
             asm volatile("mov $13, %ecx");
             asm volatile("int $128");
             asm volatile("ret");
