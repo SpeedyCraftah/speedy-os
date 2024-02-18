@@ -10,3 +10,9 @@ extern bool input_allowed;
 extern char text_buffer[100];
 extern uint32_t text_buffer_ptr;
 
+extern uint32_t y_offset;
+extern uint32_t x_offset;
+
+extern uint32_t cursor_x;
+
+void cursor_move(uint32_t new_x);
