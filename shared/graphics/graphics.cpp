@@ -24,7 +24,7 @@ namespace graphics {
     }
   #endif
   
-  void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str) {
+  uint32_t draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str) {
     uint32_t i = 0;
     uint32_t offset_x = 0;
     uint32_t offset_y = 0;
@@ -76,6 +76,8 @@ namespace graphics {
 
       i++;
     }
+
+    return offset_x;
   }
 
   void draw_text_with_scale(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale) {
