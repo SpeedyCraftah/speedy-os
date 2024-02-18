@@ -23,8 +23,62 @@ namespace graphics {
       resolution_height = (res & 0xFFFF);
     }
   #endif
+  
+  void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str) {
+    uint32_t i = 0;
+    uint32_t offset_x = 0;
+    uint32_t offset_y = 0;
 
-  void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale) {
+    while (true) {
+      uint8_t character = str[i];
+
+      if (character == 0) {
+        break;
+      } else if (character == '\n') {
+        // Get width of likely highest character (all characters have same height right now).
+        uint8_t height_offset = font_interpreter::char_height(font, '!');
+
+        // Add offset.
+        offset_y += height_offset + 1;
+
+        // Reset X.
+        offset_x = 0;
+
+        i++;
+        continue;
+      }
+
+      // Load character.
+      uint16_t* font_data = font_interpreter::load_char(
+          internal_fonts::bios_port_improved, str[i]
+      );
+
+      uint16_t* data = font_data + 2;
+
+      uint16_t width = font_data[0];
+      uint16_t height = font_data[1];
+
+      // Take in a custom colour modifier.
+      uint32_t colour = fill_colour;
+
+      for (int y = 0; y < height; y++) {
+          uint32_t y_value = y + y_start + offset_y;
+          uint32_t index = (y * width);
+
+          for (int x = 0; x < width; x++) {
+              if (data[index + x] == 1) {
+                graphics::draw_pixel(x_start + x + offset_x, y_value, colour);
+              } 
+          }
+      }
+
+      offset_x += 2 + width;
+
+      i++;
+    }
+  }
+
+  void draw_text_with_scale(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale) {
     uint32_t i = 0;
     uint32_t offset_x = 0;
     uint32_t offset_y = 0;

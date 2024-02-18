@@ -80,7 +80,8 @@ namespace graphics {
   // Computes the width of the text in pixels.
   uint32_t compute_text_width(uint16_t* font, char* str, float scale = 1);
 
-  void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale = 1);
+  void draw_text(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str);
+  void draw_text_with_scale(uint16_t* font, uint32_t x_start, uint32_t y_start, char* str, float scale = 1);
 
   // Draws a string of any size.
   template <typename CMF>
