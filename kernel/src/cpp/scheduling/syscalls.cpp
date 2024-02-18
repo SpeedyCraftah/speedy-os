@@ -307,7 +307,6 @@ uint32_t handle_system_call_hl() {
         else if (data == 1) temporary_registers->eax = hw_random::get_value();
     } else if (id == 15) {
         uint32_t data2 = temporary_registers->eax;
-        uint32_t data3 = temporary_registers->ebx;
 
         // Create the thread.
         Thread* thread = 
