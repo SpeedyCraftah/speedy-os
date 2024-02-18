@@ -461,10 +461,16 @@ namespace scheduler {
             // Allocate the block.
             block.allocated = true;
             thread->kernel_thread_data = &process->paging.kernel_thread_page[i];
+            thread->registers = &thread->kernel_thread_data->registers;
 
+            // WARNING - this is a virtual address.
+            thread->virtual_registers = (void*)(104857600 + 4096 + 4 + (i * sizeof(ThreadKernelArea)));
+        
             // Clear block for use.
             // TODO - strictly not needed, check if should be removed for performance.
             memset(&thread->kernel_thread_data->registers, 0, sizeof(Registers));
+
+            break;
         }
 
         // Check if block could not be allocated.
@@ -473,9 +479,6 @@ namespace scheduler {
             __builtin_unreachable();
         }
         
-        thread->registers = &thread->kernel_thread_data->registers;
-        // WARNING - this is a virtual address.
-        thread->virtual_registers = (void*)(104857600 + 4096 + 4 + (reinterpret_cast<uint32_t>(thread->registers) - reinterpret_cast<uint32_t>(process->paging.kernel_thread_page)));
         thread->registers->eip = reinterpret_cast<uint32_t>(entry);
 
         assert_eq("sch.procs.threads.new.heap", kallocated(thread), true);
@@ -491,7 +494,7 @@ namespace scheduler {
         // Map to a virtual address.
         // TODO - map to some pre-set area.
         for (int i = 0; i < 2; i++) {
-            PageEntry* page = virtual_allocator::fetch_page_index(process, virtual_stack_offset);
+            PageEntry* page = virtual_allocator::fetch_page_index(process, virtual_stack_offset + i);
             page->Present = true;
             page->ReadWrite = true;
             page->Address = paging::address_to_pi(physical_stack_offset) + i;
@@ -511,7 +514,7 @@ namespace scheduler {
 
         // Create a default EFLAGS.
         // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
-        thread->registers->eflags = 0b00000000000000000011001000000010;
+        thread->registers->eflags = 0b00000000001000000011001000000010;
 
         // TODO - check this probably doesnt work.
         uint32_t* stack = reinterpret_cast<uint32_t*>(reinterpret_cast<uint32_t>(physical_stack_offset) + 8192 - sizeof(uint32_t));
