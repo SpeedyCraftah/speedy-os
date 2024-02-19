@@ -246,4 +246,18 @@ namespace graphics {
       }
     }
   }
+
+  void shift_screen_horizontal(uint32_t pixels) {
+    uint32_t dest_y = 0;
+    uint32_t src_y = pixels * graphics::resolution_width;
+
+    for (int i = 0; i < graphics::resolution_height - pixels; i++) {
+      for (int j = 0; j < graphics::resolution_width; j++) {
+        graphics::draw_pixel_linear(dest_y + j, graphics::pixel_colour_linear(src_y + j));
+      }
+
+      src_y += graphics::resolution_width;
+      dest_y += graphics::resolution_width;
+    }
+  }
 }

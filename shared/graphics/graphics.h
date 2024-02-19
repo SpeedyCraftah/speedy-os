@@ -70,11 +70,11 @@ namespace graphics {
   }
 
   inline uint32_t __attribute__((always_inline)) pixel_colour(uint32_t x, uint32_t y) {
-    return *(double_buffer + resolution_width * y + x);
+    return double_buffer[resolution_width * y + x];
   }
 
   inline uint32_t __attribute__((always_inline)) pixel_colour_linear(uint32_t x) {
-    return *(double_buffer + x);
+    return double_buffer[x];
   }
 
   // Computes the width of the text in pixels.
@@ -155,4 +155,7 @@ namespace graphics {
   // Draws a line, straight or diagonal.
   // Width will be taken into account in the future.
   void draw_line(uint32_t x, uint32_t y, uint32_t length, bool vertical);
+
+  // Shifts the entire display up horizontally a specific amount of pixels.
+  void shift_screen_horizontal(uint32_t pixels);
 }
