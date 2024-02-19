@@ -17,6 +17,7 @@ uint32_t x_offset = 0;
 uint32_t y_offset = 0;
 
 uint32_t cursor_x = 0;
+uint32_t cursor_y = 0;
 
 ThreadMutex cursor_mutex;
 bool cursor_toggle = true;
@@ -24,7 +25,7 @@ void cursor_blink_thread(void* c) {
     while (true) {
         cursor_mutex.lock();
         graphics::fill_colour = cursor_toggle ? rgb_colour(255, 255, 255) : rgb_colour(0, 0, 0);
-        graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, y_offset, "_");
+        graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
 
         cursor_toggle = !cursor_toggle;
         cursor_mutex.unlock();
@@ -32,18 +33,19 @@ void cursor_blink_thread(void* c) {
     }
 }
 
-void cursor_move(uint32_t new_x) {
+void cursor_move(uint32_t new_x, uint32_t new_y) {
     cursor_mutex.lock();
 
     // Cursor is currently drawn.
     graphics::fill_colour = rgb_colour(0, 0, 0);
-    graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, y_offset, "_");
+    graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
     cursor_toggle = true;
     
     cursor_x = new_x;
+    cursor_y = new_y;
 
     graphics::fill_colour = rgb_colour(255, 255, 255);
-    graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, y_offset, "_");
+    graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
 
     cursor_mutex.unlock();
 }
