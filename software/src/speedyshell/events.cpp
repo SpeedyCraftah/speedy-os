@@ -56,11 +56,20 @@ void on_modifier_press(uint32_t id, uint32_t data) {
     else if (data == speedyos::ModifierKeys::ENTER_PRESSED) {
         if (!input_allowed) return speedyos::end_event();
         
-        y_offset += 16;
+        cursor_remove();
+        
+        if (y_offset + max_char_height + 16 >= graphics::resolution_height) {
+            speedyos::park_thread(cursor_thread_id);
+            graphics::shift_screen_horizontal(16);
+        } else {
+            y_offset += 16;
+        }
+
         x_offset = 0;
 
         print_prefix();
-        cursor_move(x_offset, y_offset);
+        cursor_move(x_offset, y_offset, false);
+        speedyos::awake_thread(cursor_thread_id);
 
         text_buffer_ptr = 0;
     }
