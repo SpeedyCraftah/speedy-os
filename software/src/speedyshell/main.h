@@ -3,12 +3,12 @@
 #include "stdint.h"
 #include "../../include/mutex.h"
 
-#define MAX_TEXT_BUFFER_SIZE 100
+#define MAX_TEXT_BUFFER_SIZE 69
 
 extern uint32_t running_pid;
 extern bool caps_text;
 extern bool input_allowed;
-extern char text_buffer[100];
+extern char text_buffer[MAX_TEXT_BUFFER_SIZE];
 extern uint32_t text_buffer_ptr;
 
 extern uint32_t max_char_height;

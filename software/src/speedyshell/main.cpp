@@ -10,7 +10,7 @@ bool input_allowed = false;
 bool caps_text = false;
 uint32_t running_pid = 0;
 
-char text_buffer[100];
+char text_buffer[MAX_TEXT_BUFFER_SIZE];
 uint32_t text_buffer_ptr = 0;
 
 uint32_t max_char_height = 0;
@@ -36,11 +36,9 @@ void cursor_blink_thread(void* c) {
 }
 
 void cursor_remove() {
-    if (cursor_toggle == false) {
-        graphics::fill_colour = rgb_colour(0, 0, 0);
-        graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
-        cursor_toggle = true;
-    }
+    graphics::fill_colour = rgb_colour(0, 0, 0);
+    graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
+    cursor_toggle = true;
 }
 
 void cursor_move(uint32_t new_x, uint32_t new_y, bool remove_old) {
