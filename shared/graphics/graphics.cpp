@@ -259,5 +259,10 @@ namespace graphics {
       src_y += graphics::resolution_width;
       dest_y += graphics::resolution_width;
     }
+
+    // Fill bottom pixels with black.
+    for (int i = 0; i < pixels * graphics::resolution_width; i++) {
+      graphics::draw_pixel_linear(dest_y + i, 0x0);
+    }
   }
 }
