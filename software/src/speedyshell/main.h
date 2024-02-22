@@ -23,3 +23,6 @@ extern ThreadMutex cursor_mutex;
 
 void cursor_remove();
 void cursor_move(uint32_t new_x, uint32_t new_y, bool remove_old = true);
+void cursor_instate();
+
+void printnl();

@@ -23,7 +23,7 @@ void on_key_press(uint32_t id, uint32_t data) {
     char str[2] = {0, 0};
     str[0] = character;
 
-    cursor_move(x_offset + graphics::compute_text_width(internal_fonts::bios_port_improved, str), y_offset);
+    cursor_move(x_offset + graphics::compute_text_width(internal_fonts::bios_port_improved, str), y_offset, true);
     graphics::fill_colour = rgb_colour(192,192,192);
     x_offset += graphics::draw_text(internal_fonts::bios_port_improved, x_offset, y_offset, str);
 
@@ -50,26 +50,17 @@ void on_modifier_press(uint32_t id, uint32_t data) {
         graphics::fill_colour = 0;
         graphics::draw_text(internal_fonts::bios_port_improved, x_offset, y_offset, str);
 
-        cursor_move(x_offset, y_offset);
+        cursor_move(x_offset, y_offset, true);
     }
 
     else if (data == speedyos::ModifierKeys::ENTER_PRESSED) {
         if (!input_allowed) return speedyos::end_event();
         
         cursor_remove();
-        
-        if (y_offset + max_char_height + 16 >= graphics::resolution_height) {
-            speedyos::park_thread(cursor_thread_id);
-            graphics::shift_screen_horizontal(16);
-        } else {
-            y_offset += 16;
-        }
-
-        x_offset = 0;
-
+        printnl();
         print_prefix();
         cursor_move(x_offset, y_offset, false);
-        speedyos::awake_thread(cursor_thread_id);
+        cursor_instate();
 
         text_buffer_ptr = 0;
     }

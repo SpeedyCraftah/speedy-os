@@ -36,29 +36,50 @@ void cursor_blink_thread(void* c) {
 }
 
 void cursor_remove() {
+    // Suspend the cursor thread.
+    speedyos::park_thread(cursor_thread_id);
+
     graphics::fill_colour = rgb_colour(0, 0, 0);
     graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
-    cursor_toggle = true;
 }
 
 void cursor_move(uint32_t new_x, uint32_t new_y, bool remove_old) {
-    if (remove_old) cursor_mutex.lock();
-
-    // Cursor is currently drawn.
     if (remove_old) {
+        cursor_mutex.lock();
+    
         graphics::fill_colour = rgb_colour(0, 0, 0);
-        graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");   
+        graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
     }
 
     cursor_toggle = true;
-    
     cursor_x = new_x;
     cursor_y = new_y;
 
+    if (remove_old) {
+        graphics::fill_colour = rgb_colour(255, 255, 255);
+        graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
+        cursor_mutex.unlock();
+    }
+}
+
+void cursor_instate() {
     graphics::fill_colour = rgb_colour(255, 255, 255);
     graphics::draw_text(internal_fonts::bios_port_improved, cursor_x, cursor_y, "_");
+    cursor_toggle = true;
 
-    if (remove_old) cursor_mutex.unlock();
+    // Unpark the cursor thread.
+    speedyos::awake_thread(cursor_thread_id);
+}
+
+void printnl() {
+    if (y_offset + max_char_height + 16 >= graphics::resolution_height) {
+        speedyos::park_thread(cursor_thread_id);
+        graphics::shift_screen_horizontal(16);
+    } else {
+        y_offset += 16;
+    }
+
+    x_offset = 0;
 }
 
 int main() {
