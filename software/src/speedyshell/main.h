@@ -2,8 +2,9 @@
 
 #include "stdint.h"
 #include "../../include/mutex.h"
+#include "../../../shared/graphics/graphics.h"
 
-#define MAX_TEXT_BUFFER_SIZE 69
+#define MAX_TEXT_BUFFER_SIZE 69 + 1
 
 extern uint32_t running_pid;
 extern bool caps_text;
@@ -26,3 +27,4 @@ void cursor_move(uint32_t new_x, uint32_t new_y, bool remove_old = true);
 void cursor_instate();
 
 void printnl();
+void print(char* text, uint32_t colour = rgb_colour(192, 192, 192));
