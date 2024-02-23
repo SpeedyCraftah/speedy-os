@@ -55,8 +55,15 @@ void on_modifier_press(uint32_t id, uint32_t data) {
 
     else if (data == speedyos::ModifierKeys::ENTER_PRESSED) {
         if (!input_allowed) return speedyos::end_event();
-        
+
+        // Add terminator.
+        text_buffer[text_buffer_ptr] = '\0';
+
         cursor_remove();
+        
+        print("\nmessage: ", rgb_colour(255, 255, 255));
+        print(text_buffer);
+
         printnl();
         print_prefix();
         cursor_move(x_offset, y_offset, false);
