@@ -82,6 +82,21 @@ void printnl() {
     x_offset = 0;
 }
 
+void print(char* text, uint32_t colour) {
+    graphics::fill_colour = colour;
+
+    char c[2];
+    c[1] = 0;
+    while ((c[0] = *text++) != '\0') {
+        if (c[0] == '\n') {
+            printnl();
+        } else {
+            if (x_offset + font_interpreter::char_width(internal_fonts::bios_port_improved, c[0]) >= graphics::resolution_width) printnl();
+            x_offset += graphics::draw_text(internal_fonts::bios_port_improved, x_offset, y_offset, c);
+        }
+    }
+};
+
 int main() {
     //speedyos::suspend_thread(4000);
 
