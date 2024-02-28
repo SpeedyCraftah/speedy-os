@@ -35,6 +35,8 @@ namespace scheduler {
     extern structures::linked_array<ThreadEvent>* thread_event_queue;
     extern structures::linked_array<Thread*>* thread_execution_queue;
 
+    extern uint32_t interface_provider_output_sink_id;
+
     void initialise();
     extern "C" void handle_context_switch();
 

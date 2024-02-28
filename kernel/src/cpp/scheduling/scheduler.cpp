@@ -75,6 +75,7 @@ namespace scheduler {
     structures::linked_array<Thread*>::iterator thread_execution_iterator;
 
     Process* scheduler_event_process = nullptr;
+    uint32_t interface_provider_output_sink_id = 0;
 
     void initialise() {
         // Set base FPU state.
@@ -143,8 +144,6 @@ namespace scheduler {
     // TODO - make paging inline asm functions
     // TODO - dont disable paging, switch to kernel
     extern "C" void handle_context_switch() {
-        //bpwatch = 1;
-
         // If a thread was previously running.
         if (current_thread != nullptr) {
             // Switch to kernel paging.
