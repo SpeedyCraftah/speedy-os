@@ -478,21 +478,20 @@ uint32_t handle_system_call_hl() {
         uint32_t data2 = temporary_registers->eax;
         uint32_t data3 = temporary_registers->ebx;
 
-        if (!scheduler::datasink::active_sinks.exists(data)) {
+        // Check if the sink exists.
+        if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
+            temporary_registers->eax = 0;
+            return false;
+        }
+
+        // Check if process has permission and if sink exists in global map.
+        DataSinkPermissions datasink_permissions = scheduler::current_thread->process->steady_sinks->fetch(data);
+        if (!datasink_permissions.write || !scheduler::datasink::active_sinks.exists(data)) {
             temporary_registers->eax = 0;
             return false;
         }
 
         SteadyDataSink* datasink = scheduler::datasink::active_sinks.fetch(data);
-        
-        if (
-            !datasink->permissions.exists(scheduler::current_thread->process->id) ||
-            !datasink->permissions.fetch(scheduler::current_thread->process->id).write
-        ) {
-            temporary_registers->eax = 0;
-            return false;
-        }
-
         if (data3 == 0 || data3 > 2048 || datasink->fragments.get_size() > 200) {
             temporary_registers->eax = 0;
             return false;
@@ -521,7 +520,7 @@ uint32_t handle_system_call_hl() {
         uint32_t data2 = temporary_registers->eax;
         uint32_t data3 = temporary_registers->ebx;
 
-        // Check if the sink exists and if the process owns it.
+        // Check if the sink exists.
         if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
             temporary_registers->eax = -1;
             return false;
@@ -533,7 +532,14 @@ uint32_t handle_system_call_hl() {
             return false;
         }
 
-        SteadyDataSink* datasink = scheduler::current_thread->process->steady_sinks->fetch(data);
+        // Check if process has permission and if sink exists in global map.
+        DataSinkPermissions datasink_permissions = scheduler::current_thread->process->steady_sinks->fetch(data);
+        if (!datasink_permissions.read || !scheduler::datasink::active_sinks.exists(data)) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::datasink::active_sinks.fetch(data);
 
         // Allocate buffer to hold the read and consume the stream into it.
         uint8_t* buffer = (uint8_t*)kmalloc(data3);
@@ -550,24 +556,38 @@ uint32_t handle_system_call_hl() {
         kfree(buffer);
         temporary_registers->eax = !write_status ? -1 : read_size;
     } else if (id == 25) {
-        // Check if the sink exists and if the process owns it.
+        // Check if the sink exists and if the process has permission to use it.
         if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
             temporary_registers->eax = -1;
             return false;
         }
 
-        SteadyDataSink* datasink = scheduler::current_thread->process->steady_sinks->fetch(data);
+        // Check if process has permission and if sink exists in global map.
+        DataSinkPermissions datasink_permissions = scheduler::current_thread->process->steady_sinks->fetch(data);
+        if (!datasink_permissions.read || !scheduler::datasink::active_sinks.exists(data)) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::datasink::active_sinks.fetch(data);
         temporary_registers->eax = datasink->fragments.get_size() == 0 ? 0 : (int)datasink->fragments.peek_front().actual_size;
     } else if (id == 26) {
         uint32_t data2 = temporary_registers->eax;
 
-        // Check if the sink exists and if the process owns it.
+        // Check if the sink exists and if the process has permission to use it.
         if (!scheduler::current_thread->process->steady_sinks->exists(data)) {
             temporary_registers->eax = -1;
             return false;
         }
 
-        SteadyDataSink* datasink = scheduler::current_thread->process->steady_sinks->fetch(data);
+        // Check if process has permission and if sink exists in global map.
+        DataSinkPermissions datasink_permissions = scheduler::current_thread->process->steady_sinks->fetch(data);
+        if (!datasink_permissions.read || !scheduler::datasink::active_sinks.exists(data)) {
+            temporary_registers->eax = -1;
+            return false;
+        }
+
+        SteadyDataSink* datasink = scheduler::datasink::active_sinks.fetch(data);
 
         // Check if fragment exists and get.
         if (datasink->fragments.get_size() == 0) {

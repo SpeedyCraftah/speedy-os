@@ -27,7 +27,6 @@ struct SteadyDataSink {
 
     uint32_t handle_id;
     structures::linked_array<DataFragment> fragments;
-    structures::map<DataSinkPermissions> permissions;
 
     bool append_data(uint8_t* buffer, uint32_t buffer_size, AppendType append_type = AppendType::COPY_BUFFER) {
         if (buffer_size == 0) return false;
