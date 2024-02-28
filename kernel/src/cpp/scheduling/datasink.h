@@ -10,6 +10,6 @@ namespace scheduler {
         extern structures::map<SteadyDataSink*> active_sinks;
 
         void initialise();
-        SteadyDataSink* create_steady_datasink(Process* process);
+        SteadyDataSink* create_steady_datasink(Process* process, DataSinkPermissions owner_permission = {.owner=true, .read=true, .write=true});
     };
 };

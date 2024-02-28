@@ -53,7 +53,7 @@ namespace modules {
     MultibootModule* find_interface_provider() {
         auto iterator = modules->create_iterator();
         while (iterator.hasNext()) {
-            MultibootModule* module = iterator.next();
+            MultibootModule* module = iterator.next().value();
             if (module->type == MultibootModule::SOFTWARE_EXECUTABLE_INTERFACE_PROVIDER) {
                 return module;
             }

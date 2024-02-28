@@ -320,7 +320,7 @@ namespace scheduler {
         process->name = structures::string(name).char_copy().norm();
         process->flags = flags;
         process->hooked_threads = new structures::linked_array<ThreadEventListener>(6);
-        process->steady_sinks = new structures::map<SteadyDataSink*>(4);
+        process->steady_sinks = new structures::map<DataSinkPermissions>(4);
 
         assert_eq("sch.procs.name.heap", kallocated(process->name), true);
         assert_eq("sch.procs.hookedthreads.heap", kallocated(process->hooked_threads), true);
@@ -608,12 +608,20 @@ namespace scheduler {
             kill_thread(thread, 1, false);
         }
 
-        // Iterate through the data sinks and delete.
+        // Iterate through the data sinks and delete if process owns them.
         auto steady_sinks_iterator = process->steady_sinks->create_iterator();
 
         while (steady_sinks_iterator.hasNext()) {
-            SteadyDataSink* sink = steady_sinks_iterator.next();
-            scheduler::datasink::active_sinks.remove(sink->handle_id);
+            auto entry = steady_sinks_iterator.next();
+            DataSinkPermissions sink_permissions = entry.value();
+            if (!sink_permissions.owner) continue;
+
+            // Sinks should only be deleted by the process that owns them.
+            assert_eq("sch.procs.sinks.clean.exists", datasink::active_sinks.exists(entry.key()), true);
+            
+            // Delete the datasink.
+            SteadyDataSink* sink = datasink::active_sinks.fetch(entry.key());
+            scheduler::datasink::active_sinks.remove(entry.key());
             delete sink;
         }
 

@@ -45,7 +45,7 @@ struct Process {
 
     structures::linked_array<Thread*>* threads = nullptr;
     structures::linked_array<ThreadEventListener>* hooked_threads = nullptr;
-    structures::map<SteadyDataSink*>* steady_sinks = nullptr;
+    structures::map<DataSinkPermissions>* steady_sinks = nullptr;
 
     char* name;
     float total_cpu_time;

@@ -13,13 +13,13 @@ namespace scheduler {
             active_sinks = structures::map<SteadyDataSink*>();
         }
 
-        SteadyDataSink* create_steady_datasink(Process* process) {
+        SteadyDataSink* create_steady_datasink(Process* process, DataSinkPermissions owner_permissions) {
             SteadyDataSink* sink = new SteadyDataSink;
             sink->handle_id = id_gen.next();
 
             assert_eq("sch.structs.sdatasink.fragments", sink->fragments.get_capacity(), (uint32_t)10);
 
-            process->steady_sinks->set(sink->handle_id, sink);
+            process->steady_sinks->set(sink->handle_id, owner_permissions);
             active_sinks.set(sink->handle_id, sink);
             return sink;
         }

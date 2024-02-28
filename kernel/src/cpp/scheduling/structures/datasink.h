@@ -7,6 +7,8 @@
 #include "../../../../../shared/memory.h"
 
 struct DataSinkPermissions {
+    bool owner : 1; // Is the owner of the sink.
+    bool read : 1; // Can read data from the sink.
     bool write : 1; // Can write data to the sink.
 };
 
