@@ -29,6 +29,7 @@ extern "C" Registers* temporary_registers;
 //      - 2 = Thread ID of thread.
 //      - 3 = Graphics resolution (uint32_t = uint16_t width, uint16_t height).
 //      - 4 = Graphics colour depth in bits.
+//      - 5 = (INTERFACE PROVIDER ONLY) Get ID of program output sink.
 // ID 2 = End process request (with status code). 
 // ID 3 = Temporarily suspend a thread with specific conditions.
 // ID 6 = End of event call.
@@ -87,6 +88,10 @@ uint32_t handle_system_call_hl() {
         else if (data == 2) temporary_registers->eax = scheduler::current_thread->id;
         else if (data == 3) temporary_registers->eax = ((graphics::resolution_width & 0xFFFF) << 16) | (graphics::resolution_height & 0xFFFF);
         else if (data == 4) temporary_registers->eax = 32; // hard coded for now.
+        else if (data == 5) {
+           temporary_registers->eax = 
+            scheduler::current_thread->process->flags.interface_provider ? scheduler::interface_provider_output_sink_id : 0;
+        }
     } else if (id == 2) {
         scheduler::kill_process(scheduler::current_thread->process, data);
         return 1;
