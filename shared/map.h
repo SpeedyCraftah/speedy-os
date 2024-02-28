@@ -190,6 +190,21 @@ namespace structures {
             }
 
             struct iterator {
+                class MapIteratorElement {
+                    public:
+                        inline MapIteratorElement(map::entry* e) : entry(e) {};
+                        
+                        inline uint32_t key() {
+                            return entry->key;
+                        }
+                        inline ValT& value() {
+                            return entry->value;
+                        }
+
+                    private:
+                        map::entry* entry;
+                };
+
                 uint32_t current_entry = 0;
                 map* object;
                 
@@ -208,8 +223,8 @@ namespace structures {
                     return false;
                 }
                 
-                inline ValT& next() {
-                    return object->storage_ptr[current_entry++].value;
+                inline MapIteratorElement next() {
+                    return MapIteratorElement(&object->storage_ptr[current_entry++]);
                 }
             };
             
