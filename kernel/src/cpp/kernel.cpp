@@ -177,6 +177,10 @@ void kernelControlHandOver() {
         flags.interface_provider = true;
         Process* process = loader::load_elf32_executable_as_process(provider->name, flags, provider->data, provider->size);
 
+        // Create events process.
+        // TODO - restrict this to interface providers only?
+        scheduler::interface_provider_events_process = scheduler::create_process("Interface Provider Event Dispatch", 0, {.kernel_process = true, .virtual_process = true});
+
         // Create datasink for output.
         SteadyDataSink* datasink = scheduler::datasink::create_steady_datasink(process);
         scheduler::interface_provider_output_sink_id = datasink->handle_id;

@@ -75,6 +75,7 @@ namespace scheduler {
     structures::linked_array<Thread*>::iterator thread_execution_iterator;
 
     Process* scheduler_event_process = nullptr;
+    Process* interface_provider_events_process = nullptr;
     uint32_t interface_provider_output_sink_id = 0;
 
     void initialise() {

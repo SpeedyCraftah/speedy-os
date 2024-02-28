@@ -35,7 +35,9 @@ namespace scheduler {
     extern structures::linked_array<ThreadEvent>* thread_event_queue;
     extern structures::linked_array<Thread*>* thread_execution_queue;
 
+    // TODO - move to another file?
     extern uint32_t interface_provider_output_sink_id;
+    extern Process* interface_provider_events_process; 
 
     void initialise();
     extern "C" void handle_context_switch();
