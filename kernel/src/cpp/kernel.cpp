@@ -176,6 +176,10 @@ void kernelControlHandOver() {
         ProcessFlags flags;
         flags.interface_provider = true;
         Process* process = loader::load_elf32_executable_as_process(provider->name, flags, provider->data, provider->size);
+
+        // Create datasink for output.
+        SteadyDataSink* datasink = scheduler::datasink::create_steady_datasink(process);
+        scheduler::interface_provider_output_sink_id = datasink->handle_id;
     }
     
     // Start shell.
