@@ -76,3 +76,8 @@ void on_modifier_press(uint32_t id, uint32_t data) {
 
     return speedyos::end_event();
 }
+
+// On process sending text to stdout.
+void on_output_data_available(uint32_t id, uint32_t data) {
+    
+}
