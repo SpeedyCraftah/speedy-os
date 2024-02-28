@@ -6,6 +6,7 @@
 
 #define MAX_TEXT_BUFFER_SIZE 69 + 1
 
+extern uint32_t output_datasink_id;
 extern uint32_t running_pid;
 extern bool caps_text;
 extern bool input_allowed;

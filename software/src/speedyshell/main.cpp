@@ -1,11 +1,13 @@
 #include "../../include/sys.h"
 #include "../../../shared/graphics/graphics.h"
 #include "../../../shared/graphics/fonts/internal.h"
+#include "../../include/sys_additional.h"
 #include "../../include/mutex.h"
 #include "main.h"
 #include "shell.h"
 #include "events.h"
 
+uint32_t output_datasink_id = 0;
 bool input_allowed = false;
 bool caps_text = false;
 uint32_t running_pid = 0;
@@ -99,6 +101,9 @@ void print(char* text, uint32_t colour) {
 
 int main() {
     //speedyos::suspend_thread(4000);
+
+    // Get datasink IDs from the kernel.
+    output_datasink_id = speedyos::interface_provider::fetch_output_sink_id();
 
     max_char_height = font_interpreter::char_height(internal_fonts::bios_port_improved, '!');
 
