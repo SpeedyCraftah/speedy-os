@@ -125,6 +125,10 @@ int main() {
     uint32_t scheduler_pid = speedyos::fetch_process_id_by_string("Scheduler Events");
 
     speedyos::register_event_for_thread(scheduler_pid, 2, on_process_end);
+
+    // Hook interface provider specific events.
+    /*uint32_t dispatch_pid = speedyos::fetch_process_id_by_string("Interface Provider Event Dispatch");
+    speedyos::register_event_for_thread(dispatch_pid, 1, on_output_data_available);*/
     
     // Clear the screen.
     graphics::outline_colour = 0x0;
@@ -138,6 +142,7 @@ int main() {
     cursor_x = x_offset;
 
     cursor_thread_id = speedyos::create_thread(cursor_blink_thread);
+    uint32_t output_thread_id = speedyos::create_thread(output_thread);
 
     input_allowed = true;
 
