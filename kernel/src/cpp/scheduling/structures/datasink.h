@@ -94,4 +94,14 @@ struct SteadyDataSink {
 
         return true;
     }
+
+    ~SteadyDataSink() {
+        auto iterator = fragments.create_iterator();
+        while (iterator.hasNext()) {
+            DataFragment fragment = iterator.next();
+            
+            // Deallocate fragment if it is allocated.
+            if (fragment.unique) kfree(fragment.data);
+        }
+    }
 };
