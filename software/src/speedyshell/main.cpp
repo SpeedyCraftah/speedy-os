@@ -146,7 +146,7 @@ int main() {
 
     input_allowed = true;
 
-    speedyos::update_execution_policy(speedyos::ThreadExecutionPolicy::EVENT_ONLY);
+    uint32_t shell_output_thread_id = speedyos::create_thread(shell_output_thread);
 
     return 0;
 }
