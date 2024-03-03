@@ -143,7 +143,6 @@ namespace scheduler {
     }
 
     // TODO - make paging inline asm functions
-    // TODO - dont disable paging, switch to kernel
     extern "C" void handle_context_switch() {
         // If a thread was previously running.
         if (current_thread != nullptr) {
