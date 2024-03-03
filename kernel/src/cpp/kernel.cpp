@@ -182,6 +182,7 @@ void kernelControlHandOver() {
         scheduler::interface_provider_events_process = scheduler::create_process("Interface Provider Event Dispatch", 0, {.kernel_process = true, .virtual_process = true});
 
         // Create datasink for output.
+        // TODO - set pointer to datasink globally instead of id?
         SteadyDataSink* datasink = scheduler::datasink::create_steady_datasink(process);
         scheduler::interface_provider_output_sink_id = datasink->handle_id;
     }
