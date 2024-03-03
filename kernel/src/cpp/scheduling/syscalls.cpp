@@ -245,7 +245,7 @@ uint32_t handle_system_call_hl() {
         uint32_t data2 = temporary_registers->eax;
         uint32_t data3 = temporary_registers->ebx;
 
-        if (data3 == 0 || data3 > 1024) {
+        if (data3 == 0 || data3 > 1024 || scheduler::interface_provider_events_process == nullptr) {
             temporary_registers->eax = 0;
             return 0;
         }
@@ -265,13 +265,10 @@ uint32_t handle_system_call_hl() {
         // Print the string.
         video::printf(text, data2);
 
-        // Free the allocated memory.
-        kfree(text);
-
-        //speedyshell::printf(reinterpret_cast<char*>(data), (VGA_COLOUR)data2);
-
-        // will be removed.
-        //speedyshell::printf("\n");
+        // Push to datasink for interface provider to handle.
+        // TODO - send event to interface provider?
+        SteadyDataSink* sink = scheduler::datasink::active_sinks.fetch(scheduler::interface_provider_output_sink_id);
+        sink->append_data((uint8_t*)text, data3 + 1, SteadyDataSink::AppendType::TRANSFER_BUFFER_OWNERSHIP);
     } else if (id == 13) {
         // If interface method is not shell or graphics mode is pixel.
         /*if (!isTerminalInterface || speedyshell::pixel_mode) {
